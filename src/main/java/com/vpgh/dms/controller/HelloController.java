@@ -1,4 +1,4 @@
-package com.vpgh.dms.controllers;
+package com.vpgh.dms.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
