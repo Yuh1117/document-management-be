@@ -22,7 +22,7 @@ public class User {
     @Column(nullable = false)
     private String lastName;
     private String avatar;
-    @Column(columnDefinition = "MEDIUMTEXT")
+    @Column(columnDefinition = "TEXT")
     private String refreshToken;
 
     private Boolean twoFactorEnabled;

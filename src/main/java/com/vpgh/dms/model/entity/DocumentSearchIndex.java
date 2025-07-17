@@ -1,8 +1,13 @@
 package com.vpgh.dms.model.entity;
 
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Type;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.Map;
 
 @Entity
 @Table(name = "document_search_index")
@@ -11,8 +16,10 @@ public class DocumentSearchIndex {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String keywords;
-    @Column(columnDefinition = "JSON")
-    private String contentVector;
+    @Type(JsonBinaryType.class)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> contentVector;
 
     private Instant createdAt;
     private Instant updatedAt;
@@ -37,11 +44,11 @@ public class DocumentSearchIndex {
         this.keywords = keywords;
     }
 
-    public String getContentVector() {
+    public Map<String, Object> getContentVector() {
         return contentVector;
     }
 
-    public void setContentVector(String contentVector) {
+    public void setContentVector(Map<String, Object> contentVector) {
         this.contentVector = contentVector;
     }
 
