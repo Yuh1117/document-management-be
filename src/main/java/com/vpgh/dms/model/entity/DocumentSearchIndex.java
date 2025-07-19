@@ -1,13 +1,7 @@
 package com.vpgh.dms.model.entity;
 
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.Type;
-import org.hibernate.type.SqlTypes;
-
 import java.time.Instant;
-import java.util.Map;
 
 @Entity
 @Table(name = "document_search_index")
@@ -16,10 +10,12 @@ public class DocumentSearchIndex {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String keywords;
-    @Type(JsonBinaryType.class)
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private Map<String, Object> contentVector;
+
+    @Column(columnDefinition = "vector(384)")
+    private float[] contentVector;
+
+    @Column(columnDefinition = "tsvector", insertable = false, updatable = false)
+    private String keywordsTsv;
 
     private Instant createdAt;
     private Instant updatedAt;
@@ -44,11 +40,11 @@ public class DocumentSearchIndex {
         this.keywords = keywords;
     }
 
-    public Map<String, Object> getContentVector() {
+    public float[] getContentVector() {
         return contentVector;
     }
 
-    public void setContentVector(Map<String, Object> contentVector) {
+    public void setContentVector(float[] contentVector) {
         this.contentVector = contentVector;
     }
 
@@ -74,5 +70,13 @@ public class DocumentSearchIndex {
 
     public void setDocument(Document document) {
         this.document = document;
+    }
+
+    public String getKeywordsTsv() {
+        return keywordsTsv;
+    }
+
+    public void setKeywordsTsv(String keywordsTsv) {
+        this.keywordsTsv = keywordsTsv;
     }
 }
