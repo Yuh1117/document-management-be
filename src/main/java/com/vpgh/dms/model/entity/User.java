@@ -1,7 +1,7 @@
 package com.vpgh.dms.model.entity;
 
 import jakarta.persistence.*;
-import org.antlr.v4.runtime.misc.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 import java.time.Instant;
 import java.util.Set;
@@ -14,12 +14,16 @@ public class User {
     private Integer id;
 
     @Column(unique = true, nullable = false)
+    @NotBlank(message = "Email không được để trống")
     private String email;
     @Column(nullable = false)
+    @NotBlank(message = "Mật khẩu không được để trống")
     private String password;
     @Column(nullable = false)
+    @NotBlank(message = "Tên không được để trống")
     private String firstName;
     @Column(nullable = false)
+    @NotBlank(message = "Họ không được để trống")
     private String lastName;
     private String avatar;
     @Column(columnDefinition = "TEXT")
@@ -83,6 +87,16 @@ public class User {
     private Set<DocumentTag> createdTags;
     @OneToMany(mappedBy = "updatedBy", fetch = FetchType.LAZY)
     private Set<DocumentTag> updatedTags;
+
+    @PrePersist
+    public void handleBeforeCreate() {
+        this.createdAt = Instant.now();
+    }
+
+    @PreUpdate
+    void handleBeforeUpdate() {
+        this.updatedAt = Instant.now();
+    }
 
     public Set<DocumentPermission> getDocumentPermissions() {
         return documentPermissions;
