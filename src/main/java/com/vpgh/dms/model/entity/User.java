@@ -1,6 +1,7 @@
 package com.vpgh.dms.model.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 import java.time.Instant;
@@ -14,6 +15,7 @@ public class User {
     private Integer id;
 
     @Column(unique = true, nullable = false)
+    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Email không hợp lệ!")
     @NotBlank(message = "Email không được để trống")
     private String email;
     @Column(nullable = false)

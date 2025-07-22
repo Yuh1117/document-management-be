@@ -20,4 +20,9 @@ public class UserServiceImpl implements UserService {
     public boolean existsByEmail(String email) {
         return this.userRepository.existsByEmail(email);
     }
+
+    @Override
+    public User getUserByEmail(String email) {
+        return this.userRepository.getUserByEmail(email);
+    }
 }
