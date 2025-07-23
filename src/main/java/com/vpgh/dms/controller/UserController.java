@@ -1,8 +1,10 @@
 package com.vpgh.dms.controller;
 
-import com.vpgh.dms.exception.UniqueConstraintException;
+import com.vpgh.dms.model.dto.UserDTO;
+import com.vpgh.dms.model.entity.Role;
 import com.vpgh.dms.model.entity.User;
-import com.vpgh.dms.model.response.UserResDTO;
+import com.vpgh.dms.model.dto.response.UserResDTO;
+import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import jakarta.validation.Valid;
@@ -20,15 +22,22 @@ public class UserController {
     private UserService userService;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private RoleService roleService;
 
     @PostMapping(path = "/users")
     @ApiMessage(message = "Tạo mới user")
-    public ResponseEntity<UserResDTO> create(@ModelAttribute @Valid User user) throws UniqueConstraintException {
-        if (userService.existsByEmail(user.getEmail())) {
-            throw new UniqueConstraintException("Email đã tồn tại!");
-        }
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return ResponseEntity.status(HttpStatus.CREATED).body(new UserResDTO(userService.save(user)));
+    public ResponseEntity<UserResDTO> create(@ModelAttribute @Valid UserDTO user) {
+        User nuser = new User();
+        nuser.setFirstName(user.getFirstName());
+        nuser.setLastName(user.getLastName());
+        nuser.setEmail(user.getEmail());
+        nuser.setPassword(user.getPassword());
+        nuser.setFile(user.getFile());
+
+        Role role = this.roleService.getRoleById(user.getRoleId());
+        nuser.setRole(role);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new UserResDTO(this.userService.save(nuser)));
     }
 
 }

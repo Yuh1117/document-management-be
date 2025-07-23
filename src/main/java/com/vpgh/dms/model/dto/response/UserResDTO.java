@@ -1,4 +1,4 @@
-package com.vpgh.dms.model.response;
+package com.vpgh.dms.model.dto.response;
 
 import com.vpgh.dms.model.entity.User;
 
@@ -8,6 +8,7 @@ public class UserResDTO {
     private String firstName;
     private String lastName;
     private String avatar;
+    private String role;
 
     public UserResDTO() {
     }
@@ -18,6 +19,15 @@ public class UserResDTO {
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.avatar = user.getAvatar();
+        this.role = user.getRole().getName();
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public Integer getId() {

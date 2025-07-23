@@ -3,6 +3,7 @@ package com.vpgh.dms.model.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.Set;
@@ -15,17 +16,12 @@ public class User {
     private Integer id;
 
     @Column(unique = true, nullable = false)
-    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Email không hợp lệ!")
-    @NotBlank(message = "Email không được để trống")
     private String email;
     @Column(nullable = false)
-    @NotBlank(message = "Mật khẩu không được để trống")
     private String password;
     @Column(nullable = false)
-    @NotBlank(message = "Tên không được để trống")
     private String firstName;
     @Column(nullable = false)
-    @NotBlank(message = "Họ không được để trống")
     private String lastName;
     private String avatar;
     @Column(columnDefinition = "TEXT")
@@ -33,10 +29,13 @@ public class User {
 
     private Boolean twoFactorEnabled;
     private String twoFactorSecret;
-    private Boolean isActive;
+    private Boolean isActive = true;
 
     private Instant createdAt;
     private Instant updatedAt;
+
+    @Transient
+    private MultipartFile file;
 
     @ManyToOne
     @JoinColumn(name = "role_id")
@@ -98,6 +97,30 @@ public class User {
     @PreUpdate
     void handleBeforeUpdate() {
         this.updatedAt = Instant.now();
+    }
+
+    public MultipartFile getFile() {
+        return file;
+    }
+
+    public void setFile(MultipartFile file) {
+        this.file = file;
+    }
+
+    public Set<DocumentTag> getCreatedTags() {
+        return createdTags;
+    }
+
+    public void setCreatedTags(Set<DocumentTag> createdTags) {
+        this.createdTags = createdTags;
+    }
+
+    public Set<DocumentTag> getUpdatedTags() {
+        return updatedTags;
+    }
+
+    public void setUpdatedTags(Set<DocumentTag> updatedTags) {
+        this.updatedTags = updatedTags;
     }
 
     public Set<DocumentPermission> getDocumentPermissions() {

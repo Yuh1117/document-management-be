@@ -1,6 +1,6 @@
 package com.vpgh.dms.util;
 
-import com.vpgh.dms.model.response.CustomResponse;
+import com.vpgh.dms.model.dto.response.CustomResponse;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.context.ApiMessageContext;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,18 +33,19 @@ public class FormatCustomResponse implements ResponseBodyAdvice<Object> {
         if (apiMessage == null) {
             apiMessage = ApiMessageContext.get();
         }
-        res.setMessage(apiMessage != null ? apiMessage.message() : "hehe");
-        ApiMessageContext.clear();
 
         if (status < 400) {
+            res.setMessage(ApiMessageUtil.getSuccessMessage(apiMessage));
             res.setData(body);
         } else {
             if (body instanceof ErrorResponse err) {
+                res.setMessage(ApiMessageUtil.getFailedMessage(apiMessage));
                 res.setError(err.getError());
             } else {
                 return body;
             }
         }
+        ApiMessageContext.clear();
         return res;
     }
 }

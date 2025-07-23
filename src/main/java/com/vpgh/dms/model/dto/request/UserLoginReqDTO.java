@@ -1,4 +1,4 @@
-package com.vpgh.dms.model.request;
+package com.vpgh.dms.model.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
