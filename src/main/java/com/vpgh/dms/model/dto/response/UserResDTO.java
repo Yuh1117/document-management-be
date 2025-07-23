@@ -1,22 +1,33 @@
-package com.vpgh.dms.model.response;
+package com.vpgh.dms.model.dto.response;
 
 import com.vpgh.dms.model.entity.User;
 
-public class UserResponseDTO {
+public class UserResDTO {
     private Integer id;
     private String email;
-    private String password;
     private String firstName;
     private String lastName;
     private String avatar;
+    private String role;
 
-    public UserResponseDTO(User user) {
+    public UserResDTO() {
+    }
+
+    public UserResDTO(User user) {
         this.id = user.getId();
         this.email = user.getEmail();
-        this.password = user.getPassword();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.avatar = user.getAvatar();
+        this.role = user.getRole().getName();
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public Integer getId() {
@@ -33,14 +44,6 @@ public class UserResponseDTO {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getFirstName() {
