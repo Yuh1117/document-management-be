@@ -8,6 +8,7 @@ import com.vpgh.dms.model.dto.response.UserLoginResDTO;
 import com.vpgh.dms.model.dto.response.UserResDTO;
 import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.UserService;
+import com.vpgh.dms.service.impl.UserServiceImpl;
 import com.vpgh.dms.util.JwtUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import jakarta.validation.Valid;
@@ -18,12 +19,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/api")
 public class AuthController {
 
     @Autowired
@@ -68,5 +67,14 @@ public class AuthController {
         Role role = this.roleService.getRoleByName("USER");
         nuser.setRole(role);
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserResDTO(this.userService.save(nuser)));
+    }
+
+    @GetMapping("/secure/profile")
+    @ApiMessage(message = "Lấy profile")
+    public ResponseEntity<UserResDTO> getProfile() {
+        String email = UserServiceImpl.getCurrentUser();
+        User currentUser = this.userService.getUserByEmail(email);
+
+        return ResponseEntity.status(HttpStatus.OK).body(new UserResDTO(currentUser));
     }
 }

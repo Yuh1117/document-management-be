@@ -19,7 +19,8 @@ import java.util.stream.Collectors;
 public class GlobalException {
     @ExceptionHandler(value = {
             UniqueConstraintException.class,
-            UsernameNotFoundException.class})
+            UsernameNotFoundException.class,
+            IdInvalidException.class})
     public ResponseEntity<ErrorResponse<String>> handleException(Exception ex) {
         ErrorResponse<String> errorResponse = new ErrorResponse<>();
         errorResponse.setError(ex.getMessage());
