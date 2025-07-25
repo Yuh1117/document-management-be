@@ -44,14 +44,15 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         User currentUser = this.userService.getUserByEmail(user.getEmail());
-        UserLoginResDTO resUser = new UserLoginResDTO();
-        UserResDTO userLogin = new UserResDTO(currentUser);
-        resUser.setUser(userLogin);
+        UserResDTO userRes = new UserResDTO(currentUser);
 
-        String jwtToken = this.jwtUtil.createToken(authentication);
-        resUser.setAccessToken(jwtToken);
+        UserLoginResDTO userLoginRes = new UserLoginResDTO();
+        userLoginRes.setUser(userRes);
 
-        return ResponseEntity.status(HttpStatus.OK).body(resUser);
+        String jwtToken = this.jwtUtil.createToken(authentication, userRes);
+        userLoginRes.setAccessToken(jwtToken);
+
+        return ResponseEntity.status(HttpStatus.OK).body(userLoginRes);
     }
 
     @PostMapping("/signup")

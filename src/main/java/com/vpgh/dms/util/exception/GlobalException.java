@@ -1,5 +1,6 @@
-package com.vpgh.dms.exception;
+package com.vpgh.dms.util.exception;
 
+import com.vpgh.dms.model.dto.response.CustomResponse;
 import com.vpgh.dms.util.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,4 +54,15 @@ public class GlobalException {
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
+
+    @ExceptionHandler(value = Exception.class)
+    public ResponseEntity<CustomResponse<Object, Object>> handleAllException(Exception ex) {
+        CustomResponse<Object, Object> customResponse = new CustomResponse<>();
+        customResponse.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        customResponse.setMessage("Internal server error");
+        customResponse.setError(ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(customResponse);
+    }
+
 }

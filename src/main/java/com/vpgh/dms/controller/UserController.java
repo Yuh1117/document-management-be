@@ -1,6 +1,6 @@
 package com.vpgh.dms.controller;
 
-import com.vpgh.dms.exception.IdInvalidException;
+import com.vpgh.dms.util.exception.IdInvalidException;
 import com.vpgh.dms.model.dto.UserDTO;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
 import com.vpgh.dms.model.entity.User;

@@ -1,5 +1,6 @@
 package com.vpgh.dms.util;
 
+import com.vpgh.dms.model.dto.response.UserResDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -23,7 +24,7 @@ public class JwtUtil {
     @Autowired
     private JwtEncoder jwtEncoder;
 
-    public String createToken(Authentication authentication) {
+    public String createToken(Authentication authentication, UserResDTO user) {
         Instant now = Instant.now();
         Instant validity = now.plus(this.tokenExpiration, ChronoUnit.SECONDS);
 
@@ -32,7 +33,8 @@ public class JwtUtil {
             .issuedAt(now)
             .expiresAt(validity)
             .subject(authentication.getName())
-            .claim("user", authentication)
+            .claim("user", user)
+            .claim("role", user.getRole())
             .build();
 
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();

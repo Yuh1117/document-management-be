@@ -17,7 +17,8 @@ public class FormatCustomResponse implements ResponseBodyAdvice<Object> {
 
     @Override
     public boolean supports(MethodParameter returnType, Class converterType) {
-        return true;
+        Class<?> parameterType = returnType.getParameterType();
+        return !byte[].class.equals(parameterType);
     }
 
     @Override
