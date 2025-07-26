@@ -1,28 +1,32 @@
 package com.vpgh.dms.controller;
 
-import com.vpgh.dms.util.exception.IdInvalidException;
 import com.vpgh.dms.model.dto.UserDTO;
+import com.vpgh.dms.util.exception.CustomValidationException;
+import com.vpgh.dms.util.exception.IdInvalidException;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.model.dto.response.UserResDTO;
 import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.annotation.ApiMessage;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@Validated
 public class UserController {
     @Autowired
     private UserService userService;
@@ -30,17 +34,19 @@ public class UserController {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private RoleService roleService;
+    @Autowired
+    private Validator validator;
 
     @PostMapping(path = "/secure/users")
     @ApiMessage(message = "Tạo mới người dùng")
-    public ResponseEntity<UserResDTO> create(@ModelAttribute @Validated(UserDTO.CreateGroup.class) UserDTO user) {
+    public ResponseEntity<UserResDTO> create(@ModelAttribute @Valid UserDTO user) {
         User nuser = new User();
         nuser.setFirstName(user.getFirstName());
         nuser.setLastName(user.getLastName());
         nuser.setEmail(user.getEmail());
         nuser.setPassword(user.getPassword());
         nuser.setFile(user.getFile());
-        nuser.setRole(this.roleService.getRoleById(user.getRoleId()));
+        nuser.setRole(this.roleService.getRoleById(user.getRole().getId()));
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserResDTO(this.userService.save(nuser)));
     }
 
@@ -77,22 +83,30 @@ public class UserController {
     @PatchMapping(path = "/secure/users/{id}")
     @ApiMessage(message = "Cập nhật người dùng")
     public ResponseEntity<UserResDTO> update(@PathVariable(value = "id") Integer id,
-                                             @ModelAttribute @Validated(UserDTO.UpdateGroup.class) UserDTO reqUser)
-            throws IdInvalidException {
+                                             @ModelAttribute UserDTO reqUser) throws IdInvalidException {
+        reqUser.setId(id);
+        Set<ConstraintViolation<UserDTO>> violations = validator.validate(reqUser);
+
+        if (!violations.isEmpty()) {
+            List<Map<String, String>> errorList = violations.stream().map(v -> {
+                Map<String, String> err = new HashMap<>();
+                err.put("field", v.getPropertyPath().toString());
+                err.put("message", v.getMessage());
+                return err;
+            }).collect(Collectors.toList());
+            throw new CustomValidationException(errorList);
+        }
+
         User user = this.userService.getUserById(id);
         if (user == null) {
             throw new IdInvalidException("Không tìm thấy người dùng!");
-        }
-
-        if (this.userService.existsByEmailAndIdNot(reqUser.getEmail(), user.getId())) {
-            throw new IdInvalidException("Email đã tồn tại");
         }
 
         user.setEmail(reqUser.getEmail());
         user.setPassword(reqUser.getPassword());
         user.setFirstName(reqUser.getFirstName());
         user.setLastName(reqUser.getLastName());
-        user.setRole(this.roleService.getRoleById(reqUser.getRoleId()));
+        user.setRole(this.roleService.getRoleById(reqUser.getRole().getId()));
         user.setFile(reqUser.getFile());
         return ResponseEntity.status(HttpStatus.OK).body(new UserResDTO(this.userService.save(user)));
     }

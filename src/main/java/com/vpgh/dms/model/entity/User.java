@@ -16,12 +16,17 @@ public class User {
     private Integer id;
 
     @Column(unique = true, nullable = false)
+    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Email không hợp lệ!")
+    @NotBlank(message = "Email không được để trống")
     private String email;
     @Column(nullable = false)
+    @NotBlank(message = "Mật khẩu không được để trống")
     private String password;
     @Column(nullable = false)
+    @NotBlank(message = "Tên không được để trống")
     private String firstName;
     @Column(nullable = false)
+    @NotBlank(message = "Họ không được để trống")
     private String lastName;
     private String avatar;
     @Column(columnDefinition = "TEXT")

@@ -47,6 +47,14 @@ public class GlobalException {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    @ExceptionHandler(CustomValidationException.class)
+    public ResponseEntity<ErrorResponse<List<Map<String, String>>>> handleException(CustomValidationException ex) {
+        ErrorResponse<List<Map<String, String>>> errorResponse = new ErrorResponse<>();
+        errorResponse.setError(ex.getErrors());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
     @ExceptionHandler(value = BadCredentialsException.class)
     public ResponseEntity<ErrorResponse<String>> handleException(BadCredentialsException ex) {
         ErrorResponse<String> errorResponse = new ErrorResponse<>();

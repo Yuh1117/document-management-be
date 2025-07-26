@@ -1,5 +1,6 @@
 package com.vpgh.dms.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.Set;
@@ -24,7 +25,18 @@ public class Permission {
     private Instant updatedAt;
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "permissions")
+    @JsonIgnore
     private Set<Role> roles;
+
+    @PrePersist
+    public void handleBeforeCreate() {
+        this.createdAt = Instant.now();
+    }
+
+    @PreUpdate
+    void handleBeforeUpdate() {
+        this.updatedAt = Instant.now();
+    }
 
     public Integer getId() {
         return id;
