@@ -3,6 +3,8 @@ package com.vpgh.dms.model.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
@@ -16,12 +18,17 @@ public class User {
     private Integer id;
 
     @Column(unique = true, nullable = false)
+    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Email không hợp lệ!")
+    @NotBlank(message = "Email không được để trống")
     private String email;
     @Column(nullable = false)
+    @NotBlank(message = "Mật khẩu không được để trống")
     private String password;
     @Column(nullable = false)
+    @NotBlank(message = "Tên không được để trống")
     private String firstName;
     @Column(nullable = false)
+    @NotBlank(message = "Họ không được để trống")
     private String lastName;
     private String avatar;
     @Column(columnDefinition = "TEXT")
@@ -38,7 +45,8 @@ public class User {
     private MultipartFile file;
 
     @ManyToOne
-    @JoinColumn(name = "role_id")
+    @JoinColumn(name = "role_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.RESTRICT)
     private Role role;
 
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)

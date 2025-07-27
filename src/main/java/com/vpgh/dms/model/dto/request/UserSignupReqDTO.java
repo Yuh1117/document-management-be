@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.multipart.MultipartFile;
 
-public class UserSignupDTO {
+public class UserSignupReqDTO {
     @NotBlank(message = "Tên không được để trống")
     private String firstName;
     @NotBlank(message = "Họ không được để trống")

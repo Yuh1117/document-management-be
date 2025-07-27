@@ -1,0 +1,26 @@
+package com.vpgh.dms.service;
+
+import com.vpgh.dms.model.dto.PermissionDTO;
+import com.vpgh.dms.model.entity.Permission;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
+import java.util.Map;
+
+public interface PermissionService {
+    List<Permission> findPermissionsByIdIn(List<Integer> ids);
+
+    Permission getPermissionById(Integer id);
+
+    boolean existsByApiPathAndMethodAndModuleAndIdNot(String apiPath, String method, String module, Integer id);
+
+    Permission save(Permission permission);
+
+    Permission handleCreatePermission(PermissionDTO dto);
+
+    Page<Permission> getAllPermission(Map<String, String> params);
+
+    Permission handleUpdatePermission(Integer id, PermissionDTO dto);
+
+    void deletePermissionById(Integer id);
+}

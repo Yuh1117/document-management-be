@@ -1,6 +1,9 @@
 package com.vpgh.dms.model.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.time.Instant;
 
 @Entity
@@ -22,6 +25,7 @@ public class DocumentSearchIndex {
 
     @ManyToOne
     @JoinColumn(name = "document_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Document document;
 
     public Integer getId() {

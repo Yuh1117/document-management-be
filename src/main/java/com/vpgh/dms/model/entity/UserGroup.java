@@ -1,6 +1,8 @@
 package com.vpgh.dms.model.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 import java.util.Set;
@@ -20,9 +22,11 @@ public class UserGroup {
 
     @ManyToOne
     @JoinColumn(name = "created_by")
+    @OnDelete(action = OnDeleteAction.RESTRICT)
     private User createdBy;
     @ManyToOne
     @JoinColumn(name = "updated_by")
+    @OnDelete(action = OnDeleteAction.RESTRICT)
     private User updatedBy;
 
     @OneToMany(mappedBy = "group", fetch = FetchType.LAZY)

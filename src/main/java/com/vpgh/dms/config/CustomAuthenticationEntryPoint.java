@@ -29,7 +29,8 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
         CustomResponse<String, String> res = new CustomResponse<>();
         res.setStatusCode(HttpStatus.UNAUTHORIZED.value());
-        res.setMessage(authException.getCause().getMessage());
+        res.setMessage(authException.getCause() != null ?
+                authException.getCause().getMessage() : authException.getMessage());
         res.setError("Token không hợp lệ");
 
         mapper.writeValue(response.getWriter(), res);

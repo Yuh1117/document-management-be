@@ -1,9 +1,10 @@
 package com.vpgh.dms.service;
 
+import com.vpgh.dms.model.dto.UserDTO;
+import com.vpgh.dms.model.dto.response.UserResDTO;
 import com.vpgh.dms.model.entity.User;
 import org.springframework.data.domain.Page;
 
-import java.awt.print.Pageable;
 import java.util.Map;
 
 public interface UserService {
@@ -20,4 +21,12 @@ public interface UserService {
     void deleteUserById(Integer id);
 
     boolean existsByEmailAndIdNot(String email, Integer id);
+
+    User handleCreateUser(UserDTO dto);
+
+    User handleUpdateUser(Integer id, UserDTO dto);
+
+    UserDTO convertUserToUserDTO(User user);
+
+    UserResDTO convertUserToUserResDTO(User user);
 }

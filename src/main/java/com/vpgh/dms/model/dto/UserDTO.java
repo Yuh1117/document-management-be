@@ -1,36 +1,28 @@
 package com.vpgh.dms.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.entity.Role;
-import com.vpgh.dms.model.entity.User;
-import com.vpgh.dms.util.annotation.NotFound;
-import com.vpgh.dms.util.annotation.Unique;
+import com.vpgh.dms.util.annotation.ValidUser;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.web.multipart.MultipartFile;
 
+@ValidUser
 public class UserDTO {
-    public interface CreateGroup {
-    }
-
-    public interface UpdateGroup {
-    }
-
-    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Email không hợp lệ!",
-            groups = {CreateGroup.class, UpdateGroup.class})
-    @NotBlank(message = "Email không được để trống", groups = {CreateGroup.class, UpdateGroup.class})
-    @Unique(entity = User.class, field = "email", message = "Email đã tồn tại", groups = {CreateGroup.class})
+    private Integer id;
+    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Email không hợp lệ!")
+    @NotBlank(message = "Email không được để trống")
     private String email;
-    @NotBlank(message = "Mật khẩu không được để trống", groups = {CreateGroup.class, UpdateGroup.class})
+    @NotBlank(message = "Mật khẩu không được để trống")
     private String password;
-    @NotBlank(message = "Tên không được để trống", groups = {CreateGroup.class, UpdateGroup.class})
+    @NotBlank(message = "Tên không được để trống")
     private String firstName;
-    @NotBlank(message = "Họ không được để trống", groups = {CreateGroup.class, UpdateGroup.class})
+    @NotBlank(message = "Họ không được để trống")
     private String lastName;
     private String avatar;
-    @NotNull(message = "Role không được để trống", groups = {CreateGroup.class, UpdateGroup.class})
-    @NotFound(entity = Role.class, field = "id", message = "Không tìm thấy role", groups = {CreateGroup.class, UpdateGroup.class})
-    private Integer roleId;
+    private Role role;
+    @JsonIgnore
     private MultipartFile file;
 
     public String getEmail() {
@@ -73,12 +65,12 @@ public class UserDTO {
         this.avatar = avatar;
     }
 
-    public Integer getRoleId() {
-        return roleId;
+    public Role getRole() {
+        return role;
     }
 
-    public void setRoleId(Integer roleId) {
-        this.roleId = roleId;
+    public void setRole(Role role) {
+        this.role = role;
     }
 
     public MultipartFile getFile() {
@@ -87,5 +79,13 @@ public class UserDTO {
 
     public void setFile(MultipartFile file) {
         this.file = file;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 }

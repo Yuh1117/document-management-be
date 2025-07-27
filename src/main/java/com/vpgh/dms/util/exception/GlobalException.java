@@ -1,5 +1,6 @@
-package com.vpgh.dms.exception;
+package com.vpgh.dms.util.exception;
 
+import com.vpgh.dms.model.dto.response.CustomResponse;
 import com.vpgh.dms.util.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalException {
+
     @ExceptionHandler(value = {
             UniqueConstraintException.class,
             UsernameNotFoundException.class,
@@ -46,6 +48,14 @@ public class GlobalException {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    @ExceptionHandler(CustomValidationException.class)
+    public ResponseEntity<ErrorResponse<List<Map<String, String>>>> handleException(CustomValidationException ex) {
+        ErrorResponse<List<Map<String, String>>> errorResponse = new ErrorResponse<>();
+        errorResponse.setError(ex.getErrors());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
     @ExceptionHandler(value = BadCredentialsException.class)
     public ResponseEntity<ErrorResponse<String>> handleException(BadCredentialsException ex) {
         ErrorResponse<String> errorResponse = new ErrorResponse<>();
@@ -53,4 +63,23 @@ public class GlobalException {
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
+
+    @ExceptionHandler(value = DataConflictException.class)
+    public ResponseEntity<ErrorResponse<String>> handleException(DataConflictException ex) {
+        ErrorResponse<String> errorResponse = new ErrorResponse<>();
+        errorResponse.setError(ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(value = Exception.class)
+    public ResponseEntity<CustomResponse<Object, Object>> handleAllException(Exception ex) {
+        CustomResponse<Object, Object> customResponse = new CustomResponse<>();
+        customResponse.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        customResponse.setMessage("Internal server error");
+        customResponse.setError(ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(customResponse);
+    }
+
 }

@@ -2,8 +2,11 @@ package com.vpgh.dms.service.impl;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.vpgh.dms.model.dto.UserDTO;
+import com.vpgh.dms.model.dto.response.UserResDTO;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.UserRepository;
+import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.service.specification.UserSpecification;
 import com.vpgh.dms.util.PageSize;
@@ -34,6 +37,8 @@ public class UserServiceImpl implements UserService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private Cloudinary cloudinary;
+    @Autowired
+    private RoleService roleService;
 
     @Override
     public User save(User user) {
@@ -50,6 +55,57 @@ public class UserServiceImpl implements UserService {
         }
 
         return this.userRepository.save(user);
+    }
+
+    @Override
+    public User handleCreateUser(UserDTO dto) {
+        User user = new User();
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
+        user.setEmail(dto.getEmail());
+        user.setPassword(dto.getPassword());
+        user.setFile(dto.getFile());
+        user.setRole(this.roleService.getRoleById(dto.getRole().getId()));
+        return save(user);
+    }
+
+    @Override
+    public User handleUpdateUser(Integer id, UserDTO dto) {
+        User user = getUserById(id);
+        if (user != null) {
+            user.setFirstName(dto.getFirstName());
+            user.setLastName(dto.getLastName());
+            user.setEmail(dto.getEmail());
+            user.setPassword(dto.getPassword());
+            user.setFile(dto.getFile());
+            user.setRole(this.roleService.getRoleById(dto.getRole().getId()));
+            return save(user);
+        }
+        return null;
+    }
+
+    @Override
+    public UserDTO convertUserToUserDTO(User user) {
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setEmail(user.getEmail());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setAvatar(user.getAvatar());
+        dto.setRole(user.getRole());
+        return dto;
+    }
+
+    @Override
+    public UserResDTO convertUserToUserResDTO(User user) {
+        UserResDTO dto = new UserResDTO();
+        dto.setId(user.getId());
+        dto.setEmail(user.getEmail());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setAvatar(user.getAvatar());
+        dto.setRole(user.getRole().getName());
+        return dto;
     }
 
     @Override
@@ -110,4 +166,5 @@ public class UserServiceImpl implements UserService {
     public boolean existsByEmailAndIdNot(String email, Integer id) {
         return this.userRepository.existsByEmailAndIdNot(email, id);
     }
+
 }

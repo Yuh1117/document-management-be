@@ -1,11 +1,11 @@
 package com.vpgh.dms.controller;
 
+import com.vpgh.dms.model.dto.response.UserResDTO;
 import com.vpgh.dms.model.entity.Role;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.model.dto.request.UserLoginReqDTO;
-import com.vpgh.dms.model.dto.request.UserSignupDTO;
+import com.vpgh.dms.model.dto.request.UserSignupReqDTO;
 import com.vpgh.dms.model.dto.response.UserLoginResDTO;
-import com.vpgh.dms.model.dto.response.UserResDTO;
 import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.service.impl.UserServiceImpl;
@@ -44,19 +44,20 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         User currentUser = this.userService.getUserByEmail(user.getEmail());
-        UserLoginResDTO resUser = new UserLoginResDTO();
-        UserResDTO userLogin = new UserResDTO(currentUser);
-        resUser.setUser(userLogin);
+        UserResDTO userRes = this.userService.convertUserToUserResDTO(currentUser);
 
-        String jwtToken = this.jwtUtil.createToken(authentication);
-        resUser.setAccessToken(jwtToken);
+        UserLoginResDTO userLoginRes = new UserLoginResDTO();
+        userLoginRes.setUser(userRes);
 
-        return ResponseEntity.status(HttpStatus.OK).body(resUser);
+        String jwtToken = this.jwtUtil.createToken(authentication, userRes);
+        userLoginRes.setAccessToken(jwtToken);
+
+        return ResponseEntity.status(HttpStatus.OK).body(userLoginRes);
     }
 
     @PostMapping("/signup")
     @ApiMessage(message = "Đăng ký")
-    public ResponseEntity<UserResDTO> signup(@ModelAttribute @Valid UserSignupDTO user) {
+    public ResponseEntity<UserResDTO> signup(@ModelAttribute @Valid UserSignupReqDTO user) {
         User nuser = new User();
         nuser.setFirstName(user.getFirstName());
         nuser.setLastName(user.getLastName());
@@ -66,7 +67,7 @@ public class AuthController {
 
         Role role = this.roleService.getRoleByName("USER");
         nuser.setRole(role);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new UserResDTO(this.userService.save(nuser)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertUserToUserResDTO(this.userService.save(nuser)));
     }
 
     @GetMapping("/secure/profile")
@@ -75,6 +76,6 @@ public class AuthController {
         String email = UserServiceImpl.getCurrentUser();
         User currentUser = this.userService.getUserByEmail(email);
 
-        return ResponseEntity.status(HttpStatus.OK).body(new UserResDTO(currentUser));
+        return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserResDTO(currentUser));
     }
 }
