@@ -33,7 +33,7 @@ public class RoleController {
     @ApiMessage(message = "Tạo mới vai trò")
     public ResponseEntity<Role> create(@RequestBody @Valid RoleDTO reqRole) {
         Role role = this.roleService.handleCreateRole(reqRole);
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.roleService.save(role));
+        return ResponseEntity.status(HttpStatus.CREATED).body(role);
     }
 
     @GetMapping(path = "/secure/roles")
@@ -89,7 +89,7 @@ public class RoleController {
             throw new IdInvalidException("Không tìm thấy vai trò");
         }
 
-        return ResponseEntity.ok(this.roleService.save(role));
+        return ResponseEntity.status(HttpStatus.OK).body(role);
     }
 
 

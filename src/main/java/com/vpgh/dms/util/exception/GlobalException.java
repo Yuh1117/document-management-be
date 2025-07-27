@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalException {
+
     @ExceptionHandler(value = {
             UniqueConstraintException.class,
             UsernameNotFoundException.class,

@@ -9,7 +9,8 @@ import java.time.Instant;
 import java.util.Set;
 
 @Entity
-@Table(name = "permissions")
+@Table(name = "permissions",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"apiPath", "method", "module"}))
 public class Permission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
