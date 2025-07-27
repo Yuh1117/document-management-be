@@ -2,6 +2,8 @@ package com.vpgh.dms.model.entity;
 
 import com.vpgh.dms.model.constant.MemberEnum;
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(
@@ -20,9 +22,11 @@ public class UserGroupMember {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
     @ManyToOne
     @JoinColumn(name = "group_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private UserGroup group;
 
     public User getUser() {

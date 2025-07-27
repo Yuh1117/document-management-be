@@ -39,29 +39,24 @@ public class UserController {
 
     @PostMapping(path = "/secure/users")
     @ApiMessage(message = "Tạo mới người dùng")
-    public ResponseEntity<UserResDTO> create(@ModelAttribute @Valid UserDTO user) {
-        User nuser = new User();
-        nuser.setFirstName(user.getFirstName());
-        nuser.setLastName(user.getLastName());
-        nuser.setEmail(user.getEmail());
-        nuser.setPassword(user.getPassword());
-        nuser.setFile(user.getFile());
-        nuser.setRole(this.roleService.getRoleById(user.getRole().getId()));
-        return ResponseEntity.status(HttpStatus.CREATED).body(new UserResDTO(this.userService.save(nuser)));
+    public ResponseEntity<UserDTO> create(@ModelAttribute @Valid UserDTO reqUser) {
+        User user = this.userService.handleCreateUser(reqUser);
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertUserToUserDTO(user));
     }
 
     @GetMapping(path = "/secure/users")
     @ApiMessage(message = "Lấy danh sách người dùng")
-    public ResponseEntity<PaginationResDTO<List<UserResDTO>>> list(@RequestParam Map<String, String> params) {
+    public ResponseEntity<PaginationResDTO<List<UserDTO>>> list(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
             params.put("page", "1");
         }
 
         Page<User> pageUsers = this.userService.getAllUsers(params);
-        List<UserResDTO> users = pageUsers.getContent().stream().map(UserResDTO::new).collect(Collectors.toList());
+        List<UserDTO> users = pageUsers.getContent().stream().map(u -> this.userService.convertUserToUserDTO(u))
+                .collect(Collectors.toList());
 
-        PaginationResDTO<List<UserResDTO>> results = new PaginationResDTO<>();
+        PaginationResDTO<List<UserDTO>> results = new PaginationResDTO<>();
         results.setResult(users);
         results.setCurrentPage(pageUsers.getNumber() + 1);
         results.setTotalPages(pageUsers.getTotalPages());
@@ -71,19 +66,19 @@ public class UserController {
 
     @GetMapping(path = "/secure/users/{id}")
     @ApiMessage(message = "Lấy chi tiết người dùng")
-    public ResponseEntity<UserResDTO> detail(@PathVariable(value = "id") Integer id) throws IdInvalidException {
+    public ResponseEntity<UserDTO> detail(@PathVariable(value = "id") Integer id) throws IdInvalidException {
         User user = this.userService.getUserById(id);
         if (user == null) {
             throw new IdInvalidException("Không tìm thấy người dùng");
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(new UserResDTO(user));
+        return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserDTO(user));
     }
 
     @PatchMapping(path = "/secure/users/{id}")
     @ApiMessage(message = "Cập nhật người dùng")
-    public ResponseEntity<UserResDTO> update(@PathVariable(value = "id") Integer id,
-                                             @ModelAttribute UserDTO reqUser) throws IdInvalidException {
+    public ResponseEntity<UserDTO> update(@PathVariable(value = "id") Integer id,
+                                          @ModelAttribute UserDTO reqUser) throws IdInvalidException {
         reqUser.setId(id);
         Set<ConstraintViolation<UserDTO>> violations = validator.validate(reqUser);
 
@@ -97,18 +92,12 @@ public class UserController {
             throw new CustomValidationException(errorList);
         }
 
-        User user = this.userService.getUserById(id);
+        User user = this.userService.handleUpdateUser(id, reqUser);
         if (user == null) {
             throw new IdInvalidException("Không tìm thấy người dùng!");
         }
 
-        user.setEmail(reqUser.getEmail());
-        user.setPassword(reqUser.getPassword());
-        user.setFirstName(reqUser.getFirstName());
-        user.setLastName(reqUser.getLastName());
-        user.setRole(this.roleService.getRoleById(reqUser.getRole().getId()));
-        user.setFile(reqUser.getFile());
-        return ResponseEntity.status(HttpStatus.OK).body(new UserResDTO(this.userService.save(user)));
+        return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserDTO(user));
     }
 
     @DeleteMapping(path = "/secure/users/{id}")

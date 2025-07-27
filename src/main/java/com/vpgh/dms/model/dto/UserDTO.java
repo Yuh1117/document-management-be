@@ -1,5 +1,6 @@
 package com.vpgh.dms.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.entity.Role;
 import com.vpgh.dms.util.annotation.ValidUser;
 import jakarta.validation.constraints.Email;
@@ -21,6 +22,7 @@ public class UserDTO {
     private String lastName;
     private String avatar;
     private Role role;
+    @JsonIgnore
     private MultipartFile file;
 
     public String getEmail() {

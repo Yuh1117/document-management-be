@@ -2,6 +2,8 @@ package com.vpgh.dms.model.entity;
 
 import com.vpgh.dms.model.constant.StorageType;
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 import java.util.Set;
@@ -40,6 +42,7 @@ public class Document {
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Folder folder;
 
     @ManyToOne
@@ -55,6 +58,7 @@ public class Document {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "document_tag_assignments", joinColumns = @JoinColumn(name = "document_id"),
             inverseJoinColumns = @JoinColumn(name = "document_tag_id"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<DocumentTag> tags;
 
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)

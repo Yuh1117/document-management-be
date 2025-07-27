@@ -63,6 +63,14 @@ public class GlobalException {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
+    @ExceptionHandler(value = DataConflictException.class)
+    public ResponseEntity<ErrorResponse<String>> handleException(DataConflictException ex) {
+        ErrorResponse<String> errorResponse = new ErrorResponse<>();
+        errorResponse.setError(ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
     @ExceptionHandler(value = Exception.class)
     public ResponseEntity<CustomResponse<Object, Object>> handleAllException(Exception ex) {
         CustomResponse<Object, Object> customResponse = new CustomResponse<>();

@@ -1,6 +1,8 @@
 package com.vpgh.dms.model.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 import java.util.Set;
@@ -19,6 +21,7 @@ public class DocumentTag {
     private Instant updatedAt;
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "tags")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<Document> documents;
 
     @ManyToOne

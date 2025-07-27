@@ -10,18 +10,6 @@ public class UserResDTO {
     private String avatar;
     private String role;
 
-    public UserResDTO() {
-    }
-
-    public UserResDTO(User user) {
-        this.id = user.getId();
-        this.email = user.getEmail();
-        this.firstName = user.getFirstName();
-        this.lastName = user.getLastName();
-        this.avatar = user.getAvatar();
-        this.role = user.getRole().getName();
-    }
-
     public String getRole() {
         return role;
     }

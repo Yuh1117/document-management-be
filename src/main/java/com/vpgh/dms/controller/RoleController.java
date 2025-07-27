@@ -6,11 +6,13 @@ import com.vpgh.dms.model.entity.Role;
 import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.CustomValidationException;
+import com.vpgh.dms.util.exception.DataConflictException;
 import com.vpgh.dms.util.exception.IdInvalidException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,10 +32,7 @@ public class RoleController {
     @PostMapping(path = "/secure/roles")
     @ApiMessage(message = "Tạo mới vai trò")
     public ResponseEntity<Role> create(@RequestBody @Valid RoleDTO reqRole) {
-        Role role = new Role();
-        role.setName(reqRole.getName());
-        role.setDescription(reqRole.getDescription());
-        role.setPermissions(new HashSet<>(reqRole.getPermissions()));
+        Role role = this.roleService.handleCreateRole(reqRole);
         return ResponseEntity.status(HttpStatus.CREATED).body(this.roleService.save(role));
     }
 
@@ -69,8 +68,8 @@ public class RoleController {
 
     @PatchMapping(path = "/secure/roles/{id}")
     @ApiMessage(message = "Cập nhật vai trò")
-    public ResponseEntity<?> update(@PathVariable("id") Integer id,
-                                    @RequestBody RoleDTO reqRole) throws IdInvalidException {
+    public ResponseEntity<Role> update(@PathVariable("id") Integer id,
+                                       @RequestBody RoleDTO reqRole) throws IdInvalidException {
 
         reqRole.setId(id);
         Set<ConstraintViolation<RoleDTO>> violations = validator.validate(reqRole);
@@ -85,14 +84,10 @@ public class RoleController {
             throw new CustomValidationException(errorList);
         }
 
-        Role role = this.roleService.getRoleById(id);
+        Role role = this.roleService.handleUpdateRole(id, reqRole);
         if (role == null) {
             throw new IdInvalidException("Không tìm thấy vai trò");
         }
-
-        role.setName(reqRole.getName());
-        role.setDescription(reqRole.getDescription());
-        role.setPermissions(new HashSet<>(reqRole.getPermissions()));
 
         return ResponseEntity.ok(this.roleService.save(role));
     }
@@ -106,7 +101,12 @@ public class RoleController {
             throw new IdInvalidException("Không tìm thấy vai trò");
         }
 
-        this.roleService.deleteRoleById(role.getId());
+        try {
+            this.roleService.deleteRoleById(role.getId());
+        } catch (DataIntegrityViolationException ex) {
+            throw new DataConflictException("Không thể xóa vai trò này!");
+        }
+
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 

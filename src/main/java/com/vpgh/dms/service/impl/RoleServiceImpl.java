@@ -1,6 +1,6 @@
 package com.vpgh.dms.service.impl;
 
-import com.vpgh.dms.model.entity.Permission;
+import com.vpgh.dms.model.dto.RoleDTO;
 import com.vpgh.dms.model.entity.Role;
 import com.vpgh.dms.repository.PermissionRepository;
 import com.vpgh.dms.repository.RoleRepository;
@@ -8,6 +8,7 @@ import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.specification.RoleSpecification;
 import com.vpgh.dms.util.PageSize;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -60,9 +61,34 @@ public class RoleServiceImpl implements RoleService {
     public Role save(Role role) {
         if (role.getPermissions() != null) {
             List<Integer> ids = role.getPermissions().stream().map(p -> p.getId()).collect(Collectors.toList());
-            role.setPermissions(new HashSet<>(permissionRepository.findByIdIn(ids)));
+            role.setPermissions(new HashSet<>(this.permissionRepository.findByIdIn(ids)));
         }
         return this.roleRepository.save(role);
+    }
+
+    @Override
+    public Role handleCreateRole(RoleDTO dto) {
+        Role role = new Role();
+        role.setName(dto.getName());
+        role.setDescription(dto.getDescription());
+        role.setPermissions(dto.getPermissions() != null ? new HashSet<>(dto.getPermissions()) : null);
+        return save(role);
+    }
+
+    @Override
+    public Role handleUpdateRole(Integer id, RoleDTO dto) {
+        Role role = getRoleById(id);
+        if (role != null) {
+            role.setName(dto.getName());
+            role.setDescription(dto.getDescription());
+            if (dto.getPermissions() != null) {
+                role.setPermissions(new HashSet<>(dto.getPermissions()));
+            } else {
+                role.setPermissions(null);
+            }
+            return save(role);
+        }
+        return null;
     }
 
     @Override
@@ -72,6 +98,10 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public void deleteRoleById(Integer id) {
+        Role role = getRoleById(id);
+        if (!role.getPermissions().isEmpty()) {
+            throw new DataIntegrityViolationException("");
+        }
         this.roleRepository.deleteById(id);
     }
 
