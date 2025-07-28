@@ -1,7 +1,7 @@
 package com.vpgh.dms.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vpgh.dms.model.dto.response.CustomResponse;
+import com.vpgh.dms.util.CustomResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

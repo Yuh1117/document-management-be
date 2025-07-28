@@ -118,24 +118,6 @@ public class UserServiceImpl implements UserService {
         return this.userRepository.findByEmail(email);
     }
 
-    private static String extractPrincipal(Authentication authentication) {
-        if (authentication == null) {
-            return null;
-        } else if (authentication.getPrincipal() instanceof UserDetails springSecurityUser) {
-            return springSecurityUser.getUsername();
-        } else if (authentication.getPrincipal() instanceof Jwt jwt) {
-            return jwt.getSubject();
-        } else if (authentication.getPrincipal() instanceof String s) {
-            return s;
-        }
-        return null;
-    }
-
-    public static String getCurrentUser() {
-        SecurityContext securityContext = SecurityContextHolder.getContext();
-        return extractPrincipal(securityContext.getAuthentication());
-    }
-
     @Override
     public Page<User> getAllUsers(Map<String, String> params) {
         int page = Integer.parseInt(params.get("page"));

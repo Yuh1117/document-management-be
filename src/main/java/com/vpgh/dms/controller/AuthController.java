@@ -8,8 +8,8 @@ import com.vpgh.dms.model.dto.request.UserSignupReqDTO;
 import com.vpgh.dms.model.dto.response.UserLoginResDTO;
 import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.UserService;
-import com.vpgh.dms.service.impl.UserServiceImpl;
 import com.vpgh.dms.util.JwtUtil;
+import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,8 +73,7 @@ public class AuthController {
     @GetMapping("/secure/profile")
     @ApiMessage(message = "Lấy profile")
     public ResponseEntity<UserResDTO> getProfile() {
-        String email = UserServiceImpl.getCurrentUser();
-        User currentUser = this.userService.getUserByEmail(email);
+        User currentUser = SecurityUtil.getCurrentUser();
 
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserResDTO(currentUser));
     }
