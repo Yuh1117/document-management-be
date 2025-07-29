@@ -1,14 +1,13 @@
 package com.vpgh.dms.model.entity;
 
+import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
-
 @Entity
 @Table(name = "document_versions")
-public class DocumentVersion {
+public class DocumentVersion extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -25,9 +24,6 @@ public class DocumentVersion {
     private String mimeType;
     @Column(nullable = false)
     private String fileHash;
-
-    private Instant createdAt;
-    private Instant updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "document_id")
@@ -88,22 +84,6 @@ public class DocumentVersion {
 
     public void setFileHash(String fileHash) {
         this.fileHash = fileHash;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public Document getDocument() {

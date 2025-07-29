@@ -36,8 +36,8 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     @Override
-    public boolean existsByApiPathAndMethodAndModuleAndIdNot(String apiPath, String method, String module, Integer id) {
-        return this.permissionRepository.existsByApiPathAndMethodAndModuleAndIdNot(apiPath, method, module, id);
+    public boolean existsByApiPathAndMethodAndIdNot(String apiPath, String method, Integer id) {
+        return this.permissionRepository.existsByApiPathAndMethodAndIdNot(apiPath, method, id);
     }
 
     @Override

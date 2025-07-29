@@ -1,5 +1,6 @@
 package com.vpgh.dms.model.entity;
 
+import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -7,12 +8,11 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Instant;
 import java.util.Set;
 
 @Entity
 @Table(name = "users")
-public class User {
+public class User extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -37,9 +37,6 @@ public class User {
     private Boolean twoFactorEnabled;
     private String twoFactorSecret;
     private Boolean isActive = true;
-
-    private Instant createdAt;
-    private Instant updatedAt;
 
     @Transient
     private MultipartFile file;
@@ -96,16 +93,6 @@ public class User {
     private Set<DocumentTag> createdTags;
     @OneToMany(mappedBy = "updatedBy", fetch = FetchType.LAZY)
     private Set<DocumentTag> updatedTags;
-
-    @PrePersist
-    public void handleBeforeCreate() {
-        this.createdAt = Instant.now();
-    }
-
-    @PreUpdate
-    void handleBeforeUpdate() {
-        this.updatedAt = Instant.now();
-    }
 
     public MultipartFile getFile() {
         return file;
@@ -217,22 +204,6 @@ public class User {
 
     public void setActive(Boolean active) {
         isActive = active;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public Role getRole() {

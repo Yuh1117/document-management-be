@@ -1,17 +1,16 @@
 package com.vpgh.dms.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
 import java.util.Set;
 
 @Entity
 @Table(name = "roles")
-public class Role {
+public class Role extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -19,9 +18,6 @@ public class Role {
     @Column(nullable = false, unique = true)
     private String name;
     private String description;
-
-    private Instant createdAt;
-    private Instant updatedAt;
 
     @OneToMany(mappedBy = "role", fetch = FetchType.LAZY)
     @JsonIgnore
@@ -31,17 +27,8 @@ public class Role {
     @JoinTable(name = "role_permission", joinColumns = @JoinColumn(name = "role_id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id"))
     @OnDelete(action = OnDeleteAction.RESTRICT)
+    @JsonIgnore
     private Set<Permission> permissions;
-
-    @PrePersist
-    public void handleBeforeCreate() {
-        this.createdAt = Instant.now();
-    }
-
-    @PreUpdate
-    void handleBeforeUpdate() {
-        this.updatedAt = Instant.now();
-    }
 
     public Integer getId() {
         return id;
@@ -65,22 +52,6 @@ public class Role {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public Set<User> getUsers() {

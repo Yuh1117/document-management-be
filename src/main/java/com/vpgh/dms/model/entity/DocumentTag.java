@@ -1,34 +1,31 @@
 package com.vpgh.dms.model.entity;
 
+import com.vpgh.dms.model.FullAuditableEntity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
 import java.util.Set;
 
 @Entity
 @Table(name = "document_tags")
-public class DocumentTag {
+public class DocumentTag extends FullAuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-
     private String name;
     private String color;
-
-    private Instant createdAt;
-    private Instant updatedAt;
-
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "tags")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<Document> documents;
 
     @ManyToOne
     @JoinColumn(name = "created_by")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User createdBy;
     @ManyToOne
     @JoinColumn(name = "updated_by")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User updatedBy;
 
     public Integer getId() {
@@ -55,27 +52,31 @@ public class DocumentTag {
         this.color = color;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
     public Set<Document> getDocuments() {
         return documents;
     }
 
     public void setDocuments(Set<Document> documents) {
         this.documents = documents;
+    }
+
+    @Override
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    @Override
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    @Override
+    public User getUpdatedBy() {
+        return updatedBy;
+    }
+
+    @Override
+    public void setUpdatedBy(User updatedBy) {
+        this.updatedBy = updatedBy;
     }
 }

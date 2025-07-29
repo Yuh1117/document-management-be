@@ -1,15 +1,15 @@
 package com.vpgh.dms.model.entity;
 
+import com.vpgh.dms.model.FullAuditableEntity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
 import java.util.Set;
 
 @Entity
 @Table(name = "user_groups")
-public class UserGroup {
+public class UserGroup extends FullAuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -17,16 +17,13 @@ public class UserGroup {
     private String name;
     private String description;
 
-    private Instant createdAt;
-    private Instant updatedAt;
-
     @ManyToOne
     @JoinColumn(name = "created_by")
-    @OnDelete(action = OnDeleteAction.RESTRICT)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User createdBy;
     @ManyToOne
     @JoinColumn(name = "updated_by")
-    @OnDelete(action = OnDeleteAction.RESTRICT)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User updatedBy;
 
     @OneToMany(mappedBy = "group", fetch = FetchType.LAZY)
@@ -37,14 +34,6 @@ public class UserGroup {
 
     @OneToMany(mappedBy = "group", fetch = FetchType.LAZY)
     private Set<DocumentPermission> documentPermissions;
-
-    public User getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
 
     public Integer getId() {
         return id;
@@ -70,30 +59,6 @@ public class UserGroup {
         this.description = description;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public User getUpdatedBy() {
-        return updatedBy;
-    }
-
-    public void setUpdatedBy(User updatedBy) {
-        this.updatedBy = updatedBy;
-    }
-
     public Set<UserGroupMember> getMembers() {
         return members;
     }
@@ -102,4 +67,23 @@ public class UserGroup {
         this.members = members;
     }
 
+    @Override
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    @Override
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    @Override
+    public User getUpdatedBy() {
+        return updatedBy;
+    }
+
+    @Override
+    public void setUpdatedBy(User updatedBy) {
+        this.updatedBy = updatedBy;
+    }
 }

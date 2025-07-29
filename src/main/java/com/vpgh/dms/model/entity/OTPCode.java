@@ -1,5 +1,6 @@
 package com.vpgh.dms.model.entity;
 
+import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -8,7 +9,7 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "otp_codes")
-public class OTPCode {
+public class OTPCode extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -16,9 +17,6 @@ public class OTPCode {
     private String code;
     private Instant expireAt;
     private Boolean isUsed;
-
-    private Instant createdAt;
-    private Instant updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -55,22 +53,6 @@ public class OTPCode {
 
     public void setUsed(Boolean used) {
         isUsed = used;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public User getUser() {

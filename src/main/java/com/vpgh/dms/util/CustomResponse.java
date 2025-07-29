@@ -1,4 +1,4 @@
-package com.vpgh.dms.model.dto.response;
+package com.vpgh.dms.util;
 
 public class CustomResponse<T, K> {
     private int statusCode;

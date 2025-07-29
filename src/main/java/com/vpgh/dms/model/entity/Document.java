@@ -1,16 +1,17 @@
 package com.vpgh.dms.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.vpgh.dms.model.FullAuditableEntity;
 import com.vpgh.dms.model.constant.StorageType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
 import java.util.Set;
 
 @Entity
 @Table(name = "documents")
-public class Document {
+public class Document extends FullAuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -36,38 +37,41 @@ public class Document {
     private String extractedText;
     private Boolean isDeleted;
 
-
-    private Instant createdAt;
-    private Instant updatedAt;
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private User createdBy;
+    @ManyToOne
+    @JoinColumn(name = "updated_by")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private User updatedBy;
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Folder folder;
 
-    @ManyToOne
-    @JoinColumn(name = "created_by")
-    private User createdBy;
-    @ManyToOne
-    @JoinColumn(name = "updated_by")
-    private User updatedBy;
-
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<DocumentPermission> documentPermissions;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "document_tag_assignments", joinColumns = @JoinColumn(name = "document_id"),
             inverseJoinColumns = @JoinColumn(name = "document_tag_id"))
     @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore
     private Set<DocumentTag> tags;
 
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<DocumentSearchIndex> documentSearchIndices;
 
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<DocumentVersion> versions;
 
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<AccessLog> accessLogs;
 
     public Integer getId() {
@@ -174,44 +178,12 @@ public class Document {
         isDeleted = deleted;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
     public Folder getFolder() {
         return folder;
     }
 
     public void setFolder(Folder folder) {
         this.folder = folder;
-    }
-
-    public User getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public User getUpdatedBy() {
-        return updatedBy;
-    }
-
-    public void setUpdatedBy(User updatedBy) {
-        this.updatedBy = updatedBy;
     }
 
     public Set<DocumentPermission> getDocumentPermissions() {
@@ -244,5 +216,25 @@ public class Document {
 
     public void setVersions(Set<DocumentVersion> versions) {
         this.versions = versions;
+    }
+
+    @Override
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    @Override
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    @Override
+    public User getUpdatedBy() {
+        return updatedBy;
+    }
+
+    @Override
+    public void setUpdatedBy(User updatedBy) {
+        this.updatedBy = updatedBy;
     }
 }

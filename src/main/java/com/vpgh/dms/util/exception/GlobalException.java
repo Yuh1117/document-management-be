@@ -1,7 +1,7 @@
 package com.vpgh.dms.util.exception;
 
-import com.vpgh.dms.model.dto.response.CustomResponse;
-import com.vpgh.dms.util.ErrorResponse;
+import com.vpgh.dms.util.CustomResponse;
+import com.vpgh.dms.util.DataResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -23,16 +23,16 @@ public class GlobalException {
             UniqueConstraintException.class,
             UsernameNotFoundException.class,
             IdInvalidException.class})
-    public ResponseEntity<ErrorResponse<String>> handleException(Exception ex) {
-        ErrorResponse<String> errorResponse = new ErrorResponse<>();
-        errorResponse.setError(ex.getMessage());
+    public ResponseEntity<DataResponse<String>> handleException(Exception ex) {
+        DataResponse<String> errorResponse = new DataResponse<>();
+        errorResponse.setContent(ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse<List<Map<String, String>>>> handleException(MethodArgumentNotValidException ex) {
-        ErrorResponse<List<Map<String, String>>> errorResponse = new ErrorResponse<>();
+    public ResponseEntity<DataResponse<List<Map<String, String>>>> handleException(MethodArgumentNotValidException ex) {
+        DataResponse<List<Map<String, String>>> errorResponse = new DataResponse<>();
 
         List<Map<String, String>> errors = new ArrayList<>();
         if (ex.getBindingResult().hasErrors()) {
@@ -43,31 +43,31 @@ public class GlobalException {
                 return err;
             }).collect(Collectors.toList());
         }
-        errorResponse.setError(errors);
+        errorResponse.setContent(errors);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(CustomValidationException.class)
-    public ResponseEntity<ErrorResponse<List<Map<String, String>>>> handleException(CustomValidationException ex) {
-        ErrorResponse<List<Map<String, String>>> errorResponse = new ErrorResponse<>();
-        errorResponse.setError(ex.getErrors());
+    public ResponseEntity<DataResponse<List<Map<String, String>>>> handleException(CustomValidationException ex) {
+        DataResponse<List<Map<String, String>>> errorResponse = new DataResponse<>();
+        errorResponse.setContent(ex.getErrors());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(value = BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse<String>> handleException(BadCredentialsException ex) {
-        ErrorResponse<String> errorResponse = new ErrorResponse<>();
-        errorResponse.setError(ex.getMessage());
+    public ResponseEntity<DataResponse<String>> handleException(BadCredentialsException ex) {
+        DataResponse<String> errorResponse = new DataResponse<>();
+        errorResponse.setContent(ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
     @ExceptionHandler(value = DataConflictException.class)
-    public ResponseEntity<ErrorResponse<String>> handleException(DataConflictException ex) {
-        ErrorResponse<String> errorResponse = new ErrorResponse<>();
-        errorResponse.setError(ex.getMessage());
+    public ResponseEntity<DataResponse<String>> handleException(DataConflictException ex) {
+        DataResponse<String> errorResponse = new DataResponse<>();
+        errorResponse.setContent(ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }

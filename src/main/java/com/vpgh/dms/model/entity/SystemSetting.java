@@ -1,12 +1,15 @@
 package com.vpgh.dms.model.entity;
 
+import com.vpgh.dms.model.FullAuditableEntity;
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 
 @Entity
 @Table(name = "system_settings")
-public class SystemSetting {
+public class SystemSetting extends FullAuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -17,14 +20,13 @@ public class SystemSetting {
     private String value;
     private String description;
 
-    private Instant createdAt;
-    private Instant updatedAt;
-
     @ManyToOne
     @JoinColumn(name = "created_by")
+    @OnDelete(action = OnDeleteAction.RESTRICT)
     private User createdBy;
     @ManyToOne
     @JoinColumn(name = "updated_by")
+    @OnDelete(action = OnDeleteAction.RESTRICT)
     private User updatedBy;
 
     public Integer getId() {
@@ -59,34 +61,22 @@ public class SystemSetting {
         this.description = description;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
+    @Override
     public User getCreatedBy() {
         return createdBy;
     }
 
+    @Override
     public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
     }
 
+    @Override
     public User getUpdatedBy() {
         return updatedBy;
     }
 
+    @Override
     public void setUpdatedBy(User updatedBy) {
         this.updatedBy = updatedBy;
     }
