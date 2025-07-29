@@ -1,15 +1,16 @@
 package com.vpgh.dms.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.vpgh.dms.model.FullAuditableEntity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
 import java.util.Set;
 
 @Entity
 @Table(name = "folders")
-public class Folder {
+public class Folder extends FullAuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -19,27 +20,30 @@ public class Folder {
     private Boolean inheritPermissions;
     private Boolean isDeleted;
 
-    private Instant createdAt;
-    private Instant updatedAt;
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private User createdBy;
+    @ManyToOne
+    @JoinColumn(name = "updated_by")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private User updatedBy;
 
     @OneToMany(mappedBy = "folder", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
     private Set<Document> documents;
 
     @ManyToOne
     @JoinColumn(name = "parent_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore
     private Folder parent;
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
     private Set<Folder> folders;
 
-    @ManyToOne
-    @JoinColumn(name = "created_by")
-    private User createdBy;
-    @ManyToOne
-    @JoinColumn(name = "updated_by")
-    private User updatedBy;
-
     @OneToMany(mappedBy = "folder", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<FolderPermission> folderPermissions;
 
     public Integer getId() {
@@ -75,22 +79,6 @@ public class Folder {
         isDeleted = deleted;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
     public Set<Document> getDocuments() {
         return documents;
     }
@@ -115,27 +103,31 @@ public class Folder {
         this.folders = folders;
     }
 
-    public User getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public User getUpdatedBy() {
-        return updatedBy;
-    }
-
-    public void setUpdatedBy(User updatedBy) {
-        this.updatedBy = updatedBy;
-    }
-
     public Set<FolderPermission> getFolderPermissions() {
         return folderPermissions;
     }
 
     public void setFolderPermissions(Set<FolderPermission> folderPermissions) {
         this.folderPermissions = folderPermissions;
+    }
+
+    @Override
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    @Override
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    @Override
+    public User getUpdatedBy() {
+        return updatedBy;
+    }
+
+    @Override
+    public void setUpdatedBy(User updatedBy) {
+        this.updatedBy = updatedBy;
     }
 }

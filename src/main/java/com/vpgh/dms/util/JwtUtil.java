@@ -1,6 +1,6 @@
 package com.vpgh.dms.util;
 
-import com.vpgh.dms.model.dto.response.UserResDTO;
+import com.vpgh.dms.model.dto.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 
 @Service
 public class JwtUtil {
@@ -24,17 +25,24 @@ public class JwtUtil {
     @Autowired
     private JwtEncoder jwtEncoder;
 
-    public String createToken(Authentication authentication, UserResDTO user) {
+    public String createToken(Authentication authentication, UserDTO user) {
         Instant now = Instant.now();
         Instant validity = now.plus(this.tokenExpiration, ChronoUnit.SECONDS);
+
+        Map<String, Object> userInfo = Map.of(
+                "id", user.getId(),
+                "email", user.getEmail(),
+                "firstName", user.getFirstName(),
+                "lastName", user.getLastName()
+        );
 
         // @formatter:off
         JwtClaimsSet claims = JwtClaimsSet.builder()
             .issuedAt(now)
             .expiresAt(validity)
             .subject(authentication.getName())
-            .claim("user", user)
-            .claim("role", user.getRole())
+            .claim("user", userInfo)
+            .claim("role", user.getRole().getName())
             .build();
 
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();

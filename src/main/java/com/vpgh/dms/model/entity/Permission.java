@@ -1,17 +1,17 @@
 package com.vpgh.dms.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
 import java.util.Set;
 
 @Entity
 @Table(name = "permissions",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"apiPath", "method", "module"}))
-public class Permission {
+        uniqueConstraints = @UniqueConstraint(columnNames = {"apiPath", "method"}))
+public class Permission extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -25,23 +25,10 @@ public class Permission {
     @Column(nullable = false)
     private String module;
 
-    private Instant createdAt;
-    private Instant updatedAt;
-
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "permissions")
     @OnDelete(action = OnDeleteAction.RESTRICT)
     @JsonIgnore
     private Set<Role> roles;
-
-    @PrePersist
-    public void handleBeforeCreate() {
-        this.createdAt = Instant.now();
-    }
-
-    @PreUpdate
-    void handleBeforeUpdate() {
-        this.updatedAt = Instant.now();
-    }
 
     public Integer getId() {
         return id;
@@ -81,22 +68,6 @@ public class Permission {
 
     public void setModule(String module) {
         this.module = module;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public Set<Role> getRoles() {

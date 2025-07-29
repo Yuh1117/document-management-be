@@ -5,7 +5,6 @@ import com.vpgh.dms.util.exception.CustomValidationException;
 import com.vpgh.dms.util.exception.IdInvalidException;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
 import com.vpgh.dms.model.entity.User;
-import com.vpgh.dms.model.dto.response.UserResDTO;
 import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.annotation.ApiMessage;

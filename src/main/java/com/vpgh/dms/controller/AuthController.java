@@ -1,6 +1,6 @@
 package com.vpgh.dms.controller;
 
-import com.vpgh.dms.model.dto.response.UserResDTO;
+import com.vpgh.dms.model.dto.UserDTO;
 import com.vpgh.dms.model.entity.Role;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.model.dto.request.UserLoginReqDTO;
@@ -44,7 +44,7 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         User currentUser = this.userService.getUserByEmail(user.getEmail());
-        UserResDTO userRes = this.userService.convertUserToUserResDTO(currentUser);
+        UserDTO userRes = this.userService.convertUserToUserDTO(currentUser);
 
         UserLoginResDTO userLoginRes = new UserLoginResDTO();
         userLoginRes.setUser(userRes);
@@ -57,7 +57,7 @@ public class AuthController {
 
     @PostMapping("/signup")
     @ApiMessage(message = "Đăng ký")
-    public ResponseEntity<UserResDTO> signup(@ModelAttribute @Valid UserSignupReqDTO user) {
+    public ResponseEntity<UserDTO> signup(@ModelAttribute @Valid UserSignupReqDTO user) {
         User nuser = new User();
         nuser.setFirstName(user.getFirstName());
         nuser.setLastName(user.getLastName());
@@ -67,14 +67,14 @@ public class AuthController {
 
         Role role = this.roleService.getRoleByName("USER");
         nuser.setRole(role);
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertUserToUserResDTO(this.userService.save(nuser)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertUserToUserDTO(this.userService.save(nuser)));
     }
 
     @GetMapping("/secure/profile")
     @ApiMessage(message = "Lấy profile")
-    public ResponseEntity<UserResDTO> getProfile() {
+    public ResponseEntity<UserDTO> getProfile() {
         User currentUser = SecurityUtil.getCurrentUser();
 
-        return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserResDTO(currentUser));
+        return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserDTO(currentUser));
     }
 }

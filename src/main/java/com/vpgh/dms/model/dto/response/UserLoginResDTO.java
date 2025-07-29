@@ -1,14 +1,16 @@
 package com.vpgh.dms.model.dto.response;
 
+import com.vpgh.dms.model.dto.UserDTO;
+
 public class UserLoginResDTO {
-    private UserResDTO user;
+    private UserDTO user;
     private String accessToken;
 
-    public UserResDTO getUser() {
+    public UserDTO getUser() {
         return user;
     }
 
-    public void setUser(UserResDTO user) {
+    public void setUser(UserDTO user) {
         this.user = user;
     }
 

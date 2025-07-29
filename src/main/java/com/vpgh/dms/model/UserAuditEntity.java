@@ -1,40 +1,19 @@
 package com.vpgh.dms.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.entity.User;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
 
 @MappedSuperclass
 @EntityListeners(UserAuditEntityListener.class)
 public abstract class UserAuditEntity {
 
-    @ManyToOne
-    @JoinColumn(name = "created_by", updatable = false)
-    @JsonIgnore
-    private User createdBy;
+    public abstract User getCreatedBy();
 
-    @ManyToOne
-    @JoinColumn(name = "updated_by")
-    @JsonIgnore
-    private User updatedBy;
+    public abstract void setCreatedBy(User createdBy);
 
-    public User getCreatedBy() {
-        return createdBy;
-    }
+    public abstract User getUpdatedBy();
 
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public User getUpdatedBy() {
-        return updatedBy;
-    }
-
-    public void setUpdatedBy(User updatedBy) {
-        this.updatedBy = updatedBy;
-    }
+    public abstract void setUpdatedBy(User updatedBy);
 }
 

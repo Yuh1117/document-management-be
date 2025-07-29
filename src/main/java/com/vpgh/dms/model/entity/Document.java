@@ -38,6 +38,15 @@ public class Document extends FullAuditableEntity {
     private Boolean isDeleted;
 
     @ManyToOne
+    @JoinColumn(name = "created_by")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private User createdBy;
+    @ManyToOne
+    @JoinColumn(name = "updated_by")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private User updatedBy;
+
+    @ManyToOne
     @JoinColumn(name = "folder_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Folder folder;
@@ -207,5 +216,25 @@ public class Document extends FullAuditableEntity {
 
     public void setVersions(Set<DocumentVersion> versions) {
         this.versions = versions;
+    }
+
+    @Override
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    @Override
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    @Override
+    public User getUpdatedBy() {
+        return updatedBy;
+    }
+
+    @Override
+    public void setUpdatedBy(User updatedBy) {
+        this.updatedBy = updatedBy;
     }
 }

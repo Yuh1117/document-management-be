@@ -1,15 +1,14 @@
 package com.vpgh.dms.model.entity;
 
+import com.vpgh.dms.model.TimestampedEntity;
 import com.vpgh.dms.model.constant.ActionType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
-
 @Entity
 @Table(name = "access_logs")
-public class AccessLog {
+public class AccessLog extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -18,9 +17,6 @@ public class AccessLog {
     private String userAgent;
     @Enumerated(EnumType.STRING)
     private ActionType actionType;
-
-    private Instant createdAt;
-    private Instant updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -61,22 +57,6 @@ public class AccessLog {
 
     public void setActionType(ActionType actionType) {
         this.actionType = actionType;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public User getUser() {

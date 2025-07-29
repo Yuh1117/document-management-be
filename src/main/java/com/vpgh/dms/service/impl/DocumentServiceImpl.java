@@ -1,9 +1,11 @@
 package com.vpgh.dms.service.impl;
 
+import com.vpgh.dms.model.DocumentDTO;
 import com.vpgh.dms.model.constant.StorageType;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.service.DocumentService;
+import com.vpgh.dms.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,9 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Autowired
     private DocumentRepository documentRepository;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private S3Client s3Client;
@@ -66,6 +71,27 @@ public class DocumentServiceImpl implements DocumentService {
                 .key(key)
                 .build());
         return objectAsBytes.asByteArray();
+    }
+
+    @Override
+    public DocumentDTO convertDocumentToDocumentDTO(Document doc) {
+        DocumentDTO dto = new DocumentDTO();
+        dto.setId(doc.getId());
+        dto.setName(doc.getName());
+        dto.setDescription(doc.getDescription());
+        dto.setOriginalFilename(doc.getOriginalFilename());
+        dto.setStoredFilename(doc.getStoredFilename());
+        dto.setFilePath(doc.getFilePath());
+        dto.setFileSize(doc.getFileSize());
+        dto.setMimeType(doc.getMimeType());
+        dto.setStorageType(doc.getStorageType());
+        dto.setFolder(doc.getFolder());
+        dto.setCreatedAt(doc.getCreatedAt());
+        dto.setUpdatedAt(doc.getUpdatedAt());
+        dto.setCreatedBy(this.userService.convertUserToUserDTO(doc.getCreatedBy()));
+        dto.setUpdatedBy(this.userService.convertUserToUserDTO(doc.getUpdatedBy()));
+
+        return dto;
     }
 
 }

@@ -1,14 +1,13 @@
 package com.vpgh.dms.model.entity;
 
+import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
-
 @Entity
 @Table(name = "document_search_index")
-public class DocumentSearchIndex {
+public class DocumentSearchIndex extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -19,9 +18,6 @@ public class DocumentSearchIndex {
 
     @Column(columnDefinition = "tsvector", insertable = false, updatable = false)
     private String keywordsTsv;
-
-    private Instant createdAt;
-    private Instant updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "document_id")
@@ -50,22 +46,6 @@ public class DocumentSearchIndex {
 
     public void setContentVector(float[] contentVector) {
         this.contentVector = contentVector;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public Document getDocument() {

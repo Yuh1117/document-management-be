@@ -1,24 +1,20 @@
 package com.vpgh.dms.model.entity;
 
+import com.vpgh.dms.model.FullAuditableEntity;
 import com.vpgh.dms.model.constant.PermissionType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
-
 @Entity
 @Table(name = "folder_permissions")
-public class FolderPermission {
+public class FolderPermission extends FullAuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Enumerated(EnumType.STRING)
     private PermissionType permissionType;
-
-    private Instant createdAt;
-    private Instant updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
@@ -32,11 +28,16 @@ public class FolderPermission {
     @JoinColumn(name = "group_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private UserGroup group;
+
     @ManyToOne
     @JoinColumn(name = "created_by")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+
     private User createdBy;
     @ManyToOne
     @JoinColumn(name = "updated_by")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+
     private User updatedBy;
 
     public Integer getId() {
@@ -71,35 +72,23 @@ public class FolderPermission {
         this.user = user;
     }
 
+    @Override
     public User getCreatedBy() {
         return createdBy;
     }
 
+    @Override
     public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
     }
 
+    @Override
     public User getUpdatedBy() {
         return updatedBy;
     }
 
+    @Override
     public void setUpdatedBy(User updatedBy) {
         this.updatedBy = updatedBy;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
     }
 }

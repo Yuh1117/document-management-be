@@ -3,7 +3,6 @@ package com.vpgh.dms.service.impl;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.vpgh.dms.model.dto.UserDTO;
-import com.vpgh.dms.model.dto.response.UserResDTO;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.UserRepository;
 import com.vpgh.dms.service.RoleService;
@@ -15,12 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -93,18 +87,6 @@ public class UserServiceImpl implements UserService {
         dto.setLastName(user.getLastName());
         dto.setAvatar(user.getAvatar());
         dto.setRole(user.getRole());
-        return dto;
-    }
-
-    @Override
-    public UserResDTO convertUserToUserResDTO(User user) {
-        UserResDTO dto = new UserResDTO();
-        dto.setId(user.getId());
-        dto.setEmail(user.getEmail());
-        dto.setFirstName(user.getFirstName());
-        dto.setLastName(user.getLastName());
-        dto.setAvatar(user.getAvatar());
-        dto.setRole(user.getRole().getName());
         return dto;
     }
 

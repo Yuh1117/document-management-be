@@ -17,7 +17,7 @@ public interface PermissionRepository extends JpaRepository<Permission, Integer>
 
     Optional<Permission> findById(Integer id);
 
-    boolean existsByApiPathAndMethodAndModuleAndIdNot(String apiPath, String method, String module, Integer id);
+    boolean existsByApiPathAndMethodAndIdNot(String apiPath, String method, Integer id);
 
     Permission save(Permission permission);
 

@@ -5,7 +5,6 @@ import com.vpgh.dms.model.entity.Role;
 import com.vpgh.dms.util.annotation.ValidUser;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.web.multipart.MultipartFile;
 
 @ValidUser
@@ -15,6 +14,7 @@ public class UserDTO {
     @NotBlank(message = "Email không được để trống")
     private String email;
     @NotBlank(message = "Mật khẩu không được để trống")
+    @JsonIgnore
     private String password;
     @NotBlank(message = "Tên không được để trống")
     private String firstName;

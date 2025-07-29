@@ -5,6 +5,7 @@ import com.vpgh.dms.util.context.ApiMessageContext;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpResponse;
@@ -19,17 +20,26 @@ public class FormatCustomResponse implements ResponseBodyAdvice<Object> {
 
     @Override
     public boolean supports(MethodParameter returnType, Class converterType) {
-        Type type = returnType.getGenericParameterType();
+        Class<?> paramType = returnType.getParameterType();
 
+        if (paramType == byte[].class) {
+            return false;
+        }
+
+        Type type = returnType.getGenericParameterType();
         if (type instanceof ParameterizedType parameterizedType) {
-            Type actualType = parameterizedType.getActualTypeArguments()[0];
-            if (actualType == byte[].class) {
-                return false;
+            Type rawType = parameterizedType.getRawType();
+            if (rawType == ResponseEntity.class) {
+                Type actualType = parameterizedType.getActualTypeArguments()[0];
+                if (actualType == byte[].class) {
+                    return false;
+                }
             }
         }
 
         return true;
     }
+
 
     @Override
     public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType,

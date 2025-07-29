@@ -18,17 +18,14 @@ public class PermissionValidator implements ConstraintValidator<ValidPermission,
 
         context.disableDefaultConstraintViolation();
 
-        boolean exist = this.permissionService.existsByApiPathAndMethodAndModuleAndIdNot(permission.getApiPath(),
-                permission.getMethod(), permission.getModule(), permission.getId());
+        boolean exist = this.permissionService.existsByApiPathAndMethodAndIdNot(permission.getApiPath(),
+                permission.getMethod(), permission.getId());
         if (exist) {
             context.buildConstraintViolationWithTemplate("Quyền đã tồn tại!")
                     .addPropertyNode("apiPath")
                     .addConstraintViolation();
             context.buildConstraintViolationWithTemplate("Quyền đã tồn tại!")
                     .addPropertyNode("method")
-                    .addConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Quyền đã tồn tại!")
-                    .addPropertyNode("module")
                     .addConstraintViolation();
             valid = false;
         }

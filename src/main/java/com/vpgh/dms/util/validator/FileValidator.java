@@ -1,13 +1,19 @@
 package com.vpgh.dms.util.validator;
 
 import com.vpgh.dms.model.dto.request.FileUploadReq;
+import com.vpgh.dms.service.SystemSettingService;
 import com.vpgh.dms.util.annotation.ValidFile;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
 public class FileValidator implements ConstraintValidator<ValidFile, FileUploadReq> {
+
+    @Autowired
+    private SystemSettingService systemSettingService;
+
     @Override
     public boolean isValid(FileUploadReq fileUploadReq, ConstraintValidatorContext context) {
         boolean valid = true;
@@ -21,7 +27,7 @@ public class FileValidator implements ConstraintValidator<ValidFile, FileUploadR
             return false;
         }
 
-        List<String> allowedTypes = List.of("application/pdf", "image/png", "image/jpeg");
+        List<String> allowedTypes = List.of(this.systemSettingService.getSettingByKey("fileType").getValue().split(";"));
         if (!allowedTypes.contains(fileUploadReq.getFile().getContentType())) {
             context.buildConstraintViolationWithTemplate("Loại file không hợp lệ!")
                     .addPropertyNode("file")
@@ -29,7 +35,7 @@ public class FileValidator implements ConstraintValidator<ValidFile, FileUploadR
             return false;
         }
 
-        long maxSize = 10 * 1024 * 1024;
+        long maxSize = Long.parseLong(this.systemSettingService.getSettingByKey("maxFileSize").getValue());
         if (fileUploadReq.getFile().getSize() > maxSize) {
             context.buildConstraintViolationWithTemplate("Dung lượng file vượt quá giới hạn cho phép!")
                     .addPropertyNode("file")
