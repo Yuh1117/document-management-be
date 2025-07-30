@@ -105,5 +105,13 @@ public class RoleServiceImpl implements RoleService {
         this.roleRepository.deleteById(id);
     }
 
+    @Override
+    public long count() {
+        return this.roleRepository.count();
+    }
 
+    @Override
+    public List<Role> saveAll(List<Role> roles) {
+        return this.roleRepository.saveAll(roles);
+    }
 }

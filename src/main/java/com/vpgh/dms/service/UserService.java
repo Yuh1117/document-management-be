@@ -26,4 +26,6 @@ public interface UserService {
     User handleUpdateUser(Integer id, UserDTO dto);
 
     UserDTO convertUserToUserDTO(User user);
+
+    long count();
 }

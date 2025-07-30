@@ -2,8 +2,6 @@ package com.vpgh.dms.model.entity;
 
 import com.vpgh.dms.model.FullAuditableEntity;
 import jakarta.persistence.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.Set;
 
@@ -16,16 +14,13 @@ public class DocumentTag extends FullAuditableEntity {
     private String name;
     private String color;
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "tags")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<Document> documents;
 
     @ManyToOne
     @JoinColumn(name = "created_by")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private User createdBy;
     @ManyToOne
     @JoinColumn(name = "updated_by")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private User updatedBy;
 
     public Integer getId() {

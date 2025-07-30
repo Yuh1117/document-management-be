@@ -1,6 +1,6 @@
 package com.vpgh.dms.service.impl;
 
-import com.vpgh.dms.model.DocumentDTO;
+import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.constant.StorageType;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.repository.DocumentRepository;

@@ -1,7 +1,6 @@
-package com.vpgh.dms.model;
+package com.vpgh.dms.model.dto;
 
 import com.vpgh.dms.model.constant.StorageType;
-import com.vpgh.dms.model.dto.UserDTO;
 import com.vpgh.dms.model.entity.Folder;
 
 import java.time.Instant;

@@ -12,7 +12,7 @@ public class UserAuditEntityListener {
     @PrePersist
     public void prePersist(Object entity) {
         if (entity instanceof UserAuditEntity e) {
-            User user = SecurityUtil.getCurrentUser();
+            User user = SecurityUtil.getCurrentUserFromThreadLocal();
             if (user != null) e.setCreatedBy(user);
         }
     }
@@ -20,7 +20,7 @@ public class UserAuditEntityListener {
     @PreUpdate
     public void preUpdate(Object entity) {
         if (entity instanceof UserAuditEntity e) {
-            User user = SecurityUtil.getCurrentUser();
+            User user = SecurityUtil.getCurrentUserFromThreadLocal();
             if (user != null) e.setUpdatedBy(user);
         }
     }

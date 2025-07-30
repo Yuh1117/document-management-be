@@ -27,7 +27,7 @@ public class FileValidator implements ConstraintValidator<ValidFile, FileUploadR
             return false;
         }
 
-        List<String> allowedTypes = List.of(this.systemSettingService.getSettingByKey("fileType").getValue().split(";"));
+        List<String> allowedTypes = List.of(this.systemSettingService.getSettingByKey("allowedFileType").getValue().split(";"));
         if (!allowedTypes.contains(fileUploadReq.getFile().getContentType())) {
             context.buildConstraintViolationWithTemplate("Loại file không hợp lệ!")
                     .addPropertyNode("file")

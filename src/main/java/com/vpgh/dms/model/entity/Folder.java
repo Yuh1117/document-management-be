@@ -3,8 +3,6 @@ package com.vpgh.dms.model.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.FullAuditableEntity;
 import jakarta.persistence.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.Set;
 
@@ -22,11 +20,9 @@ public class Folder extends FullAuditableEntity {
 
     @ManyToOne
     @JoinColumn(name = "created_by")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private User createdBy;
     @ManyToOne
     @JoinColumn(name = "updated_by")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private User updatedBy;
 
     @OneToMany(mappedBy = "folder", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -35,7 +31,6 @@ public class Folder extends FullAuditableEntity {
 
     @ManyToOne
     @JoinColumn(name = "parent_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
     private Folder parent;
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

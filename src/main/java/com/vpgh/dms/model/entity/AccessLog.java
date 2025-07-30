@@ -3,8 +3,6 @@ package com.vpgh.dms.model.entity;
 import com.vpgh.dms.model.TimestampedEntity;
 import com.vpgh.dms.model.constant.ActionType;
 import jakarta.persistence.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "access_logs")
@@ -20,11 +18,9 @@ public class AccessLog extends TimestampedEntity {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
     @ManyToOne
     @JoinColumn(name = "document_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private Document document;
 
     public Integer getId() {

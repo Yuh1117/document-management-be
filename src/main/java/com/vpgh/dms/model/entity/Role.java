@@ -3,8 +3,6 @@ package com.vpgh.dms.model.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.Set;
 
@@ -26,9 +24,16 @@ public class Role extends TimestampedEntity {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "role_permission", joinColumns = @JoinColumn(name = "role_id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id"))
-    @OnDelete(action = OnDeleteAction.RESTRICT)
     @JsonIgnore
     private Set<Permission> permissions;
+
+    public Role() {
+    }
+
+    public Role(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
 
     public Integer getId() {
         return id;

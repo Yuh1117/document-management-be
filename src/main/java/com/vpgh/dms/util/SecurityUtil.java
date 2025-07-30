@@ -23,6 +23,20 @@ public class SecurityUtil {
         staticUserService = userService;
     }
 
+    private static final ThreadLocal<User> currentUser = new ThreadLocal<>();
+
+    public static void setCurrentUser(User user) {
+        currentUser.set(user);
+    }
+
+    public static User getCurrentUserFromThreadLocal() {
+        return currentUser.get();
+    }
+
+    public static void clear() {
+        currentUser.remove();
+    }
+
     public static User getCurrentUser() {
         SecurityContext context = SecurityContextHolder.getContext();
         Authentication authentication = context.getAuthentication();
@@ -45,5 +59,6 @@ public class SecurityUtil {
         }
         return null;
     }
+
 }
 

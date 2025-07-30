@@ -26,4 +26,5 @@ public interface RoleRepository extends JpaRepository<Role, Integer>, JpaSpecifi
 
     void deleteById(Integer id);
 
+    long count();
 }
