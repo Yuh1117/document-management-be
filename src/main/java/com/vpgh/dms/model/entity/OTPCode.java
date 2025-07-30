@@ -2,8 +2,6 @@ package com.vpgh.dms.model.entity;
 
 import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 
@@ -20,7 +18,6 @@ public class OTPCode extends TimestampedEntity {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     public Integer getId() {

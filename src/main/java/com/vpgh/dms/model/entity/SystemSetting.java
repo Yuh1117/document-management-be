@@ -2,10 +2,7 @@ package com.vpgh.dms.model.entity;
 
 import com.vpgh.dms.model.FullAuditableEntity;
 import jakarta.persistence.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
-import java.time.Instant;
+import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "system_settings")
@@ -14,19 +11,19 @@ public class SystemSetting extends FullAuditableEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, name = "`key`")
+    @Column(nullable = false, name = "`key`", unique = true)
+    @NotBlank(message = "Key không được để trống!")
     private String key;
     @Column(nullable = false)
+    @NotBlank(message = "Giá trị không được để trống!")
     private String value;
     private String description;
 
     @ManyToOne
     @JoinColumn(name = "created_by")
-    @OnDelete(action = OnDeleteAction.RESTRICT)
     private User createdBy;
     @ManyToOne
     @JoinColumn(name = "updated_by")
-    @OnDelete(action = OnDeleteAction.RESTRICT)
     private User updatedBy;
 
     public Integer getId() {

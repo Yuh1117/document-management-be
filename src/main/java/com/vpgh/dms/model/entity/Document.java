@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.FullAuditableEntity;
 import com.vpgh.dms.model.constant.StorageType;
 import jakarta.persistence.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.Set;
 
@@ -39,16 +37,13 @@ public class Document extends FullAuditableEntity {
 
     @ManyToOne
     @JoinColumn(name = "created_by")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private User createdBy;
     @ManyToOne
     @JoinColumn(name = "updated_by")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private User updatedBy;
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private Folder folder;
 
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
@@ -58,7 +53,6 @@ public class Document extends FullAuditableEntity {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "document_tag_assignments", joinColumns = @JoinColumn(name = "document_id"),
             inverseJoinColumns = @JoinColumn(name = "document_tag_id"))
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
     private Set<DocumentTag> tags;
 

@@ -73,7 +73,7 @@ public class AuthController {
     @GetMapping("/secure/profile")
     @ApiMessage(message = "Lấy profile")
     public ResponseEntity<UserDTO> getProfile() {
-        User currentUser = SecurityUtil.getCurrentUser();
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserDTO(currentUser));
     }

@@ -1,11 +1,10 @@
 package com.vpgh.dms.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Set;
@@ -23,6 +22,7 @@ public class User extends TimestampedEntity {
     private String email;
     @Column(nullable = false)
     @NotBlank(message = "Mật khẩu không được để trống")
+    @JsonIgnore
     private String password;
     @Column(nullable = false)
     @NotBlank(message = "Tên không được để trống")
@@ -39,59 +39,78 @@ public class User extends TimestampedEntity {
     private Boolean isActive = true;
 
     @Transient
+    @JsonIgnore
     private MultipartFile file;
 
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
     private Role role;
 
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<SystemSetting> createdSettings;
     @OneToMany(mappedBy = "updatedBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<SystemSetting> updatedSettings;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<OTPCode> otpCodes;
 
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<UserGroup> createdGroups;
     @OneToMany(mappedBy = "updatedBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<UserGroup> updatedGroups;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<UserGroupMember> groups;
 
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Folder> createdFolders;
     @OneToMany(mappedBy = "updatedBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Folder> updatedFolders;
 
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Document> createdDocuments;
     @OneToMany(mappedBy = "updatedBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Document> updatedDocuments;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<FolderPermission> folderPermissions;
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<FolderPermission> createdFolderPermissions;
     @OneToMany(mappedBy = "updatedBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<FolderPermission> updatedFolderPermissions;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<DocumentPermission> documentPermissions;
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<DocumentPermission> createdDocumentPermissions;
     @OneToMany(mappedBy = "updatedBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<DocumentPermission> updatedDocumentPermissions;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<AccessLog> accessLogs;
 
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<DocumentTag> createdTags;
     @OneToMany(mappedBy = "updatedBy", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<DocumentTag> updatedTags;
 
     public MultipartFile getFile() {

@@ -3,8 +3,6 @@ package com.vpgh.dms.model.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.Set;
 
@@ -26,7 +24,6 @@ public class Permission extends TimestampedEntity {
     private String module;
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "permissions")
-    @OnDelete(action = OnDeleteAction.RESTRICT)
     @JsonIgnore
     private Set<Role> roles;
 

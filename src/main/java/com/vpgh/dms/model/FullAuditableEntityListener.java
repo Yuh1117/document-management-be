@@ -16,7 +16,7 @@ public class FullAuditableEntityListener {
         if (entity instanceof FullAuditableEntity e) {
             e.setCreatedAt(Instant.now());
 
-            User user = SecurityUtil.getCurrentUser();
+            User user = SecurityUtil.getCurrentUserFromThreadLocal();
             if (user != null) e.setCreatedBy(user);
         }
     }
@@ -26,7 +26,7 @@ public class FullAuditableEntityListener {
         if (entity instanceof FullAuditableEntity e) {
             e.setUpdatedAt(Instant.now());
 
-            User user = SecurityUtil.getCurrentUser();
+            User user = SecurityUtil.getCurrentUserFromThreadLocal();
             if (user != null) e.setUpdatedBy(user);
         }
     }
