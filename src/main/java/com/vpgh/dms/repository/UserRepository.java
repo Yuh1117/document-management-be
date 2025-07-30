@@ -25,4 +25,6 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
     void deleteById(Integer id);
 
     boolean existsByEmailAndIdNot(String email, Integer id);
+
+    long count();
 }

@@ -4,6 +4,7 @@ import com.vpgh.dms.model.dto.RoleDTO;
 import com.vpgh.dms.model.entity.Role;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
 import java.util.Map;
 
 public interface RoleService {
@@ -24,4 +25,8 @@ public interface RoleService {
     Role handleCreateRole(RoleDTO dto);
 
     Role handleUpdateRole(Integer id, RoleDTO dto);
+
+    long count();
+
+    List<Role> saveAll(List<Role> roles);
 }

@@ -1,6 +1,6 @@
 package com.vpgh.dms.service;
 
-import com.vpgh.dms.model.DocumentDTO;
+import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.entity.Document;
 import org.springframework.web.multipart.MultipartFile;
 

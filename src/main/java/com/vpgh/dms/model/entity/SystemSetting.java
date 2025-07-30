@@ -26,6 +26,16 @@ public class SystemSetting extends FullAuditableEntity {
     @JoinColumn(name = "updated_by")
     private User updatedBy;
 
+    public SystemSetting() {
+
+    }
+
+    public SystemSetting(String key, String value, String description) {
+        this.key = key;
+        this.value = value;
+        this.description = description;
+    }
+
     public Integer getId() {
         return id;
     }

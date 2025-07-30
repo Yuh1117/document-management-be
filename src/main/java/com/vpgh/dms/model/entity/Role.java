@@ -27,6 +27,14 @@ public class Role extends TimestampedEntity {
     @JsonIgnore
     private Set<Permission> permissions;
 
+    public Role() {
+    }
+
+    public Role(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
+
     public Integer getId() {
         return id;
     }

@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -84,5 +85,15 @@ public class SystemSettingServiceImpl implements SystemSettingService {
     @Override
     public void deleteSettingById(Integer id) {
         this.systemSettingRepository.deleteById(id);
+    }
+
+    @Override
+    public long count() {
+        return this.systemSettingRepository.count();
+    }
+
+    @Override
+    public List<SystemSetting> saveAll(List<SystemSetting> settings) {
+        return this.systemSettingRepository.saveAll(settings);
     }
 }

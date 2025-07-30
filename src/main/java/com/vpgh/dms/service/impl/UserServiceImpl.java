@@ -131,4 +131,8 @@ public class UserServiceImpl implements UserService {
         return this.userRepository.existsByEmailAndIdNot(email, id);
     }
 
+    @Override
+    public long count() {
+        return this.userRepository.count();
+    }
 }
