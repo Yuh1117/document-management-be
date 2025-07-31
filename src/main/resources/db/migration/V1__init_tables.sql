@@ -289,7 +289,6 @@ CREATE TABLE public.users (
     is_active boolean,
     last_name character varying(255) NOT NULL,
     password character varying(255) NOT NULL,
-    refresh_token text,
     two_factor_enabled boolean,
     two_factor_secret character varying(255),
     updated_at timestamp(6) with time zone,

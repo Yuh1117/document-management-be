@@ -1,6 +1,7 @@
 package com.vpgh.dms.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vpgh.dms.model.entity.Role;
 import com.vpgh.dms.util.annotation.ValidUser;
 import jakarta.validation.constraints.Email;
@@ -14,7 +15,7 @@ public class UserDTO {
     @NotBlank(message = "Email không được để trống")
     private String email;
     @NotBlank(message = "Mật khẩu không được để trống")
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     @NotBlank(message = "Tên không được để trống")
     private String firstName;

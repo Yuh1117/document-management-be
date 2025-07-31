@@ -3,7 +3,6 @@ package com.vpgh.dms.util;
 import com.vpgh.dms.model.dto.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -25,7 +24,7 @@ public class JwtUtil {
     @Autowired
     private JwtEncoder jwtEncoder;
 
-    public String createToken(Authentication authentication, UserDTO user) {
+    public String createToken(UserDTO user) {
         Instant now = Instant.now();
         Instant validity = now.plus(this.tokenExpiration, ChronoUnit.SECONDS);
 
@@ -40,7 +39,7 @@ public class JwtUtil {
         JwtClaimsSet claims = JwtClaimsSet.builder()
             .issuedAt(now)
             .expiresAt(validity)
-            .subject(authentication.getName())
+            .subject(user.getEmail())
             .claim("user", userInfo)
             .claim("role", user.getRole().getName())
             .build();
