@@ -31,8 +31,6 @@ public class User extends TimestampedEntity {
     @NotBlank(message = "Họ không được để trống")
     private String lastName;
     private String avatar;
-    @Column(columnDefinition = "TEXT")
-    private String refreshToken;
 
     private Boolean twoFactorEnabled;
     private String twoFactorSecret;
@@ -191,14 +189,6 @@ public class User extends TimestampedEntity {
 
     public void setAvatar(String avatar) {
         this.avatar = avatar;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
     }
 
     public Boolean getTwoFactorEnabled() {
