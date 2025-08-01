@@ -7,7 +7,7 @@ import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.CustomValidationException;
 import com.vpgh.dms.util.exception.DataConflictException;
-import com.vpgh.dms.util.exception.IdInvalidException;
+import com.vpgh.dms.util.exception.NotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
@@ -57,10 +57,10 @@ public class RoleController {
 
     @GetMapping(path = "/secure/roles/{id}")
     @ApiMessage(message = "Lấy chi tiết vai trò")
-    public ResponseEntity<Role> detail(@PathVariable(value = "id") Integer id) throws IdInvalidException {
+    public ResponseEntity<Role> detail(@PathVariable(value = "id") Integer id) {
         Role role = this.roleService.getRoleById(id);
         if (role == null) {
-            throw new IdInvalidException("Không tìm thấy vai trò");
+            throw new NotFoundException("Không tìm thấy vai trò");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(role);
@@ -69,7 +69,7 @@ public class RoleController {
     @PatchMapping(path = "/secure/roles/{id}")
     @ApiMessage(message = "Cập nhật vai trò")
     public ResponseEntity<Role> update(@PathVariable("id") Integer id,
-                                       @RequestBody RoleDTO reqRole) throws IdInvalidException {
+                                       @RequestBody RoleDTO reqRole) {
 
         reqRole.setId(id);
         Set<ConstraintViolation<RoleDTO>> violations = validator.validate(reqRole);
@@ -86,7 +86,7 @@ public class RoleController {
 
         Role role = this.roleService.handleUpdateRole(id, reqRole);
         if (role == null) {
-            throw new IdInvalidException("Không tìm thấy vai trò");
+            throw new NotFoundException("Không tìm thấy vai trò");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(role);
@@ -95,10 +95,10 @@ public class RoleController {
 
     @DeleteMapping(path = "/secure/roles/{id}")
     @ApiMessage(message = "Xóa vai trò")
-    public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) throws IdInvalidException {
+    public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
         Role role = this.roleService.getRoleById(id);
         if (role == null) {
-            throw new IdInvalidException("Không tìm thấy vai trò");
+            throw new NotFoundException("Không tìm thấy vai trò");
         }
 
         try {

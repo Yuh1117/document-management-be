@@ -2,7 +2,7 @@ package com.vpgh.dms.controller;
 
 import com.vpgh.dms.model.dto.UserDTO;
 import com.vpgh.dms.util.exception.CustomValidationException;
-import com.vpgh.dms.util.exception.IdInvalidException;
+import com.vpgh.dms.util.exception.NotFoundException;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.service.RoleService;
@@ -65,10 +65,10 @@ public class UserController {
 
     @GetMapping(path = "/secure/users/{id}")
     @ApiMessage(message = "Lấy chi tiết người dùng")
-    public ResponseEntity<UserDTO> detail(@PathVariable(value = "id") Integer id) throws IdInvalidException {
+    public ResponseEntity<UserDTO> detail(@PathVariable(value = "id") Integer id) {
         User user = this.userService.getUserById(id);
         if (user == null) {
-            throw new IdInvalidException("Không tìm thấy người dùng");
+            throw new NotFoundException("Không tìm thấy người dùng");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserDTO(user));
@@ -77,7 +77,7 @@ public class UserController {
     @PatchMapping(path = "/secure/users/{id}")
     @ApiMessage(message = "Cập nhật người dùng")
     public ResponseEntity<UserDTO> update(@PathVariable(value = "id") Integer id,
-                                          @ModelAttribute UserDTO reqUser) throws IdInvalidException {
+                                          @ModelAttribute UserDTO reqUser) {
         reqUser.setId(id);
         Set<ConstraintViolation<UserDTO>> violations = validator.validate(reqUser);
 
@@ -93,7 +93,7 @@ public class UserController {
 
         User user = this.userService.handleUpdateUser(id, reqUser);
         if (user == null) {
-            throw new IdInvalidException("Không tìm thấy người dùng!");
+            throw new NotFoundException("Không tìm thấy người dùng!");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserDTO(user));
@@ -101,10 +101,10 @@ public class UserController {
 
     @DeleteMapping(path = "/secure/users/{id}")
     @ApiMessage(message = "Xóa người dùng")
-    public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) throws IdInvalidException {
+    public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
         User user = this.userService.getUserById(id);
         if (user == null) {
-            throw new IdInvalidException("Không tìm thấy người dùng!");
+            throw new NotFoundException("Không tìm thấy người dùng!");
         }
 
         this.userService.deleteUserById(user.getId());
