@@ -18,13 +18,15 @@ import com.vpgh.dms.util.annotation.ApiMessage;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.Map;
@@ -42,7 +44,12 @@ public class AuthController {
     @Autowired
     private RoleService roleService;
     @Value("${google.client-id}")
-    private String CLIENT_ID;
+    private String clientId;
+    @Value("${google.client-secret}")
+    private String clientSecret;
+    @Value("${google.token-url}")
+    private String googleTokenUrl;
+
 
     @PostMapping("/login")
     @ApiMessage(message = "Đăng nhập")
@@ -91,12 +98,29 @@ public class AuthController {
     @ApiMessage(message = "Đăng nhập bằng Google")
     public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> body) {
         try {
-            String token = body.get("token");
+            String code = body.get("code");
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+            form.add("code", code);
+            form.add("client_id", clientId);
+            form.add("client_secret", clientSecret);
+            form.add("redirect_uri", "postmessage");
+            form.add("grant_type", "authorization_code");
+
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(form, headers);
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<Map> tokenRes = restTemplate.postForEntity(
+                    "https://oauth2.googleapis.com/token", request, Map.class);
+
+            String token = (String) tokenRes.getBody().get("id_token");
 
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                     GoogleNetHttpTransport.newTrustedTransport(),
                     GsonFactory.getDefaultInstance()
-            ).setAudience(Collections.singletonList(CLIENT_ID)).build();
+            ).setAudience(Collections.singletonList(clientId)).build();
 
             GoogleIdToken idToken = verifier.verify(token);
 
