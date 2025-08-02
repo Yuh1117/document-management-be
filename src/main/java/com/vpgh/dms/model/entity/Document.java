@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.FullAuditableEntity;
 import com.vpgh.dms.model.constant.StorageType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 
 import java.util.Set;
 
@@ -15,6 +16,7 @@ public class Document extends FullAuditableEntity {
     private Integer id;
 
     @Column(nullable = false)
+    @NotBlank(message = "Tên mới không được để trống.")
     private String name;
     private String description;
     @Column(nullable = false)

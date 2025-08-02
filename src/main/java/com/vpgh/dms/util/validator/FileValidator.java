@@ -1,6 +1,8 @@
 package com.vpgh.dms.util.validator;
 
 import com.vpgh.dms.model.dto.request.FileUploadReq;
+import com.vpgh.dms.model.entity.Folder;
+import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.service.SystemSettingService;
 import com.vpgh.dms.util.annotation.ValidFile;
 import jakarta.validation.ConstraintValidator;
@@ -13,6 +15,8 @@ public class FileValidator implements ConstraintValidator<ValidFile, FileUploadR
 
     @Autowired
     private SystemSettingService systemSettingService;
+    @Autowired
+    private FolderService folderService;
 
     @Override
     public boolean isValid(FileUploadReq fileUploadReq, ConstraintValidatorContext context) {
@@ -40,7 +44,17 @@ public class FileValidator implements ConstraintValidator<ValidFile, FileUploadR
             context.buildConstraintViolationWithTemplate("Dung lượng file vượt quá giới hạn cho phép!")
                     .addPropertyNode("file")
                     .addConstraintViolation();
-            valid = false;
+            return false;
+        }
+
+        if (fileUploadReq.getFolderId() != null) {
+            Folder folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
+            if (folder == null) {
+                context.buildConstraintViolationWithTemplate("Thư mục không tồn tại.")
+                        .addPropertyNode("folderId")
+                        .addConstraintViolation();
+                return false;
+            }
         }
 
         return valid;

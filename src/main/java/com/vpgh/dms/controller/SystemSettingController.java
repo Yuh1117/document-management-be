@@ -6,7 +6,7 @@ import com.vpgh.dms.model.entity.SystemSetting;
 import com.vpgh.dms.service.SystemSettingService;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.CustomValidationException;
-import com.vpgh.dms.util.exception.IdInvalidException;
+import com.vpgh.dms.util.exception.NotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
@@ -59,10 +59,10 @@ public class SystemSettingController {
 
     @GetMapping(path = "/secure/settings/{id}")
     @ApiMessage(message = "Lấy chi tiết cài đặt")
-    public ResponseEntity<SystemSetting> detail(@PathVariable(value = "id") Integer id) throws IdInvalidException {
+    public ResponseEntity<SystemSetting> detail(@PathVariable(value = "id") Integer id) {
         SystemSetting setting = this.systemSettingService.getSettingById(id);
         if (setting == null) {
-            throw new IdInvalidException("Không tìm thấy cài đặt");
+            throw new NotFoundException("Không tìm thấy cài đặt");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(setting);
@@ -72,7 +72,7 @@ public class SystemSettingController {
     @PatchMapping(path = "/secure/settings/{id}")
     @ApiMessage(message = "Cập nhật cài đặt")
     public ResponseEntity<SystemSetting> update(@PathVariable("id") Integer id,
-                                                @RequestBody SystemSettingDTO reqSetting) throws IdInvalidException {
+                                                @RequestBody SystemSettingDTO reqSetting) {
 
         reqSetting.setId(id);
         Set<ConstraintViolation<SystemSettingDTO>> violations = validator.validate(reqSetting);
@@ -89,7 +89,7 @@ public class SystemSettingController {
 
         SystemSetting setting = this.systemSettingService.handleUpdateSetting(id, reqSetting);
         if (setting == null) {
-            throw new IdInvalidException("Không tìm thấy cài đặt");
+            throw new NotFoundException("Không tìm thấy cài đặt");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(setting);
@@ -97,10 +97,10 @@ public class SystemSettingController {
 
     @DeleteMapping(path = "/secure/settings/{id}")
     @ApiMessage(message = "Xóa cài đặt")
-    public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) throws IdInvalidException {
+    public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
         SystemSetting setting = this.systemSettingService.getSettingById(id);
         if (setting == null) {
-            throw new IdInvalidException("Không tìm thấy cài đặt");
+            throw new NotFoundException("Không tìm thấy cài đặt");
         }
 
         this.systemSettingService.deleteSettingById(setting.getId());

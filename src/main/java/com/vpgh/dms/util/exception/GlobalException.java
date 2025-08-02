@@ -22,7 +22,7 @@ public class GlobalException {
     @ExceptionHandler(value = {
             UniqueConstraintException.class,
             UsernameNotFoundException.class,
-            IdInvalidException.class})
+            NotFoundException.class})
     public ResponseEntity<DataResponse<String>> handleException(Exception ex) {
         DataResponse<String> errorResponse = new DataResponse<>();
         errorResponse.setContent(ex.getMessage());
@@ -70,6 +70,14 @@ public class GlobalException {
         errorResponse.setContent(ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<DataResponse<String>> handleException(ForbiddenException ex) {
+        DataResponse<String> errorResponse = new DataResponse<>();
+        errorResponse.setContent(ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
 
     @ExceptionHandler(value = Exception.class)

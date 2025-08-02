@@ -5,7 +5,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 @ValidFile
 public class FileUploadReq {
-    MultipartFile file;
+    private MultipartFile file;
+    private Integer folderId;
 
     public MultipartFile getFile() {
         return file;
@@ -14,4 +15,13 @@ public class FileUploadReq {
     public void setFile(MultipartFile file) {
         this.file = file;
     }
+
+    public Integer getFolderId() {
+        return folderId;
+    }
+
+    public void setFolderId(Integer folderId) {
+        this.folderId = folderId;
+    }
 }
+

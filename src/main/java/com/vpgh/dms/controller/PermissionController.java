@@ -7,7 +7,7 @@ import com.vpgh.dms.service.PermissionService;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.CustomValidationException;
 import com.vpgh.dms.util.exception.DataConflictException;
-import com.vpgh.dms.util.exception.IdInvalidException;
+import com.vpgh.dms.util.exception.NotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
@@ -60,10 +60,10 @@ public class PermissionController {
 
     @GetMapping(path = "/secure/permissions/{id}")
     @ApiMessage(message = "Lấy chi tiết quyền")
-    public ResponseEntity<Permission> detail(@PathVariable(value = "id") Integer id) throws IdInvalidException {
+    public ResponseEntity<Permission> detail(@PathVariable(value = "id") Integer id) {
         Permission permission = this.permissionService.getPermissionById(id);
         if (permission == null) {
-            throw new IdInvalidException("Không tìm thấy quyền");
+            throw new NotFoundException("Không tìm thấy quyền");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(permission);
@@ -72,7 +72,7 @@ public class PermissionController {
     @PatchMapping(path = "/secure/permissions/{id}")
     @ApiMessage(message = "Cập nhật quyền")
     public ResponseEntity<Permission> update(@PathVariable("id") Integer id,
-                                             @RequestBody PermissionDTO reqPermission) throws IdInvalidException {
+                                             @RequestBody PermissionDTO reqPermission) {
 
         reqPermission.setId(id);
         Set<ConstraintViolation<PermissionDTO>> violations = validator.validate(reqPermission);
@@ -89,7 +89,7 @@ public class PermissionController {
 
         Permission permission = this.permissionService.handleUpdatePermission(id, reqPermission);
         if (permission == null) {
-            throw new IdInvalidException("Không tìm thấy quyền");
+            throw new NotFoundException("Không tìm thấy quyền");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(permission);
@@ -97,10 +97,10 @@ public class PermissionController {
 
     @DeleteMapping(path = "/secure/permissions/{id}")
     @ApiMessage(message = "Xóa quyền")
-    public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) throws IdInvalidException {
+    public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
         Permission permission = this.permissionService.getPermissionById(id);
         if (permission == null) {
-            throw new IdInvalidException("Không tìm thấy quyền");
+            throw new NotFoundException("Không tìm thấy quyền");
         }
 
         try {
