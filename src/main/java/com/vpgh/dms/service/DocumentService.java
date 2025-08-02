@@ -25,4 +25,5 @@ public interface DocumentService {
 
     List<Document> getDocumentsByIds(List<Integer> ids);
 
+    boolean existsByNameAndFolderIdAndIdNot(String name, Integer folderId, Integer excludeId);
 }

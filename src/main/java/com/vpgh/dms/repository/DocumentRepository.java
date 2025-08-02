@@ -16,4 +16,6 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     Optional<Document> findById(Integer integer);
 
     List<Document> findAllById(Iterable<Integer> ids);
+
+    boolean existsByNameAndFolderIdAndIdNot(String name, Integer folderId, Integer excludeId);
 }

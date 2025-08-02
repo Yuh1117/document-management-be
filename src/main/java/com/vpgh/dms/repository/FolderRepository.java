@@ -9,4 +9,8 @@ import java.util.Optional;
 @Repository
 public interface FolderRepository extends JpaRepository<Folder, Integer> {
     Optional<Folder> findById(Integer integer);
+
+    boolean existsByNameAndParentAndIdNot(String name, Folder parent, Integer excludeId);
+
+    Folder save(Folder folder);
 }

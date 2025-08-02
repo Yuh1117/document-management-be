@@ -7,6 +7,7 @@ import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.NotFoundException;
+import com.vpgh.dms.util.exception.UniqueConstraintException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -54,6 +55,23 @@ public class DocumentController {
 //
 //        return ResponseEntity.status(HttpStatus.CREATED).body(result);
 //    }
+
+    @PatchMapping("/secure/documents/{id}")
+    @ApiMessage(message = "Cập nhật tài liệu")
+    public ResponseEntity<Document> update(@PathVariable Integer id, @Valid @RequestBody Document request) {
+        Document doc = documentService.getDocumentById(id);
+        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
+            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xoá.");
+        }
+
+        if (documentService.existsByNameAndFolderIdAndIdNot(request.getName(), doc.getFolder().getId(), doc.getId())) {
+            throw new UniqueConstraintException("Đã tồn tại tài liệu cùng tên trong thư mục này.");
+        }
+
+        doc.setName(request.getName());
+        doc.setDescription(request.getDescription());
+        return ResponseEntity.ok(this.documentService.save(doc));
+    }
 
     @GetMapping(path = "/secure/documents/download/{storedFilename}")
     public ResponseEntity<byte[]> download(@PathVariable(value = "storedFilename") String storedFilename) {

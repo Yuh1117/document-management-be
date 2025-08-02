@@ -7,6 +7,14 @@ ALTER TABLE ONLY public.users
 ALTER TABLE ONLY public.roles
     ADD CONSTRAINT name_unique UNIQUE (name);
 
+CREATE UNIQUE INDEX unique_folder_name_per_parent
+    ON public.folders(parent_id, name)
+    WHERE parent_id IS NOT NULL;
+
+CREATE UNIQUE INDEX unique_root_folder_name
+    ON public.folders(name)
+    WHERE parent_id IS NULL;
+--
 ALTER TABLE ONLY public.access_logs
     ADD CONSTRAINT access_logs_pkey PRIMARY KEY (id);
 

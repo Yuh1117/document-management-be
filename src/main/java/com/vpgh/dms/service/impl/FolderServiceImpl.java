@@ -19,4 +19,14 @@ public class FolderServiceImpl implements FolderService {
         Optional<Folder> folder = this.folderRepository.findById(id);
         return folder.isPresent() ? folder.get() : null;
     }
+
+    @Override
+    public boolean existsByNameAndParentAndIdNot(String name, Folder parent, Integer excludeId) {
+        return this.folderRepository.existsByNameAndParentAndIdNot(name, parent, excludeId);
+    }
+
+    @Override
+    public Folder save(Folder folder) {
+        return this.folderRepository.save(folder);
+    }
 }

@@ -41,9 +41,9 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     public Document uploadFile(MultipartFile file, Folder folder) throws IOException {
-        String folderPath = folder != null ? buildS3FolderPath(folder) : "root";
+        String folderPath = folder != null ? buildS3FolderPath(folder) : "";
         String storedFilename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        String key = folderPath + "/" + storedFilename;
+        String key = "root" + (folderPath.isEmpty() ? "" : "/" + folderPath) + "/" + storedFilename;
 
         s3Client.putObject(PutObjectRequest.builder()
                         .bucket(bucketName)
@@ -135,5 +135,10 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public List<Document> getDocumentsByIds(List<Integer> ids) {
         return this.documentRepository.findAllById(ids);
+    }
+
+    @Override
+    public boolean existsByNameAndFolderIdAndIdNot(String name, Integer folderId, Integer excludeId) {
+        return this.documentRepository.existsByNameAndFolderIdAndIdNot(name, folderId, excludeId);
     }
 }

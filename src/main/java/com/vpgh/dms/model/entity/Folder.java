@@ -3,20 +3,27 @@ package com.vpgh.dms.model.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.FullAuditableEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 
 import java.util.Set;
 
 @Entity
-@Table(name = "folders")
+@Table(
+        name = "folders",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"name", "parent_id"})
+        }
+)
 public class Folder extends FullAuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(nullable = false)
+    @NotBlank(message = "Tên không được để trống")
     private String name;
-    private Boolean inheritPermissions;
-    private Boolean isDeleted;
+    private Boolean inheritPermissions = true;
+    private Boolean isDeleted = false;
 
     @ManyToOne
     @JoinColumn(name = "created_by")
@@ -31,7 +38,6 @@ public class Folder extends FullAuditableEntity {
 
     @ManyToOne
     @JoinColumn(name = "parent_id")
-    @JsonIgnore
     private Folder parent;
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
