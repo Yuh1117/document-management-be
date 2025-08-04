@@ -10,4 +10,11 @@ public interface FolderService {
     boolean existsByNameAndParentAndIdNot(String name, Folder parent, Integer excludeId);
 
     Folder save(Folder folder);
+
+    void softDeleteFolderAndChildren(Folder folder);
+
+    void restoreFolderAndChildren(Folder folder);
+
+    void hardDeleteFolderAndChildren(Folder folder);
+
 }
