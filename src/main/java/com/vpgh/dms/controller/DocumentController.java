@@ -3,9 +3,12 @@ package com.vpgh.dms.controller;
 import com.vpgh.dms.model.dto.request.FileUploadReq;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.Folder;
+import com.vpgh.dms.service.DocumentPermissionService;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FolderService;
+import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
+import com.vpgh.dms.util.exception.ForbiddenException;
 import com.vpgh.dms.util.exception.NotFoundException;
 import com.vpgh.dms.util.exception.UniqueConstraintException;
 import jakarta.validation.Valid;
@@ -29,6 +32,8 @@ public class DocumentController {
     private DocumentService documentService;
     @Autowired
     private FolderService folderService;
+    @Autowired
+    private DocumentPermissionService documentPermissionService;
 
     @PostMapping(path = "/secure/documents/upload")
     @ApiMessage(message = "Upload tài liệu")
@@ -64,7 +69,11 @@ public class DocumentController {
             throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xoá.");
         }
 
-        if (documentService.existsByNameAndFolderIdAndIdNot(request.getName(), doc.getFolder().getId(), doc.getId())) {
+        if (!this.documentPermissionService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
+            throw new ForbiddenException("Bạn không có quyền chỉnh sửa/xoá tài liệu này");
+        }
+
+        if (documentService.existsByNameAndFolderAndIdNot(request.getName(), doc.getFolder(), doc.getId())) {
             throw new UniqueConstraintException("Đã tồn tại tài liệu cùng tên trong thư mục này.");
         }
 

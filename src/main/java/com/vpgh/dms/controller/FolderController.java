@@ -51,4 +51,41 @@ public class FolderController {
         folder.setName(request.getName());
         return ResponseEntity.status(HttpStatus.OK).body(this.folderService.save(folder));
     }
+
+    @DeleteMapping(path = "/secure/folders/{id}")
+    @ApiMessage(message = "Chuyển thư mục vào thùng rác")
+    public ResponseEntity<Void> softDelete(@PathVariable Integer id) {
+        Folder folder = this.folderService.getFolderById(id);
+        if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
+            throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+        }
+
+        this.folderService.softDeleteFolderAndChildren(folder);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @PatchMapping(path = "/secure/folders/restore/{id}")
+    @ApiMessage(message = "Khôi phục thư mục")
+    public ResponseEntity<Folder> restore(@PathVariable Integer id) {
+        Folder folder = this.folderService.getFolderById(id);
+        if (folder == null || !Boolean.TRUE.equals(folder.getDeleted())) {
+            throw new NotFoundException("Thư mục không tồn tại hoặc chưa bị xoá mềm");
+        }
+
+        this.folderService.restoreFolderAndChildren(folder);
+        return ResponseEntity.status(HttpStatus.OK).body(folder);
+    }
+
+    @DeleteMapping(path = "/secure/folders/permanent/{id}")
+    @ApiMessage(message = "Xoá vĩnh viễn thư mục")
+    public ResponseEntity<Void> hardDelete(@PathVariable Integer id) {
+        Folder folder = this.folderService.getFolderById(id);
+        if (folder == null || !Boolean.TRUE.equals(folder.getDeleted())) {
+            throw new NotFoundException("Thư mục không tồn tại hoặc chưa bị xoá mềm");
+        }
+
+        this.folderService.hardDeleteFolderAndChildren(folder);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
 }
