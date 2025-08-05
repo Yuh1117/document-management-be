@@ -4,11 +4,18 @@ import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.constant.StorageType;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.Folder;
+import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.UserService;
+import com.vpgh.dms.service.specification.DocumentSpecification;
+import com.vpgh.dms.util.PageSize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -142,4 +149,33 @@ public class DocumentServiceImpl implements DocumentService {
     public boolean existsByNameAndFolderAndIdNot(String name, Folder folder, Integer excludeId) {
         return this.documentRepository.existsByNameAndFolderAndIdNot(name, folder, excludeId);
     }
+
+    @Override
+    public Page<Document> getActiveDocuments(Folder folder, User createdBy, String page) {
+        Pageable pageable = PageRequest.of(Integer.parseInt(page) - 1, PageSize.DOCUMENT_PAGE_SIZE.getSize());
+        return this.documentRepository.findByFolderAndCreatedByAndIsDeletedFalse(folder, createdBy, pageable);
+    }
+
+    @Override
+    public Page<Document> getInactiveDocuments(Folder folder, User createdBy, String page) {
+        Pageable pageable = PageRequest.of(Integer.parseInt(page) - 1, PageSize.DOCUMENT_PAGE_SIZE.getSize());
+        return this.documentRepository.findByFolderAndCreatedByAndIsDeletedTrue(folder, createdBy, pageable);
+    }
+
+    @Override
+    public Page<Document> searchDocuments(Map<String, String> params, User user) {
+        int page = Integer.parseInt(params.get("page"));
+        String kw = params.get("kw");
+
+        Pageable pageable = PageRequest.of(page - 1, PageSize.DOCUMENT_PAGE_SIZE.getSize());
+        Specification<Document> combinedSpec = Specification.allOf();
+        if (kw != null && !kw.isEmpty()) {
+            Specification<Document> spec = DocumentSpecification.filterByKeyword(params.get("kw"), user);
+            combinedSpec = combinedSpec.and(spec);
+        }
+
+        return this.documentRepository.findAll(combinedSpec, pageable);
+    }
+
+
 }

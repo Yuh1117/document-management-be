@@ -1,14 +1,19 @@
 package com.vpgh.dms.repository;
 
 import com.vpgh.dms.model.entity.Folder;
+import com.vpgh.dms.model.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface FolderRepository extends JpaRepository<Folder, Integer> {
+public interface FolderRepository extends JpaRepository<Folder, Integer>, JpaSpecificationExecutor<Folder> {
     Optional<Folder> findById(Integer integer);
 
     boolean existsByNameAndParentAndIdNot(String name, Folder parent, Integer excludeId);
@@ -17,7 +22,9 @@ public interface FolderRepository extends JpaRepository<Folder, Integer> {
 
     List<Folder> findByParentId(Integer id);
 
-    List<Folder> findByParentIdAndIsDeletedFalse(Integer parentId);   // Chỉ lấy thư mục chưa bị xoá mềm
+    Page<Folder> findByParentAndCreatedByAndIsDeletedFalse(Folder parent, User createdBy, Pageable pageable);
 
-    List<Folder> findByParentIdAndIsDeletedTrue(Integer parentId);
+    Page<Folder> findByParentAndCreatedByAndIsDeletedTrue(Folder parent, User createdBy, Pageable pageable);
+
+    Page<Folder> findAll(Specification<Folder> specification, Pageable pageable);
 }

@@ -14,13 +14,28 @@ public abstract class FullAuditableEntity {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
-    public abstract User getCreatedBy();
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private User createdBy;
+    @ManyToOne
+    @JoinColumn(name = "updated_by")
+    private User updatedBy;
 
-    public abstract void setCreatedBy(User createdBy);
+    public User getCreatedBy() {
+        return createdBy;
+    }
 
-    public abstract User getUpdatedBy();
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
 
-    public abstract void setUpdatedBy(User updatedBy);
+    public User getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(User updatedBy) {
+        this.updatedBy = updatedBy;
+    }
 
     public Instant getCreatedAt() {
         return createdAt;

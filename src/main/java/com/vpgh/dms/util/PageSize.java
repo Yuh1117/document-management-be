@@ -2,7 +2,9 @@ package com.vpgh.dms.util;
 
 public enum PageSize {
     USER_PAGE_SIZE(10),
-    ROLE_PAGE_SIZE(5);
+    ROLE_PAGE_SIZE(5),
+    FOLDER_PAGE_SIZE(10),
+    DOCUMENT_PAGE_SIZE(10);
 
     private final int size;
 
