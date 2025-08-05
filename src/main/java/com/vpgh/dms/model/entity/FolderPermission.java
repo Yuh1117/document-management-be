@@ -24,15 +24,6 @@ public class FolderPermission extends FullAuditableEntity {
     @JoinColumn(name = "group_id")
     private UserGroup group;
 
-    @ManyToOne
-    @JoinColumn(name = "created_by")
-
-    private User createdBy;
-    @ManyToOne
-    @JoinColumn(name = "updated_by")
-
-    private User updatedBy;
-
     public Integer getId() {
         return id;
     }
@@ -65,23 +56,4 @@ public class FolderPermission extends FullAuditableEntity {
         this.user = user;
     }
 
-    @Override
-    public User getCreatedBy() {
-        return createdBy;
-    }
-
-    @Override
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    @Override
-    public User getUpdatedBy() {
-        return updatedBy;
-    }
-
-    @Override
-    public void setUpdatedBy(User updatedBy) {
-        this.updatedBy = updatedBy;
-    }
 }

@@ -25,13 +25,6 @@ public class Folder extends FullAuditableEntity {
     private Boolean inheritPermissions = true;
     private Boolean isDeleted = false;
 
-    @ManyToOne
-    @JoinColumn(name = "created_by")
-    private User createdBy;
-    @ManyToOne
-    @JoinColumn(name = "updated_by")
-    private User updatedBy;
-
     @OneToMany(mappedBy = "folder", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
     private Set<Document> documents;
@@ -112,23 +105,4 @@ public class Folder extends FullAuditableEntity {
         this.folderPermissions = folderPermissions;
     }
 
-    @Override
-    public User getCreatedBy() {
-        return createdBy;
-    }
-
-    @Override
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    @Override
-    public User getUpdatedBy() {
-        return updatedBy;
-    }
-
-    @Override
-    public void setUpdatedBy(User updatedBy) {
-        this.updatedBy = updatedBy;
-    }
 }

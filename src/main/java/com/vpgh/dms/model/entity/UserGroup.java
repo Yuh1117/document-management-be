@@ -15,13 +15,6 @@ public class UserGroup extends FullAuditableEntity {
     private String name;
     private String description;
 
-    @ManyToOne
-    @JoinColumn(name = "created_by")
-    private User createdBy;
-    @ManyToOne
-    @JoinColumn(name = "updated_by")
-    private User updatedBy;
-
     @OneToMany(mappedBy = "group", fetch = FetchType.LAZY)
     private Set<UserGroupMember> members;
 
@@ -63,23 +56,4 @@ public class UserGroup extends FullAuditableEntity {
         this.members = members;
     }
 
-    @Override
-    public User getCreatedBy() {
-        return createdBy;
-    }
-
-    @Override
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    @Override
-    public User getUpdatedBy() {
-        return updatedBy;
-    }
-
-    @Override
-    public void setUpdatedBy(User updatedBy) {
-        this.updatedBy = updatedBy;
-    }
 }

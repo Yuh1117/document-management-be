@@ -38,13 +38,6 @@ public class Document extends FullAuditableEntity {
     private Boolean isDeleted;
 
     @ManyToOne
-    @JoinColumn(name = "created_by")
-    private User createdBy;
-    @ManyToOne
-    @JoinColumn(name = "updated_by")
-    private User updatedBy;
-
-    @ManyToOne
     @JoinColumn(name = "folder_id")
     private Folder folder;
 
@@ -214,23 +207,4 @@ public class Document extends FullAuditableEntity {
         this.versions = versions;
     }
 
-    @Override
-    public User getCreatedBy() {
-        return createdBy;
-    }
-
-    @Override
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    @Override
-    public User getUpdatedBy() {
-        return updatedBy;
-    }
-
-    @Override
-    public void setUpdatedBy(User updatedBy) {
-        this.updatedBy = updatedBy;
-    }
 }

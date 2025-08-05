@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: dms_postgres
+    env_file:
+      - .env.docker
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - dms_network
+
+  springboot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dms_app
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_CONFIG_IMPORT: optional:file:.env.docker
+    networks:
+      - dms_network
+
+volumes:
+  postgres_data:
+
+networks:
+  dms_network:

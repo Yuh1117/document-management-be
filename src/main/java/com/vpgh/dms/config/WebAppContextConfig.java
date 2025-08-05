@@ -9,9 +9,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebAppContextConfig implements WebMvcConfigurer {
     @Autowired
     private ApiMessageInterceptor apiMessageInterceptor;
+    @Autowired
+    private PermissionInterceptor permissionInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(apiMessageInterceptor);
+//        registry.addInterceptor(permissionInterceptor).excludePathPatterns("/api/login");
     }
 }
