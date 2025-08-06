@@ -58,7 +58,7 @@ public class FormatCustomResponse implements ResponseBodyAdvice<Object> {
         if (status < 400) {
             res.setMessage(ApiMessageUtil.getSuccessMessage(apiMessage));
             if (body instanceof DataResponse data) {
-                res.setError(data.getContent());
+                res.setData(data.getContent());
             } else {
                 res.setData(body);
             }

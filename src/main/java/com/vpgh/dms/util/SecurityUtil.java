@@ -43,7 +43,7 @@ public class SecurityUtil {
         String username = extractPrincipal(authentication);
 
         if (username == null) return null;
-        return staticUserService.getUserByEmail(username);
+        return staticUserService.getUserWithRoleAndPermissions(username);
     }
 
     private static String extractPrincipal(Authentication authentication) {

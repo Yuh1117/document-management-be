@@ -7,7 +7,6 @@ import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.exception.ForbiddenException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.HandlerMapping;
@@ -18,7 +17,6 @@ import java.util.Set;
 public class PermissionInterceptor implements HandlerInterceptor {
 
     @Override
-    @Transactional
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String path = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
         String requestURI = request.getRequestURI();

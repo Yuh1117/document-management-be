@@ -11,6 +11,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -49,12 +50,22 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         if (countSettings == 0) {
-            List<SystemSetting> settings = new ArrayList<>();
-            settings.add(new SystemSetting("maxFileSize", String.valueOf(10 * 1024 * 1024), "max file size"));
-            settings.add(new SystemSetting("allowedFileType",
-                    "text/plain;text/html;text/css;image/jpeg;image/png;image/gif;audio/mpeg;audio/wav;video/mp4;video/webm;application/pdf;application/zip",
-                    "allowed file type"));
+            User user = this.userService.getUserByEmail("admin@gmail.com");
 
+            SystemSetting s1 = new SystemSetting();
+            s1.setKey("maxFileSize");
+            s1.setValue(String.valueOf(10 * 1024 * 1024));
+            s1.setDescription("max file size");
+            s1.setCreatedBy(user);
+
+            SystemSetting s2 = new SystemSetting();
+            s2.setKey("allowedFileType");
+            s2.setValue("text/plain;text/html;text/css;image/jpeg;image/png;image/gif;audio/mpeg;audio/wav;video/mp4;video/webm;" +
+                    "application/pdf;application/zip");
+            s2.setDescription("allowed file type");
+            s2.setCreatedBy(user);
+
+            List<SystemSetting> settings = new ArrayList<>(Arrays.asList(s1, s2));
             this.systemSettingService.saveAll(settings);
         }
 

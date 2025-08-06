@@ -24,7 +24,6 @@ public class Role extends TimestampedEntity {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "role_permission", joinColumns = @JoinColumn(name = "role_id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id"))
-    @JsonIgnore
     private Set<Permission> permissions;
 
     public Role() {
