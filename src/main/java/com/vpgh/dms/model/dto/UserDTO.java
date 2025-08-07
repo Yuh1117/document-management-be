@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
+
 @ValidUser
 public class UserDTO {
     private Integer id;
@@ -25,6 +27,25 @@ public class UserDTO {
     private Role role;
     @JsonIgnore
     private MultipartFile file;
+
+    private Instant createdAt;
+    private Instant updatedAt;
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
     public String getEmail() {
         return email;

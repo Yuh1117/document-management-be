@@ -22,7 +22,6 @@ public class User extends TimestampedEntity {
     private String email;
     @Column(nullable = false)
     @NotBlank(message = "Mật khẩu không được để trống")
-    @JsonIgnore
     private String password;
     @Column(nullable = false)
     @NotBlank(message = "Tên không được để trống")
