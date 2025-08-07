@@ -28,4 +28,6 @@ public interface UserService {
     UserDTO convertUserToUserDTO(User user);
 
     long count();
+
+    User getUserWithRoleAndPermissions(String email);
 }

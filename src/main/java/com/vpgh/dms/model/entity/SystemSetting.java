@@ -23,12 +23,6 @@ public class SystemSetting extends FullAuditableEntity {
 
     }
 
-    public SystemSetting(String key, String value, String description) {
-        this.key = key;
-        this.value = value;
-        this.description = description;
-    }
-
     public Integer getId() {
         return id;
     }

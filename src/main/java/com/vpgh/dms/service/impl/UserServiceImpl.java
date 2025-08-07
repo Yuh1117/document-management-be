@@ -135,4 +135,9 @@ public class UserServiceImpl implements UserService {
     public long count() {
         return this.userRepository.count();
     }
+
+    @Override
+    public User getUserWithRoleAndPermissions(String email) {
+        return this.userRepository.findByEmailWithRoleAndPermissions(email);
+    }
 }

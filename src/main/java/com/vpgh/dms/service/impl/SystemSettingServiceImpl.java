@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +34,9 @@ public class SystemSettingServiceImpl implements SystemSettingService {
         int page = Integer.parseInt(params.get("page"));
         String kw = params.get("kw");
 
-        Pageable pageable = PageRequest.of(page - 1, PageSize.ROLE_PAGE_SIZE.getSize());
+        Pageable pageable = PageRequest.of(page - 1, PageSize.ROLE_PAGE_SIZE.getSize(),
+                Sort.by(Sort.Order.desc("id")));
+
         Specification<SystemSetting> combinedSpec = Specification.allOf();
         if (kw != null && !kw.isEmpty()) {
             Specification<SystemSetting> spec = SystemSettingSpecification.filterByKeyword(params.get("kw"));
