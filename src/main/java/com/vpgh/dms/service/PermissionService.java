@@ -23,4 +23,8 @@ public interface PermissionService {
     Permission handleUpdatePermission(Integer id, PermissionDTO dto);
 
     void deletePermissionById(Integer id);
+
+    long count();
+
+    List<Permission> saveAll(List<Permission> permissions);
 }

@@ -58,6 +58,16 @@ public class PermissionController {
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 
+    @GetMapping(path = "/secure/permissions-all")
+    @ApiMessage(message = "Lấy danh sách quyền")
+    public ResponseEntity<List<Permission>> listAll(@RequestParam Map<String, String> params) {
+
+        Page<Permission> pagePermissions = this.permissionService.getAllPermission(null);
+        List<Permission> permissions = pagePermissions.getContent();
+
+        return ResponseEntity.status(HttpStatus.OK).body(permissions);
+    }
+
     @GetMapping(path = "/secure/permissions/{id}")
     @ApiMessage(message = "Lấy chi tiết quyền")
     public ResponseEntity<Permission> detail(@PathVariable(value = "id") Integer id) {

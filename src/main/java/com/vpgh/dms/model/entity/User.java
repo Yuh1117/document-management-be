@@ -1,6 +1,7 @@
 package com.vpgh.dms.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -22,6 +23,7 @@ public class User extends TimestampedEntity {
     private String email;
     @Column(nullable = false)
     @NotBlank(message = "Mật khẩu không được để trống")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     @Column(nullable = false)
     @NotBlank(message = "Tên không được để trống")

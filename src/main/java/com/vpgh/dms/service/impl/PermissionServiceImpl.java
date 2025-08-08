@@ -11,6 +11,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -57,14 +58,19 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     public Page<Permission> getAllPermission(Map<String, String> params) {
-        int page = Integer.parseInt(params.get("page"));
-        String kw = params.get("kw");
-
-        Pageable pageable = PageRequest.of(page - 1, PageSize.ROLE_PAGE_SIZE.getSize());
         Specification<Permission> combinedSpec = Specification.allOf();
-        if (kw != null && !kw.isEmpty()) {
-            Specification<Permission> spec = PermissionSpecification.filterByKeyword(params.get("kw"));
-            combinedSpec = combinedSpec.and(spec);
+        Pageable pageable = Pageable.unpaged();
+
+        if (params != null) {
+            int page = Integer.parseInt(params.get("page"));
+            String kw = params.get("kw");
+
+            pageable = PageRequest.of(page - 1, PageSize.PERMISSION_PAGE_SIZE.getSize(),
+                    Sort.by(Sort.Order.asc("id")));
+            if (kw != null && !kw.isEmpty()) {
+                Specification<Permission> spec = PermissionSpecification.filterByKeyword(params.get("kw"));
+                combinedSpec = combinedSpec.and(spec);
+            }
         }
 
         return this.permissionRepository.findAll(combinedSpec, pageable);
@@ -90,5 +96,15 @@ public class PermissionServiceImpl implements PermissionService {
             throw new DataIntegrityViolationException("");
         }
         this.permissionRepository.deleteById(id);
+    }
+
+    @Override
+    public long count() {
+        return this.permissionRepository.count();
+    }
+
+    @Override
+    public List<Permission> saveAll(List<Permission> permissions) {
+        return this.permissionRepository.saveAll(permissions);
     }
 }

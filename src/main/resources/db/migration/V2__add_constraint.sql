@@ -7,12 +7,12 @@ ALTER TABLE ONLY public.users
 ALTER TABLE ONLY public.roles
     ADD CONSTRAINT name_unique UNIQUE (name);
 
-CREATE UNIQUE INDEX unique_folder_name_per_parent
-    ON public.folders(parent_id, name)
+CREATE UNIQUE INDEX unique_folder_name_per_parent_per_user
+    ON public.folders(parent_id, name, created_by)
     WHERE parent_id IS NOT NULL;
 
-CREATE UNIQUE INDEX unique_root_folder_name
-    ON public.folders(name)
+CREATE UNIQUE INDEX unique_root_folder_name_per_user
+    ON public.folders(name, created_by)
     WHERE parent_id IS NULL;
 --
 ALTER TABLE ONLY public.access_logs

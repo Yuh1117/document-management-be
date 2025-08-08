@@ -16,7 +16,9 @@ import java.util.Optional;
 public interface FolderRepository extends JpaRepository<Folder, Integer>, JpaSpecificationExecutor<Folder> {
     Optional<Folder> findById(Integer integer);
 
-    boolean existsByNameAndParentAndIdNot(String name, Folder parent, Integer excludeId);
+    Folder findByIdAndCreatedBy(Integer id, User user);
+
+    boolean existsByNameAndParentAndCreatedByAndIdNot(String name, Folder parent, User user, Integer excludeId);
 
     Folder save(Folder folder);
 

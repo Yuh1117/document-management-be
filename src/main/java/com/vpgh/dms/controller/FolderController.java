@@ -2,6 +2,7 @@ package com.vpgh.dms.controller;
 
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.service.FolderService;
+import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.NotFoundException;
 import com.vpgh.dms.util.exception.UniqueConstraintException;
@@ -22,14 +23,16 @@ public class FolderController {
     @ApiMessage(message = "Tạo mới thư mục")
     public ResponseEntity<Folder> create(@RequestBody @Valid Folder folder) {
         if (folder.getParent() != null && folder.getParent().getId() != null) {
-            Folder f = this.folderService.getFolderById(folder.getParent().getId());
+            Folder f = this.folderService.getFolderByIdAndCreatedBy(folder.getParent().getId(),
+                    SecurityUtil.getCurrentUserFromThreadLocal());
             if (f == null) {
                 throw new NotFoundException("Không tồn tại thư mục cha này.");
             }
             folder.setParent(f);
         }
 
-        if (this.folderService.existsByNameAndParentAndIdNot(folder.getName(), folder.getParent(), null)) {
+        if (this.folderService.existsByNameAndParentAndCreatedByAndIdNot(folder.getName(), folder.getParent(),
+                SecurityUtil.getCurrentUserFromThreadLocal(), null)) {
             throw new UniqueConstraintException("Không thể tạo thư mục với tên này.");
         }
 
@@ -44,7 +47,8 @@ public class FolderController {
             throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
         }
 
-        if (this.folderService.existsByNameAndParentAndIdNot(request.getName(), folder.getParent(), folder.getId())) {
+        if (this.folderService.existsByNameAndParentAndCreatedByAndIdNot(request.getName(), folder.getParent(),
+                SecurityUtil.getCurrentUserFromThreadLocal(), folder.getId())) {
             throw new UniqueConstraintException("Không thể tạo thư mục với tên này.");
         }
 

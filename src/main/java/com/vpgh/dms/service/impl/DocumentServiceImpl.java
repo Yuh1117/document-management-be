@@ -146,8 +146,8 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public boolean existsByNameAndFolderAndIdNot(String name, Folder folder, Integer excludeId) {
-        return this.documentRepository.existsByNameAndFolderAndIdNot(name, folder, excludeId);
+    public boolean existsByNameAndFolderAndCreatedByAndIdNot(String name, Folder folder, User user, Integer excludeId) {
+        return this.documentRepository.existsByNameAndFolderAndCreatedByAndIdNot(name, folder, user, excludeId);
     }
 
     @Override

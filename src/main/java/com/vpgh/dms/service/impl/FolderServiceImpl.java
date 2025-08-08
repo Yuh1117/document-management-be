@@ -42,8 +42,13 @@ public class FolderServiceImpl implements FolderService {
     }
 
     @Override
-    public boolean existsByNameAndParentAndIdNot(String name, Folder parent, Integer excludeId) {
-        return this.folderRepository.existsByNameAndParentAndIdNot(name, parent, excludeId);
+    public Folder getFolderByIdAndCreatedBy(Integer id, User user) {
+        return this.folderRepository.findByIdAndCreatedBy(id, user);
+    }
+
+    @Override
+    public boolean existsByNameAndParentAndCreatedByAndIdNot(String name, Folder parent, User user, Integer excludeId) {
+        return this.folderRepository.existsByNameAndParentAndCreatedByAndIdNot(name, parent, user, excludeId);
     }
 
     @Override

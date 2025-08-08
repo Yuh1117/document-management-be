@@ -28,7 +28,7 @@ public interface DocumentService {
 
     List<Document> getDocumentsByIds(List<Integer> ids);
 
-    boolean existsByNameAndFolderAndIdNot(String name, Folder folder, Integer excludeId);
+    boolean existsByNameAndFolderAndCreatedByAndIdNot(String name, Folder folder, User user, Integer excludeId);
 
     Page<Document> getActiveDocuments(Folder folder, User createdBy, String page);
 

@@ -29,9 +29,10 @@ public class Role extends TimestampedEntity {
     public Role() {
     }
 
-    public Role(String name, String description) {
+    public Role(String name, String description, Set<Permission> permissions) {
         this.name = name;
         this.description = description;
+        this.permissions = permissions;
     }
 
     public Integer getId() {

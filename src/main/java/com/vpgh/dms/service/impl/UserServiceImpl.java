@@ -105,15 +105,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Page<User> getAllUsers(Map<String, String> params) {
-        int page = Integer.parseInt(params.get("page"));
-        String kw = params.get("kw");
-
-        Pageable pageable = PageRequest.of(page - 1, PageSize.USER_PAGE_SIZE.getSize(),
-            Sort.by(Sort.Order.asc("id")));
         Specification<User> combinedSpec = Specification.allOf();
-        if (kw != null && !kw.isEmpty()) {
-            Specification<User> spec = UserSpecification.filterByKeyword(params.get("kw"));
-            combinedSpec = combinedSpec.and(spec);
+        Pageable pageable = Pageable.unpaged();
+
+        if (params != null) {
+            int page = Integer.parseInt(params.get("page"));
+            String kw = params.get("kw");
+
+            pageable = PageRequest.of(page - 1, PageSize.USER_PAGE_SIZE.getSize(),
+                    Sort.by(Sort.Order.asc("id")));
+            if (kw != null && !kw.isEmpty()) {
+                Specification<User> spec = UserSpecification.filterByKeyword(params.get("kw"));
+                combinedSpec = combinedSpec.and(spec);
+            }
         }
 
         return this.userRepository.findAll(combinedSpec, pageable);
