@@ -12,6 +12,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -44,14 +45,18 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Page<Role> getAllRoles(Map<String, String> params) {
-        int page = Integer.parseInt(params.get("page"));
-        String kw = params.get("kw");
-
-        Pageable pageable = PageRequest.of(page - 1, PageSize.ROLE_PAGE_SIZE.getSize());
         Specification<Role> combinedSpec = Specification.allOf();
-        if (kw != null && !kw.isEmpty()) {
-            Specification<Role> spec = RoleSpecification.filterByKeyword(params.get("kw"));
-            combinedSpec = combinedSpec.and(spec);
+        Pageable pageable = Pageable.unpaged();
+        if (params != null) {
+            int page = Integer.parseInt(params.get("page"));
+            String kw = params.get("kw");
+
+            pageable = PageRequest.of(page - 1, PageSize.ROLE_PAGE_SIZE.getSize(),
+                    Sort.by(Sort.Order.asc("id")));
+            if (kw != null && !kw.isEmpty()) {
+                Specification<Role> spec = RoleSpecification.filterByKeyword(params.get("kw"));
+                combinedSpec = combinedSpec.and(spec);
+            }
         }
 
         return this.roleRepository.findAll(combinedSpec, pageable);

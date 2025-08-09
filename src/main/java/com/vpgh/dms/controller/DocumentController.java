@@ -73,7 +73,8 @@ public class DocumentController {
             throw new ForbiddenException("Bạn không có quyền chỉnh sửa/xoá tài liệu này");
         }
 
-        if (documentService.existsByNameAndFolderAndIdNot(request.getName(), doc.getFolder(), doc.getId())) {
+        if (documentService.existsByNameAndFolderAndCreatedByAndIdNot(request.getName(), doc.getFolder(),
+                SecurityUtil.getCurrentUserFromThreadLocal(), doc.getId())) {
             throw new UniqueConstraintException("Đã tồn tại tài liệu cùng tên trong thư mục này.");
         }
 

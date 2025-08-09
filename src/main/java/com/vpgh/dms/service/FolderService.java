@@ -11,7 +11,9 @@ import java.util.Map;
 public interface FolderService {
     Folder getFolderById(Integer id);
 
-    boolean existsByNameAndParentAndIdNot(String name, Folder parent, Integer excludeId);
+    Folder getFolderByIdAndCreatedBy(Integer id, User user);
+
+    boolean existsByNameAndParentAndCreatedByAndIdNot(String name, Folder parent, User user, Integer excludeId);
 
     Folder save(Folder folder);
 

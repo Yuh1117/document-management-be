@@ -7,12 +7,12 @@ ALTER TABLE ONLY public.users
 ALTER TABLE ONLY public.roles
     ADD CONSTRAINT name_unique UNIQUE (name);
 
-CREATE UNIQUE INDEX unique_folder_name_per_parent
-    ON public.folders(parent_id, name)
+CREATE UNIQUE INDEX unique_folder_name_per_parent_per_user
+    ON public.folders(parent_id, name, created_by)
     WHERE parent_id IS NOT NULL;
 
-CREATE UNIQUE INDEX unique_root_folder_name
-    ON public.folders(name)
+CREATE UNIQUE INDEX unique_root_folder_name_per_user
+    ON public.folders(name, created_by)
     WHERE parent_id IS NULL;
 --
 ALTER TABLE ONLY public.access_logs
@@ -142,7 +142,7 @@ ALTER TABLE ONLY public.role_permission
     ADD CONSTRAINT fk_role_permission_role FOREIGN KEY (role_id) REFERENCES public.roles(id) ON DELETE RESTRICT ON UPDATE CASCADE;
 --
 ALTER TABLE ONLY public.system_settings
-    ADD CONSTRAINT fk_system_settings_updated_by FOREIGN KEY (updated_by) REFERENCES public.users(id) ON DELETE RESTRICT ON UPDATE CASCADE;
+    ADD CONSTRAINT fk_system_settings_updated_by FOREIGN KEY (updated_by) REFERENCES public.users(id) ON DELETE SET NULL ON UPDATE CASCADE;
 
 ALTER TABLE ONLY public.system_settings
     ADD CONSTRAINT fk_system_settings_created_by FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE RESTRICT ON UPDATE CASCADE;

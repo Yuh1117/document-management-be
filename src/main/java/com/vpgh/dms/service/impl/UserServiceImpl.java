@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -87,6 +88,8 @@ public class UserServiceImpl implements UserService {
         dto.setLastName(user.getLastName());
         dto.setAvatar(user.getAvatar());
         dto.setRole(user.getRole());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
         return dto;
     }
 
@@ -102,14 +105,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Page<User> getAllUsers(Map<String, String> params) {
-        int page = Integer.parseInt(params.get("page"));
-        String kw = params.get("kw");
-
-        Pageable pageable = PageRequest.of(page - 1, PageSize.USER_PAGE_SIZE.getSize());
         Specification<User> combinedSpec = Specification.allOf();
-        if (kw != null && !kw.isEmpty()) {
-            Specification<User> spec = UserSpecification.filterByKeyword(params.get("kw"));
-            combinedSpec = combinedSpec.and(spec);
+        Pageable pageable = Pageable.unpaged();
+
+        if (params != null) {
+            int page = Integer.parseInt(params.get("page"));
+            String kw = params.get("kw");
+
+            pageable = PageRequest.of(page - 1, PageSize.USER_PAGE_SIZE.getSize(),
+                    Sort.by(Sort.Order.asc("id")));
+            if (kw != null && !kw.isEmpty()) {
+                Specification<User> spec = UserSpecification.filterByKeyword(params.get("kw"));
+                combinedSpec = combinedSpec.and(spec);
+            }
         }
 
         return this.userRepository.findAll(combinedSpec, pageable);

@@ -22,7 +22,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     List<Document> findAllById(Iterable<Integer> ids);
 
-    boolean existsByNameAndFolderAndIdNot(String name, Folder folder, Integer excludeId);
+    boolean existsByNameAndFolderAndCreatedByAndIdNot(String name, Folder folder, User user, Integer excludeId);
 
     List<Document> findByFolderId(Integer id);
 

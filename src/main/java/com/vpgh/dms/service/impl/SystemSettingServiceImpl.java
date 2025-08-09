@@ -31,16 +31,19 @@ public class SystemSettingServiceImpl implements SystemSettingService {
 
     @Override
     public Page<SystemSetting> getAllSettings(Map<String, String> params) {
-        int page = Integer.parseInt(params.get("page"));
-        String kw = params.get("kw");
-
-        Pageable pageable = PageRequest.of(page - 1, PageSize.ROLE_PAGE_SIZE.getSize(),
-                Sort.by(Sort.Order.desc("id")));
-
         Specification<SystemSetting> combinedSpec = Specification.allOf();
-        if (kw != null && !kw.isEmpty()) {
-            Specification<SystemSetting> spec = SystemSettingSpecification.filterByKeyword(params.get("kw"));
-            combinedSpec = combinedSpec.and(spec);
+        Pageable pageable = Pageable.unpaged();
+
+        if (params != null) {
+            int page = Integer.parseInt(params.get("page"));
+            String kw = params.get("kw");
+
+            pageable = PageRequest.of(page - 1, PageSize.SETTING_PAGE_SIZE.getSize(),
+                    Sort.by(Sort.Order.desc("id")));
+            if (kw != null && !kw.isEmpty()) {
+                Specification<SystemSetting> spec = SystemSettingSpecification.filterByKeyword(params.get("kw"));
+                combinedSpec = combinedSpec.and(spec);
+            }
         }
 
         return this.systemSettingRepository.findAll(combinedSpec, pageable);

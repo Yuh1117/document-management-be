@@ -27,6 +27,17 @@ public class Permission extends TimestampedEntity {
     @JsonIgnore
     private Set<Role> roles;
 
+    public Permission() {
+
+    }
+
+    public Permission(String name, String apiPath, String method, String module) {
+        this.name = name;
+        this.apiPath = apiPath;
+        this.method = method;
+        this.module = module;
+    }
+
     public Integer getId() {
         return id;
     }
