@@ -42,9 +42,13 @@ public class PermissionController {
     @GetMapping(path = "/secure/permissions")
     @ApiMessage(message = "Lấy danh sách quyền")
     public ResponseEntity<PaginationResDTO<List<Permission>>> list(@RequestParam Map<String, String> params) {
-        String page = params.get("page");
-        if (page == null || page.isEmpty()) {
-            params.put("page", "1");
+        if (params.get("all") != null && "true".equalsIgnoreCase(params.get("all"))) {
+            params = null;
+        } else {
+            String page = params.get("page");
+            if (page == null || page.isEmpty()) {
+                params.put("page", "1");
+            }
         }
 
         Page<Permission> pagePermissions = this.permissionService.getAllPermission(params);
@@ -56,16 +60,6 @@ public class PermissionController {
         results.setTotalPages(pagePermissions.getTotalPages());
 
         return ResponseEntity.status(HttpStatus.OK).body(results);
-    }
-
-    @GetMapping(path = "/secure/permissions-all")
-    @ApiMessage(message = "Lấy danh sách quyền")
-    public ResponseEntity<List<Permission>> listAll(@RequestParam Map<String, String> params) {
-
-        Page<Permission> pagePermissions = this.permissionService.getAllPermission(null);
-        List<Permission> permissions = pagePermissions.getContent();
-
-        return ResponseEntity.status(HttpStatus.OK).body(permissions);
     }
 
     @GetMapping(path = "/secure/permissions/{id}")

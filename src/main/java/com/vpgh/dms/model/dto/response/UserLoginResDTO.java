@@ -3,8 +3,8 @@ package com.vpgh.dms.model.dto.response;
 import com.vpgh.dms.model.dto.UserDTO;
 
 public class UserLoginResDTO {
-    private UserDTO user;
     private String accessToken;
+    private UserDTO user;
 
     public UserDTO getUser() {
         return user;

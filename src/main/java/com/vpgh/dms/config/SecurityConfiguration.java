@@ -31,12 +31,14 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        String[] whiteList = {"/", "/api/login", "/api/signup", "/api/auth/google",
+                "/dms-api-docs/**", "/swagger-ui/**", "/swagger-ui.html"};
+
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/", "/api/login", "/api/signup", "/api/auth/google",
-                                "/dms-api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers(whiteList).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(Customizer.withDefaults())
