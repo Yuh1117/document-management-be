@@ -7,8 +7,7 @@ import jakarta.persistence.*;
 import java.util.Set;
 
 @Entity
-@Table(name = "permissions",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"apiPath", "method"}))
+@Table(name = "permissions")
 public class Permission extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

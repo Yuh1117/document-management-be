@@ -1,20 +1,3 @@
-ALTER TABLE ONLY public.user_group_members
-    ADD CONSTRAINT user_group_unique UNIQUE (user_id, group_id);
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT email_unique UNIQUE (email);
-
-ALTER TABLE ONLY public.roles
-    ADD CONSTRAINT name_unique UNIQUE (name);
-
-CREATE UNIQUE INDEX unique_folder_name_per_parent_per_user
-    ON public.folders(parent_id, name, created_by)
-    WHERE parent_id IS NOT NULL;
-
-CREATE UNIQUE INDEX unique_root_folder_name_per_user
-    ON public.folders(name, created_by)
-    WHERE parent_id IS NULL;
---
 ALTER TABLE ONLY public.access_logs
     ADD CONSTRAINT access_logs_pkey PRIMARY KEY (id);
 
@@ -62,7 +45,7 @@ ALTER TABLE ONLY public.user_groups
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
---
+----
 ALTER TABLE ONLY public.access_logs
     ADD CONSTRAINT fk_access_logs_document FOREIGN KEY (document_id) REFERENCES public.documents(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -161,3 +144,57 @@ ALTER TABLE ONLY public.user_groups
 --
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES public.roles(id) ON DELETE RESTRICT ON UPDATE CASCADE;
+----
+ALTER TABLE ONLY public.user_group_members
+    ADD CONSTRAINT user_group_unique UNIQUE (user_id, group_id);
+
+ALTER TABLE ONLY public.user_groups
+    ADD CONSTRAINT group_name_unique UNIQUE (name, created_by);
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT email_unique UNIQUE (email);
+
+ALTER TABLE ONLY public.roles
+    ADD CONSTRAINT name_unique UNIQUE (name);
+
+ALTER TABLE ONLY public.system_settings
+    ADD CONSTRAINT key_unique UNIQUE (key);
+
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT api_path_method_unique UNIQUE (api_path, method);
+
+ALTER TABLE ONLY public.folder_permissions
+    ADD CONSTRAINT folder_group_unique UNIQUE (folder_id, group_id);
+
+ALTER TABLE ONLY public.folder_permissions
+    ADD CONSTRAINT folder_user_unique UNIQUE (folder_id, user_id);
+
+ALTER TABLE ONLY public.document_versions
+    ADD CONSTRAINT document_number_unique UNIQUE (document_id, version_number);
+
+ALTER TABLE ONLY public.document_tags
+    ADD CONSTRAINT name_color_user_unique UNIQUE (name, color, created_by);
+
+ALTER TABLE ONLY public.document_permissions
+    ADD CONSTRAINT document_group_unique UNIQUE (document_id, group_id);
+
+ALTER TABLE ONLY public.document_permissions
+    ADD CONSTRAINT document_user_unique UNIQUE (document_id, user_id);
+
+ALTER TABLE public.documents
+    ADD CONSTRAINT folder_name_user_unique UNIQUE (folder_id, created_by, name);
+
+ALTER TABLE public.documents
+    ADD CONSTRAINT file_user_unique UNIQUE (created_by, file_hash);
+
+CREATE UNIQUE INDEX unique_folder_name_per_parent_per_user
+    ON public.folders(parent_id, name, created_by)
+    WHERE parent_id IS NOT NULL;
+
+CREATE UNIQUE INDEX unique_root_folder_name_per_user
+    ON public.folders(name, created_by)
+    WHERE parent_id IS NULL;
+
+CREATE INDEX idx_documents_name_lower_pattern ON public.documents (lower(name) text_pattern_ops);
+
+CREATE INDEX idx_folders_name_lower_pattern ON public.folders (lower(name) text_pattern_ops);
