@@ -14,11 +14,11 @@ import java.util.Optional;
 
 @Repository
 public interface FolderRepository extends JpaRepository<Folder, Integer>, JpaSpecificationExecutor<Folder> {
-    Optional<Folder> findById(Integer integer);
+    Optional<Folder> findById(Integer id);
 
-    Folder findByIdAndCreatedBy(Integer id, User user);
+    boolean existsByNameAndParentAndIsDeletedFalseAndIdNot(String name, Folder parent, Integer id);
 
-    boolean existsByNameAndParentAndCreatedByAndIdNot(String name, Folder parent, User user, Integer excludeId);
+    boolean existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, Integer id);
 
     Folder save(Folder folder);
 

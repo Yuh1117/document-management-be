@@ -18,6 +18,6 @@ public class WebAppContextConfig implements WebMvcConfigurer {
 
         String[] whiteList = {"/", "/api/login", "/api/signup", "/api/auth/google", "/api/secure/profile",
                 "/dms-api-docs/**", "/swagger-ui/**", "/swagger-ui.html"};
-        registry.addInterceptor(permissionInterceptor).excludePathPatterns(whiteList);
+//        registry.addInterceptor(permissionInterceptor).excludePathPatterns(whiteList);
     }
 }

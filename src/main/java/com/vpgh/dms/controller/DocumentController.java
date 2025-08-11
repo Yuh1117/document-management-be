@@ -38,10 +38,41 @@ public class DocumentController {
     @PostMapping(path = "/secure/documents/upload")
     @ApiMessage(message = "Upload tài liệu")
     public ResponseEntity<Document> upload(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
-        Folder folder = fileUploadReq.getFolderId() != null ? this.folderService.getFolderById(fileUploadReq.getFolderId()) : null;
-        Document doc = this.documentService.uploadFile(fileUploadReq.getFile(), folder);
+        Folder folder = null;
+        if (fileUploadReq.getFolderId() != null) {
+            folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
+            //todo: isDeleted or not
+            if (documentService.existsByNameAndFolderAndIdNot(fileUploadReq.getFile().getOriginalFilename(), folder, null)) {
+                throw new UniqueConstraintException("Tài liệu trùng tên trong cùng thư mục.");
+            }
+        } else {
+            //todo: isDeleted or not
+            if (documentService.existsByNameAndCreatedByAndFolderIsNullAndIdNot(fileUploadReq.getFile().getOriginalFilename(),
+                    SecurityUtil.getCurrentUserFromThreadLocal(), null)) {
+                throw new UniqueConstraintException("Tài liệu trùng tên trong thư mục gốc.");
+            }
+        }
+
+        Document doc = this.documentService.uploadNewFile(fileUploadReq.getFile(), folder);
         return ResponseEntity.status(HttpStatus.CREATED).body(doc);
     }
+
+    @PostMapping(path = "/secure/documents/upload-replace")
+    @ApiMessage(message = "Upload và thay thế")
+    public ResponseEntity<Document> uploadReplace(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
+        Folder folder = fileUploadReq.getFolderId() != null ? folderService.getFolderById(fileUploadReq.getFolderId()) : null;
+        Document doc = documentService.uploadReplaceFile(fileUploadReq.getFile(), folder);
+        return ResponseEntity.status(HttpStatus.OK).body(doc);
+    }
+
+    @PostMapping(path = "/secure/documents/upload-keep")
+    @ApiMessage(message = "Upload và giữ cả 2")
+    public ResponseEntity<Document> uploadKeep(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
+        Folder folder = fileUploadReq.getFolderId() != null ? folderService.getFolderById(fileUploadReq.getFolderId()) : null;
+        Document doc = documentService.uploadKeepBothFiles(fileUploadReq.getFile(), folder);
+        return ResponseEntity.status(HttpStatus.CREATED).body(doc);
+    }
+
 
 //    @PostMapping(path = "/secure/documents/upload-multiple")
 //    @ApiMessage(message = "Upload nhiều tài liệu")
@@ -73,9 +104,17 @@ public class DocumentController {
             throw new ForbiddenException("Bạn không có quyền chỉnh sửa/xoá tài liệu này");
         }
 
-        if (documentService.existsByNameAndFolderAndCreatedByAndIdNot(request.getName(), doc.getFolder(),
-                SecurityUtil.getCurrentUserFromThreadLocal(), doc.getId())) {
-            throw new UniqueConstraintException("Đã tồn tại tài liệu cùng tên trong thư mục này.");
+        if (doc.getFolder() != null) {
+            //todo: isDeleted or not
+            if (documentService.existsByNameAndFolderAndIdNot(request.getName(), doc.getFolder(), doc.getId())) {
+                throw new UniqueConstraintException("Không thể đổi tên này trong cùng thư mục.");
+            }
+        } else {
+            //todo: isDeleted or not
+            if (documentService.existsByNameAndCreatedByAndFolderIsNullAndIdNot(request.getName(), SecurityUtil.getCurrentUserFromThreadLocal(),
+                    doc.getId())) {
+                throw new UniqueConstraintException("Không thể đổi tên này trong thư mục gốc.");
+            }
         }
 
         doc.setName(request.getName());

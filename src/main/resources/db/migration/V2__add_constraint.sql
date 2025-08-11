@@ -181,17 +181,22 @@ ALTER TABLE ONLY public.document_permissions
 ALTER TABLE ONLY public.document_permissions
     ADD CONSTRAINT document_user_unique UNIQUE (document_id, user_id);
 
-ALTER TABLE public.documents
-    ADD CONSTRAINT folder_name_user_unique UNIQUE (folder_id, created_by, name);
+ALTER TABLE ONLY public.documents
+    ADD CONSTRAINT stored_filename_unique UNIQUE (stored_filename);
 
-ALTER TABLE public.documents
-    ADD CONSTRAINT file_user_unique UNIQUE (created_by, file_hash);
+CREATE UNIQUE INDEX unique_doc_name_per_parent
+    ON public.documents(name, folder_id)
+    WHERE folder_id IS NOT NULL;
 
-CREATE UNIQUE INDEX unique_folder_name_per_parent_per_user
-    ON public.folders(parent_id, name, created_by)
+CREATE UNIQUE INDEX unique_doc_name_per_user
+    ON public.documents(name, created_by)
+    WHERE folder_id IS NULL;
+
+CREATE UNIQUE INDEX unique_folder_name_per_parent
+    ON public.folders(name, parent_id)
     WHERE parent_id IS NOT NULL;
 
-CREATE UNIQUE INDEX unique_root_folder_name_per_user
+CREATE UNIQUE INDEX unique_folder_name_per_user
     ON public.folders(name, created_by)
     WHERE parent_id IS NULL;
 

@@ -12,7 +12,11 @@ import java.util.List;
 import java.util.Map;
 
 public interface DocumentService {
-    Document uploadFile(MultipartFile file, Folder folder) throws IOException;
+    Document uploadNewFile(MultipartFile file, Folder folder) throws IOException;
+
+    Document uploadKeepBothFiles(MultipartFile file, Folder folder) throws IOException;
+
+    Document uploadReplaceFile(MultipartFile file, Folder folder) throws IOException;
 
     byte[] downloadFile(String key);
 
@@ -28,7 +32,9 @@ public interface DocumentService {
 
     List<Document> getDocumentsByIds(List<Integer> ids);
 
-    boolean existsByNameAndFolderAndCreatedByAndIdNot(String name, Folder folder, User user, Integer excludeId);
+    boolean existsByNameAndFolderAndIdNot(String name, Folder folder, Integer excludeId);
+
+    boolean existsByNameAndCreatedByAndFolderIsNullAndIdNot(String name, User createdBy, Integer id);
 
     Page<Document> getActiveDocuments(Folder folder, User createdBy, String page);
 

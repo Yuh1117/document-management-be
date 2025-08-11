@@ -22,7 +22,10 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     List<Document> findAllById(Iterable<Integer> ids);
 
-    boolean existsByNameAndFolderAndCreatedByAndIdNot(String name, Folder folder, User user, Integer excludeId);
+    //todo: isDeleted or not
+    boolean existsByNameAndFolderAndIdNot(String name, Folder folder, Integer excludeId);
+    //todo: isDeleted or not
+    boolean existsByNameAndCreatedByAndFolderIsNullAndIdNot(String name, User createdBy, Integer id);
 
     List<Document> findByFolderId(Integer id);
 
@@ -31,4 +34,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     Page<Document> findByFolderAndCreatedByAndIsDeletedTrue(Folder folder, User createdBy, Pageable pageable);
 
     Page<Document> findAll(Specification<Document> specification, Pageable pageable);
+
+    //todo: folder null or not
+    Optional<Document> findByNameAndFolderAndIsDeletedFalse(String name, Folder folder);
 }
