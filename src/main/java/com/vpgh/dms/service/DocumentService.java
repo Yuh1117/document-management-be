@@ -14,9 +14,9 @@ import java.util.Map;
 public interface DocumentService {
     Document uploadNewFile(MultipartFile file, Folder folder) throws IOException;
 
-    Document uploadKeepBothFiles(MultipartFile file, Folder folder) throws IOException;
+    Document uploadReplaceFile(MultipartFile file, Folder folder, Document existingDoc) throws IOException;
 
-    Document uploadReplaceFile(MultipartFile file, Folder folder) throws IOException;
+    Document uploadKeepBothFiles(MultipartFile file, Folder folder) throws IOException;
 
     byte[] downloadFile(String key);
 
@@ -32,13 +32,25 @@ public interface DocumentService {
 
     List<Document> getDocumentsByIds(List<Integer> ids);
 
-    boolean existsByNameAndFolderAndIdNot(String name, Folder folder, Integer excludeId);
+    boolean existsByNameAndFolderAndIsDeletedFalseAndIdNot(String name, Folder folder, Integer excludeId);
 
-    boolean existsByNameAndCreatedByAndFolderIsNullAndIdNot(String name, User createdBy, Integer id);
+    boolean existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, Integer id);
 
     Page<Document> getActiveDocuments(Folder folder, User createdBy, String page);
 
     Page<Document> getInactiveDocuments(Folder folder, User createdBy, String page);
 
     Page<Document> searchDocuments(Map<String, String> params, User user);
+
+    Document findByNameAndFolderAndIsDeletedFalse (String name, Folder folder);
+
+    Document findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(String name, User createdBy);
+
+    List<Document> findByFolderAndIsDeletedFalse(Folder folder);
+
+    List<Document> findByFolderAndIsDeletedTrue(Folder folder);
+
+    void copyDocuments(List<Document> docs, Folder targetFolder);
+
+    void cutDocuments(List<Document> docs, Folder targetFolder);
 }

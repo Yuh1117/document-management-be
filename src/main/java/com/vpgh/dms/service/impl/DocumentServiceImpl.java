@@ -12,7 +12,7 @@ import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.service.specification.DocumentSpecification;
 import com.vpgh.dms.util.PageSize;
-import com.vpgh.dms.util.exception.NotFoundException;
+import com.vpgh.dms.util.SecurityUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,10 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -60,15 +57,9 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public Document uploadReplaceFile(MultipartFile file, Folder folder) throws IOException {
-        //todo: folder null or not
-        Document existingDoc = documentRepository
-                .findByNameAndFolderAndIsDeletedFalse(file.getOriginalFilename(), folder)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy file để thay thế"));
-
+    public Document uploadReplaceFile(MultipartFile file, Folder folder, Document existingDoc) throws IOException {
         saveDocumentVersion(existingDoc);
-
-        uploadToS3AndUpdateDoc(existingDoc, file, folder);
+        updateFileContent(existingDoc, file, folder);
         return documentRepository.save(existingDoc);
     }
 
@@ -79,15 +70,10 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private Document saveNewDocument(MultipartFile file, Folder folder, String fileName) throws IOException {
-        String folderPath = folder != null ? buildS3FolderPath(folder) : "";
+        String folderPath = buildS3FolderPath(folder);
         String storedFilename = UUID.randomUUID() + "_" + fileName;
-        String key = ROOT_FOLDER_PREFIX + (folderPath.isEmpty() ? "" : "/" + folderPath) + "/" + storedFilename;
-
-        s3Client.putObject(PutObjectRequest.builder()
-                        .bucket(bucketName)
-                        .key(key)
-                        .build(),
-                RequestBody.fromBytes(file.getBytes()));
+        String key = ROOT_FOLDER_PREFIX + "/" + folderPath + "/" + storedFilename;
+        uploadToS3(key, file);
 
         Document doc = new Document();
         doc.setName(fileName);
@@ -118,16 +104,11 @@ public class DocumentServiceImpl implements DocumentService {
         documentVersionRepository.save(version);
     }
 
-    private void uploadToS3AndUpdateDoc(Document doc, MultipartFile file, Folder folder) throws IOException {
-        String folderPath = folder != null ? buildS3FolderPath(folder) : "";
+    private void updateFileContent(Document doc, MultipartFile file, Folder folder) throws IOException {
+        String folderPath = buildS3FolderPath(folder);
         String storedFilename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        String key = ROOT_FOLDER_PREFIX + (folderPath.isEmpty() ? "" : "/" + folderPath) + "/" + storedFilename;
-
-        s3Client.putObject(PutObjectRequest.builder()
-                        .bucket(bucketName)
-                        .key(key)
-                        .build(),
-                RequestBody.fromBytes(file.getBytes()));
+        String key = ROOT_FOLDER_PREFIX + "/" + folderPath + "/" + storedFilename;
+        uploadToS3(key, file);
 
         doc.setStoredFilename(storedFilename);
         doc.setFilePath("s3://" + bucketName + "/" + key);
@@ -136,31 +117,48 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setFileHash(DigestUtils.md5DigestAsHex(file.getBytes()));
     }
 
+    private void uploadToS3(String key, MultipartFile file) throws IOException {
+        s3Client.putObject(PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(key)
+                        .build(),
+                RequestBody.fromBytes(file.getBytes()));
+    }
+
     private String generateUniqueName(String originalName, Folder folder) {
         String baseName = FilenameUtils.getBaseName(originalName);
         String extension = FilenameUtils.getExtension(originalName);
 
         String newName = originalName;
         int counter = 1;
-        //todo: folder null or not
-        while (documentRepository.findByNameAndFolderAndIsDeletedFalse(newName, folder).isPresent()) {
-            newName = baseName + " (" + counter + ")" + (extension.isEmpty() ? "" : "." + extension);
-            counter++;
+        if (folder != null) {
+            while (this.documentRepository.findByNameAndFolderAndIsDeletedFalse(newName, folder).isPresent()) {
+                newName = baseName + "(" + counter + ")" + (extension.isEmpty() ? "" : "." + extension);
+                counter++;
+            }
+        } else {
+            while (this.documentRepository.findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(newName,
+                    SecurityUtil.getCurrentUserFromThreadLocal()).isPresent()) {
+                newName = baseName + "(" + counter + ")" + (extension.isEmpty() ? "" : "." + extension);
+                counter++;
+            }
         }
         return newName;
     }
 
-
     private String buildS3FolderPath(Folder folder) {
         List<String> parts = new ArrayList<>();
+        parts.add(folder != null ? folder.getCreatedBy().getEmail() : SecurityUtil.getCurrentUserFromThreadLocal().getEmail());
+
         while (folder != null) {
             parts.add(folder.getName());
             folder = folder.getParent();
         }
-        Collections.reverse(parts);
+        Collections.reverse(parts.subList(1, parts.size()));
         return String.join("/", parts);
     }
 
+    @Override
     public byte[] downloadFile(String filePath) {
         String key = extractKeyFromPath(filePath);
         ResponseBytes<GetObjectResponse> objectAsBytes = s3Client.getObjectAsBytes(GetObjectRequest.builder()
@@ -170,10 +168,7 @@ public class DocumentServiceImpl implements DocumentService {
         return objectAsBytes.asByteArray();
     }
 
-    private String extractKeyFromPath(String s3Path) {
-        return s3Path.replace("s3://" + bucketName + "/", "");
-    }
-
+    @Override
     public void hardDelete(Document doc) {
         String key = extractKeyFromPath(doc.getFilePath());
         s3Client.deleteObject(DeleteObjectRequest.builder()
@@ -181,6 +176,10 @@ public class DocumentServiceImpl implements DocumentService {
                 .key(key)
                 .build());
         this.documentRepository.delete(doc);
+    }
+
+    private String extractKeyFromPath(String s3Path) {
+        return s3Path.replace("s3://" + bucketName + "/", "");
     }
 
     @Override
@@ -217,17 +216,17 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public List<Document> getDocumentsByIds(List<Integer> ids) {
-        return this.documentRepository.findAllById(ids);
+        return this.documentRepository.findByIdIn(ids);
     }
 
     @Override
-    public boolean existsByNameAndFolderAndIdNot(String name, Folder folder, Integer excludeId) {
-        return this.documentRepository.existsByNameAndFolderAndIdNot(name, folder, excludeId);
+    public boolean existsByNameAndFolderAndIsDeletedFalseAndIdNot(String name, Folder folder, Integer excludeId) {
+        return this.documentRepository.existsByNameAndFolderAndIsDeletedFalseAndIdNot(name, folder, excludeId);
     }
 
     @Override
-    public boolean existsByNameAndCreatedByAndFolderIsNullAndIdNot(String name, User createdBy, Integer id) {
-        return documentRepository.existsByNameAndCreatedByAndFolderIsNullAndIdNot(name, createdBy, id);
+    public boolean existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, Integer id) {
+        return this.documentRepository.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(name, createdBy, id);
     }
 
 
@@ -258,5 +257,87 @@ public class DocumentServiceImpl implements DocumentService {
         return this.documentRepository.findAll(combinedSpec, pageable);
     }
 
+    @Override
+    public Document findByNameAndFolderAndIsDeletedFalse(String name, Folder folder) {
+        return this.documentRepository.findByNameAndFolderAndIsDeletedFalse(name, folder).orElse(null);
+    }
 
+    @Override
+    public Document findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(String name, User createdBy) {
+        return this.documentRepository.findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(name, createdBy).orElse(null);
+    }
+
+    @Override
+    public List<Document> findByFolderAndIsDeletedFalse(Folder folder) {
+        return this.documentRepository.findByFolderAndIsDeletedFalse(folder);
+    }
+
+    @Override
+    public List<Document> findByFolderAndIsDeletedTrue(Folder folder) {
+        return this.documentRepository.findByFolderAndIsDeletedTrue(folder);
+    }
+
+    @Override
+    public void copyDocuments(List<Document> docs, Folder targetFolder) {
+        for (Document doc : docs) {
+            String uniqueName = generateUniqueName(doc.getName(), targetFolder);
+            String sourceKey = extractKeyFromPath(doc.getFilePath());
+            String folderPath = buildS3FolderPath(targetFolder);
+            String copiedFilename = UUID.randomUUID() + "_" + doc.getOriginalFilename();
+            String targetKey = ROOT_FOLDER_PREFIX + "/" + folderPath + "/" + copiedFilename;
+
+            s3Client.copyObject(CopyObjectRequest.builder()
+                    .sourceBucket(bucketName)
+                    .sourceKey(sourceKey)
+                    .destinationBucket(bucketName)
+                    .destinationKey(targetKey)
+                    .build());
+
+            Document copy = new Document();
+            copy.setName(uniqueName);
+            copy.setOriginalFilename(doc.getOriginalFilename());
+            copy.setStoredFilename(copiedFilename);
+            copy.setFilePath("s3://" + bucketName + "/" + targetKey);
+            copy.setFileSize(doc.getFileSize());
+            copy.setMimeType(doc.getMimeType());
+            copy.setFileHash(doc.getFileHash());
+            copy.setEncrypted(doc.getEncrypted());
+            copy.setStorageType(doc.getStorageType());
+            copy.setDeleted(false);
+            copy.setFolder(targetFolder);
+            copy.setCreatedBy(SecurityUtil.getCurrentUserFromThreadLocal());
+
+            this.documentRepository.save(copy);
+        }
+    }
+
+    @Override
+    public void cutDocuments(List<Document> docs, Folder targetFolder) {
+        for (Document doc : docs) {
+            String oldKey = extractKeyFromPath(doc.getFilePath());
+            String folderPath = buildS3FolderPath(targetFolder);
+            String storedFilename = doc.getStoredFilename();
+            String newKey = ROOT_FOLDER_PREFIX + "/" + folderPath + "/" + storedFilename;
+
+            String uniqueName = generateUniqueName(doc.getName(), targetFolder);
+
+            s3Client.copyObject(CopyObjectRequest.builder()
+                    .sourceBucket(bucketName)
+                    .sourceKey(oldKey)
+                    .destinationBucket(bucketName)
+                    .destinationKey(newKey)
+                    .build());
+
+            s3Client.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(oldKey)
+                    .build());
+
+            doc.setFilePath("s3://" + bucketName + "/" + newKey);
+            doc.setFolder(targetFolder);
+            doc.setName(uniqueName);
+
+            this.documentRepository.save(doc);
+        }
+    }
 }

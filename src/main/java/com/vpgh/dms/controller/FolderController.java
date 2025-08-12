@@ -12,6 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/api")
 public class FolderController {
@@ -67,39 +71,60 @@ public class FolderController {
         return ResponseEntity.status(HttpStatus.OK).body(this.folderService.save(folder));
     }
 
-    @DeleteMapping(path = "/secure/folders/{id}")
+    @DeleteMapping(path = "/secure/folders")
     @ApiMessage(message = "Chuyển thư mục vào thùng rác")
-    public ResponseEntity<Void> softDelete(@PathVariable Integer id) {
-        Folder folder = this.folderService.getFolderById(id);
-        if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
-            throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+    public ResponseEntity<Void> softDelete(@RequestBody List<Integer> ids) {
+        List<Folder> folders = this.folderService.getFoldersByIds(ids);
+        Map<Integer, Folder> folderMap = folders.stream()
+                .filter(f -> !f.getDeleted())
+                .collect(Collectors.toMap(f -> f.getId(), f -> f));
+        List<Integer> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
+
+        if (!notFoundIds.isEmpty()) {
+            throw new NotFoundException("Không tìm thấy thư mục với các ID (hoặc đã bị xóa mềm): " + notFoundIds);
         }
 
-        this.folderService.softDeleteFolderAndChildren(folder);
+        for (Folder f : folders) {
+            this.folderService.softDeleteFolderAndChildren(f);
+        }
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @PatchMapping(path = "/secure/folders/restore/{id}")
+    @PatchMapping(path = "/secure/folders/restore")
     @ApiMessage(message = "Khôi phục thư mục")
-    public ResponseEntity<Folder> restore(@PathVariable Integer id) {
-        Folder folder = this.folderService.getFolderById(id);
-        if (folder == null || !Boolean.TRUE.equals(folder.getDeleted())) {
-            throw new NotFoundException("Thư mục không tồn tại hoặc chưa bị xoá mềm");
+    public ResponseEntity<List<Folder>> restore(@RequestBody List<Integer> ids) {
+        List<Folder> folders = this.folderService.getFoldersByIds(ids);
+        Map<Integer, Folder> folderMap = folders.stream()
+                .filter(f -> f.getDeleted())
+                .collect(Collectors.toMap(f -> f.getId(), f -> f));
+        List<Integer> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
+
+        if (!notFoundIds.isEmpty()) {
+            throw new NotFoundException("Không tìm thấy thư mục với các ID (hoặc chưa bị xóa mềm): " + notFoundIds);
         }
 
-        this.folderService.restoreFolderAndChildren(folder);
-        return ResponseEntity.status(HttpStatus.OK).body(folder);
+        for (Folder f : folders) {
+            this.folderService.restoreFolderAndChildren(f);
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(folders);
     }
 
-    @DeleteMapping(path = "/secure/folders/permanent/{id}")
+    @DeleteMapping(path = "/secure/folders/permanent")
     @ApiMessage(message = "Xoá vĩnh viễn thư mục")
-    public ResponseEntity<Void> hardDelete(@PathVariable Integer id) {
-        Folder folder = this.folderService.getFolderById(id);
-        if (folder == null || !Boolean.TRUE.equals(folder.getDeleted())) {
-            throw new NotFoundException("Thư mục không tồn tại hoặc chưa bị xoá mềm");
+    public ResponseEntity<Void> hardDelete(@RequestBody List<Integer> ids) {
+        List<Folder> folders = this.folderService.getFoldersByIds(ids);
+        Map<Integer, Folder> folderMap = folders.stream()
+                .filter(f -> f.getDeleted())
+                .collect(Collectors.toMap(f -> f.getId(), f -> f));
+        List<Integer> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
+
+        if (!notFoundIds.isEmpty()) {
+            throw new NotFoundException("Không tìm thấy thư mục với các ID (hoặc chưa bị xóa mềm): " + notFoundIds);
         }
 
-        this.folderService.hardDeleteFolderAndChildren(folder);
+        for (Folder f : folders) {
+            this.folderService.hardDeleteFolderAndChildren(f);
+        }
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
