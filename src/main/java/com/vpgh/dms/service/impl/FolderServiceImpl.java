@@ -41,15 +41,17 @@ public class FolderServiceImpl implements FolderService {
         return folder.isPresent() ? folder.get() : null;
     }
 
+
     @Override
-    public Folder getFolderByIdAndCreatedBy(Integer id, User user) {
-        return this.folderRepository.findByIdAndCreatedBy(id, user);
+    public boolean existsByNameAndParentAndIsDeletedFalseAndIdNot(String name, Folder parent, Integer id) {
+        return this.folderRepository.existsByNameAndParentAndIsDeletedFalseAndIdNot(name, parent, id);
     }
 
     @Override
-    public boolean existsByNameAndParentAndCreatedByAndIdNot(String name, Folder parent, User user, Integer excludeId) {
-        return this.folderRepository.existsByNameAndParentAndCreatedByAndIdNot(name, parent, user, excludeId);
+    public boolean existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, Integer id) {
+        return this.folderRepository.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(name, createdBy, id);
     }
+
 
     @Override
     public Folder save(Folder folder) {

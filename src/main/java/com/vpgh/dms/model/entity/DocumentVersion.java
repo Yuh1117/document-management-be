@@ -11,6 +11,8 @@ public class DocumentVersion extends TimestampedEntity {
     private Integer id;
 
     @Column(nullable = false)
+    private String name;
+    @Column(nullable = false)
     private Integer versionNumber;
     @Column(nullable = false)
     private String storedFilename;
@@ -89,5 +91,13 @@ public class DocumentVersion extends TimestampedEntity {
 
     public void setDocument(Document document) {
         this.document = document;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

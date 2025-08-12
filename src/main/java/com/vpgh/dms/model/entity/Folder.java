@@ -8,12 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.Set;
 
 @Entity
-@Table(
-        name = "folders",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"name", "parent_id"})
-        }
-)
+@Table(name = "folders")
 public class Folder extends FullAuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

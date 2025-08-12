@@ -23,17 +23,22 @@ public class FolderController {
     @ApiMessage(message = "Tạo mới thư mục")
     public ResponseEntity<Folder> create(@RequestBody @Valid Folder folder) {
         if (folder.getParent() != null && folder.getParent().getId() != null) {
-            Folder f = this.folderService.getFolderByIdAndCreatedBy(folder.getParent().getId(),
-                    SecurityUtil.getCurrentUserFromThreadLocal());
-            if (f == null) {
-                throw new NotFoundException("Không tồn tại thư mục cha này.");
+            Folder f = this.folderService.getFolderById(folder.getParent().getId());
+            if (f == null || Boolean.TRUE.equals(folder.getDeleted())) {
+                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
             }
             folder.setParent(f);
         }
 
-        if (this.folderService.existsByNameAndParentAndCreatedByAndIdNot(folder.getName(), folder.getParent(),
-                SecurityUtil.getCurrentUserFromThreadLocal(), null)) {
-            throw new UniqueConstraintException("Không thể tạo thư mục với tên này.");
+        if (folder.getParent() != null) {
+            if (folderService.existsByNameAndParentAndIsDeletedFalseAndIdNot(folder.getName(), folder.getParent(), folder.getId())) {
+                throw new UniqueConstraintException("Không thể tạo thư mục với tên này trong cùng thư mục cha.");
+            }
+        } else {
+            if (folderService.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(folder.getName(), SecurityUtil.getCurrentUserFromThreadLocal(),
+                    folder.getId())) {
+                throw new UniqueConstraintException("Không thể tạo thư mục gốc với tên này.");
+            }
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(this.folderService.save(folder));
@@ -47,9 +52,15 @@ public class FolderController {
             throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
         }
 
-        if (this.folderService.existsByNameAndParentAndCreatedByAndIdNot(request.getName(), folder.getParent(),
-                SecurityUtil.getCurrentUserFromThreadLocal(), folder.getId())) {
-            throw new UniqueConstraintException("Không thể tạo thư mục với tên này.");
+        if (folder.getParent() != null) {
+            if (folderService.existsByNameAndParentAndIsDeletedFalseAndIdNot(request.getName(), folder.getParent(), folder.getId())) {
+                throw new UniqueConstraintException("Không thể đổi tên này trong cùng thư mục cha.");
+            }
+        } else {
+            if (folderService.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(request.getName(), SecurityUtil.getCurrentUserFromThreadLocal(),
+                    folder.getId())) {
+                throw new UniqueConstraintException("Không thể đổi tên này trong thư mục gốc");
+            }
         }
 
         folder.setName(request.getName());

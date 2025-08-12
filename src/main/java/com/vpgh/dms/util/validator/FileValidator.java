@@ -4,7 +4,6 @@ import com.vpgh.dms.model.dto.request.FileUploadReq;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.service.SystemSettingService;
-import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ValidFile;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -49,10 +48,9 @@ public class FileValidator implements ConstraintValidator<ValidFile, FileUploadR
         }
 
         if (fileUploadReq.getFolderId() != null) {
-            Folder folder = this.folderService.getFolderByIdAndCreatedBy(fileUploadReq.getFolderId(),
-                    SecurityUtil.getCurrentUserFromThreadLocal());
-            if (folder == null) {
-                context.buildConstraintViolationWithTemplate("Thư mục không tồn tại.")
+            Folder folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
+            if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
+                context.buildConstraintViolationWithTemplate("Thư mục không tồn tại hoặc đã bị xóa")
                         .addPropertyNode("folderId")
                         .addConstraintViolation();
                 return false;

@@ -4,12 +4,7 @@ import com.vpgh.dms.model.constant.MemberEnum;
 import jakarta.persistence.*;
 
 @Entity
-@Table(
-        name = "user_group_members",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"user_id", "group_id"})
-        }
-)
+@Table(name = "user_group_members")
 public class UserGroupMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
