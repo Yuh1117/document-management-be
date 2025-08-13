@@ -29,4 +29,6 @@ public interface RoleService {
     long count();
 
     List<Role> saveAll(List<Role> roles);
+
+    RoleDTO convertRoleToRoleDTO(Role role);
 }

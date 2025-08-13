@@ -24,7 +24,7 @@ public class UserDTO {
     @NotBlank(message = "Họ không được để trống")
     private String lastName;
     private String avatar;
-    private Role role;
+    private RoleDTO role;
     @JsonIgnore
     private MultipartFile file;
 
@@ -87,11 +87,11 @@ public class UserDTO {
         this.avatar = avatar;
     }
 
-    public Role getRole() {
+    public RoleDTO getRole() {
         return role;
     }
 
-    public void setRole(Role role) {
+    public void setRole(RoleDTO role) {
         this.role = role;
     }
 
