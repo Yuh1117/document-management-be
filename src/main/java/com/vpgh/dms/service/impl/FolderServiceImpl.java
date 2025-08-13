@@ -41,6 +41,10 @@ public class FolderServiceImpl implements FolderService {
         return folder.isPresent() ? folder.get() : null;
     }
 
+    @Override
+    public List<Folder> getFoldersByIds(List<Integer> ids) {
+        return this.folderRepository.findByIdIn(ids);
+    }
 
     @Override
     public boolean existsByNameAndParentAndIsDeletedFalseAndIdNot(String name, Folder parent, Integer id) {
@@ -68,15 +72,13 @@ public class FolderServiceImpl implements FolderService {
             currentFolder.setDeleted(true);
             this.folderRepository.save(currentFolder);
 
-            List<Document> documents = this.documentRepository.findByFolderAndCreatedByAndIsDeletedFalse(currentFolder,
-                    currentFolder.getCreatedBy(), Pageable.unpaged()).getContent();
+            List<Document> documents = this.documentRepository.findByFolderAndIsDeletedFalse(currentFolder);
             for (Document doc : documents) {
                 doc.setDeleted(true);
                 this.documentRepository.save(doc);
             }
 
-            List<Folder> subFolders = this.folderRepository.findByParentAndCreatedByAndIsDeletedFalse(currentFolder,
-                    currentFolder.getCreatedBy(), Pageable.unpaged()).getContent();
+            List<Folder> subFolders = this.folderRepository.findByParentAndIsDeletedFalse(currentFolder);
             for (Folder subFolder : subFolders) {
                 stack.push(subFolder);
             }
@@ -93,15 +95,13 @@ public class FolderServiceImpl implements FolderService {
             currentFolder.setDeleted(false);
             this.folderRepository.save(currentFolder);
 
-            List<Document> documents = this.documentRepository.findByFolderAndCreatedByAndIsDeletedTrue(currentFolder,
-                    currentFolder.getCreatedBy(), Pageable.unpaged()).getContent();
+            List<Document> documents = this.documentRepository.findByFolderAndIsDeletedTrue(currentFolder);
             for (Document doc : documents) {
                 doc.setDeleted(false);
                 this.documentRepository.save(doc);
             }
 
-            List<Folder> subFolders = this.folderRepository.findByParentAndCreatedByAndIsDeletedTrue(currentFolder,
-                    currentFolder.getCreatedBy(), Pageable.unpaged()).getContent();
+            List<Folder> subFolders = this.folderRepository.findByParentAndIsDeletedTrue(currentFolder);
             for (Folder subFolder : subFolders) {
                 stack.push(subFolder);
             }
@@ -165,5 +165,15 @@ public class FolderServiceImpl implements FolderService {
         }
 
         return this.folderRepository.findAll(combinedSpec, pageable);
+    }
+
+    @Override
+    public List<Folder> findByParentAndIsDeletedFalse(Folder parent) {
+        return this.folderRepository.findByParentAndIsDeletedFalse(parent);
+    }
+
+    @Override
+    public List<Folder> findByParentAndIsDeletedTrue(Folder parent) {
+        return this.folderRepository.findByParentAndIsDeletedTrue(parent);
     }
 }

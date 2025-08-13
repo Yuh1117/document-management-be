@@ -3,7 +3,11 @@ package com.vpgh.dms.controller;
 import com.vpgh.dms.model.dto.PermissionDTO;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
 import com.vpgh.dms.model.entity.Permission;
+import com.vpgh.dms.model.entity.Role;
+import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.service.PermissionService;
+import com.vpgh.dms.util.DataResponse;
+import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.CustomValidationException;
 import com.vpgh.dms.util.exception.DataConflictException;
@@ -18,10 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -116,4 +117,26 @@ public class PermissionController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
+    @PostMapping("/secure/check-permissions")
+    public ResponseEntity<DataResponse<Map<String, Boolean>>> checkPermissions(@RequestBody List<Map<String, String>> requests) {
+        DataResponse<Map<String, Boolean>> res = new DataResponse<>();
+        Map<String, Boolean> resultMap = new HashMap<>();
+        res.setContent(resultMap);
+
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+        if (currentUser == null || currentUser.getRole() == null) {
+            return ResponseEntity.status(HttpStatus.OK).body(res);
+        }
+
+        Set<Permission> userPermissions = new HashSet<>(permissionService.getPermissionsByRole(currentUser.getRole()));
+
+        for (Map<String, String> req : requests) {
+            String key = req.get("apiPath") + "|" + req.get("method").toUpperCase();
+            boolean matched = userPermissions.stream().anyMatch(p ->
+                    p.getApiPath().equals(req.get("apiPath")) && p.getMethod().equalsIgnoreCase(req.get("method")));
+            resultMap.put(key, matched);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(res);
+    }
 }

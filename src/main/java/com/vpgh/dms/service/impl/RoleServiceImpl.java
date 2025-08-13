@@ -119,4 +119,13 @@ public class RoleServiceImpl implements RoleService {
     public List<Role> saveAll(List<Role> roles) {
         return this.roleRepository.saveAll(roles);
     }
+
+    @Override
+    public RoleDTO convertRoleToRoleDTO(Role role) {
+        RoleDTO dto = new RoleDTO();
+        dto.setId(role.getId());
+        dto.setName(role.getName());
+        dto.setDescription(role.getDescription());
+        return dto;
+    }
 }

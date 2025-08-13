@@ -1,6 +1,7 @@
 package com.vpgh.dms.repository;
 
 import com.vpgh.dms.model.entity.Permission;
+import com.vpgh.dms.model.entity.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -24,4 +25,6 @@ public interface PermissionRepository extends JpaRepository<Permission, Integer>
     Page<Permission> findAll(Specification<Permission> specification, Pageable pageable);
 
     void deleteById(Integer id);
+
+    List<Permission> findAllByRoles(Role role);
 }

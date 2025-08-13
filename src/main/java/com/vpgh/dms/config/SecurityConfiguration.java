@@ -1,5 +1,6 @@
 package com.vpgh.dms.config;
 
+import com.vpgh.dms.util.WhiteListUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -31,14 +32,11 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        String[] whiteList = {"/", "/api/login", "/api/signup", "/api/auth/google",
-                "/dms-api-docs/**", "/swagger-ui/**", "/swagger-ui.html"};
-
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(whiteList).permitAll()
+                        .requestMatchers(WhiteListUtil.getPublicWhitelist()).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(Customizer.withDefaults())

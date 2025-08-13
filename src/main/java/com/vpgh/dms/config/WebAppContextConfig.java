@@ -1,9 +1,12 @@
 package com.vpgh.dms.config;
 
+import com.vpgh.dms.util.WhiteListUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.stream.Stream;
 
 @Configuration
 public class WebAppContextConfig implements WebMvcConfigurer {
@@ -15,9 +18,9 @@ public class WebAppContextConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(apiMessageInterceptor);
-
-        String[] whiteList = {"/", "/api/login", "/api/signup", "/api/auth/google", "/api/secure/profile",
-                "/dms-api-docs/**", "/swagger-ui/**", "/swagger-ui.html"};
-//        registry.addInterceptor(permissionInterceptor).excludePathPatterns(whiteList);
+        registry.addInterceptor(permissionInterceptor)
+                .excludePathPatterns(Stream.concat(
+                        Stream.of(WhiteListUtil.getPublicWhitelist()),
+                        Stream.of(WhiteListUtil.getAuthenticatedWhitelist())).toArray(String[]::new));
     }
 }

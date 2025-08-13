@@ -2,6 +2,7 @@ package com.vpgh.dms.service;
 
 import com.vpgh.dms.model.dto.PermissionDTO;
 import com.vpgh.dms.model.entity.Permission;
+import com.vpgh.dms.model.entity.Role;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -27,4 +28,6 @@ public interface PermissionService {
     long count();
 
     List<Permission> saveAll(List<Permission> permissions);
+
+    List<Permission> getPermissionsByRole(Role role);
 }

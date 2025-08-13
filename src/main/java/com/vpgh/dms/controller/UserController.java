@@ -38,23 +38,25 @@ public class UserController {
 
     @PostMapping(path = "/secure/users")
     @ApiMessage(message = "Tạo mới người dùng")
-    public ResponseEntity<User> create(@ModelAttribute @Valid UserDTO reqUser) {
+    public ResponseEntity<UserDTO> create(@ModelAttribute @Valid UserDTO reqUser) {
         User user = this.userService.handleCreateUser(reqUser);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertUserToUserDTO(user));
     }
 
     @GetMapping(path = "/secure/users")
     @ApiMessage(message = "Lấy danh sách người dùng")
-    public ResponseEntity<PaginationResDTO<List<User>>> list(@RequestParam Map<String, String> params) {
+    public ResponseEntity<PaginationResDTO<List<UserDTO>>> list(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
             params.put("page", "1");
         }
 
         Page<User> pageUsers = this.userService.getAllUsers(params);
+        List<UserDTO> users = pageUsers.getContent().stream().map(u -> this.userService.convertUserToUserDTO(u))
+                .collect(Collectors.toList());
 
-        PaginationResDTO<List<User>> results = new PaginationResDTO<>();
-        results.setResult(pageUsers.getContent());
+        PaginationResDTO<List<UserDTO>> results = new PaginationResDTO<>();
+        results.setResult(users);
         results.setCurrentPage(pageUsers.getNumber() + 1);
         results.setTotalPages(pageUsers.getTotalPages());
 
@@ -63,19 +65,19 @@ public class UserController {
 
     @GetMapping(path = "/secure/users/{id}")
     @ApiMessage(message = "Lấy chi tiết người dùng")
-    public ResponseEntity<User> detail(@PathVariable(value = "id") Integer id) {
+    public ResponseEntity<UserDTO> detail(@PathVariable(value = "id") Integer id) {
         User user = this.userService.getUserById(id);
         if (user == null) {
             throw new NotFoundException("Không tìm thấy người dùng");
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(user);
+        return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserDTO(user));
     }
 
     @PatchMapping(path = "/secure/users/{id}")
     @ApiMessage(message = "Cập nhật người dùng")
-    public ResponseEntity<User> update(@PathVariable(value = "id") Integer id,
-                                       @ModelAttribute UserDTO reqUser) {
+    public ResponseEntity<UserDTO> update(@PathVariable(value = "id") Integer id,
+                                          @ModelAttribute UserDTO reqUser) {
         reqUser.setId(id);
         Set<ConstraintViolation<UserDTO>> violations = validator.validate(reqUser);
 
@@ -94,7 +96,7 @@ public class UserController {
             throw new NotFoundException("Không tìm thấy người dùng!");
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(user);
+        return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserDTO(user));
     }
 
     @DeleteMapping(path = "/secure/users/{id}")

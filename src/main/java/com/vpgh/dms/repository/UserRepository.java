@@ -30,10 +30,4 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
     boolean existsByEmailAndIdNot(String email, Integer id);
 
     long count();
-
-    @EntityGraph(attributePaths = {"role", "role.permissions"})
-    @Query("SELECT u FROM User u WHERE u.email = :email")
-    User findByEmailWithRoleAndPermissions(@Param("email") String email);
-
-
 }

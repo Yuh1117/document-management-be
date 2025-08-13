@@ -2,6 +2,7 @@ package com.vpgh.dms.service.impl;
 
 import com.vpgh.dms.model.dto.PermissionDTO;
 import com.vpgh.dms.model.entity.Permission;
+import com.vpgh.dms.model.entity.Role;
 import com.vpgh.dms.repository.PermissionRepository;
 import com.vpgh.dms.service.PermissionService;
 import com.vpgh.dms.service.specification.PermissionSpecification;
@@ -106,5 +107,10 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     public List<Permission> saveAll(List<Permission> permissions) {
         return this.permissionRepository.saveAll(permissions);
+    }
+
+    @Override
+    public List<Permission> getPermissionsByRole(Role role) {
+        return this.permissionRepository.findAllByRoles(role);
     }
 }

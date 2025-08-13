@@ -29,5 +29,4 @@ public interface UserService {
 
     long count();
 
-    User getUserWithRoleAndPermissions(String email);
 }

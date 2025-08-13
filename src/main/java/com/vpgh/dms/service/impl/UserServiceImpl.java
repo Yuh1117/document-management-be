@@ -87,7 +87,7 @@ public class UserServiceImpl implements UserService {
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
         dto.setAvatar(user.getAvatar());
-        dto.setRole(user.getRole());
+        dto.setRole(this.roleService.convertRoleToRoleDTO(user.getRole()));
         dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());
         return dto;
@@ -144,8 +144,4 @@ public class UserServiceImpl implements UserService {
         return this.userRepository.count();
     }
 
-    @Override
-    public User getUserWithRoleAndPermissions(String email) {
-        return this.userRepository.findByEmailWithRoleAndPermissions(email);
-    }
 }

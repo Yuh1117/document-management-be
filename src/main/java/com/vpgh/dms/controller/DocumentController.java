@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RestController
@@ -41,13 +40,12 @@ public class DocumentController {
         Folder folder = null;
         if (fileUploadReq.getFolderId() != null) {
             folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
-            //todo: isDeleted or not
-            if (documentService.existsByNameAndFolderAndIdNot(fileUploadReq.getFile().getOriginalFilename(), folder, null)) {
+            if (documentService.existsByNameAndFolderAndIsDeletedFalseAndIdNot(fileUploadReq.getFile().getOriginalFilename(),
+                    folder, null)) {
                 throw new UniqueConstraintException("Tài liệu trùng tên trong cùng thư mục.");
             }
         } else {
-            //todo: isDeleted or not
-            if (documentService.existsByNameAndCreatedByAndFolderIsNullAndIdNot(fileUploadReq.getFile().getOriginalFilename(),
+            if (documentService.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(fileUploadReq.getFile().getOriginalFilename(),
                     SecurityUtil.getCurrentUserFromThreadLocal(), null)) {
                 throw new UniqueConstraintException("Tài liệu trùng tên trong thư mục gốc.");
             }
@@ -60,8 +58,24 @@ public class DocumentController {
     @PostMapping(path = "/secure/documents/upload-replace")
     @ApiMessage(message = "Upload và thay thế")
     public ResponseEntity<Document> uploadReplace(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
-        Folder folder = fileUploadReq.getFolderId() != null ? folderService.getFolderById(fileUploadReq.getFolderId()) : null;
-        Document doc = documentService.uploadReplaceFile(fileUploadReq.getFile(), folder);
+        Folder folder = null;
+        Document existingDoc = null;
+
+        if (fileUploadReq.getFolderId() != null) {
+            folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
+            existingDoc = documentService.findByNameAndFolderAndIsDeletedFalse(fileUploadReq.getFile().getOriginalFilename(), folder);
+            if (existingDoc == null) {
+                throw new NotFoundException("Không tìm thấy file trong thư mục để thay thế");
+            }
+        } else {
+            existingDoc = documentService.findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(fileUploadReq.getFile().getOriginalFilename(),
+                    SecurityUtil.getCurrentUserFromThreadLocal());
+            if (existingDoc == null) {
+                throw new NotFoundException("Không tìm thấy file để thay thể");
+            }
+        }
+
+        Document doc = documentService.uploadReplaceFile(fileUploadReq.getFile(), folder, existingDoc);
         return ResponseEntity.status(HttpStatus.OK).body(doc);
     }
 
@@ -105,14 +119,12 @@ public class DocumentController {
         }
 
         if (doc.getFolder() != null) {
-            //todo: isDeleted or not
-            if (documentService.existsByNameAndFolderAndIdNot(request.getName(), doc.getFolder(), doc.getId())) {
+            if (documentService.existsByNameAndFolderAndIsDeletedFalseAndIdNot(request.getName(), doc.getFolder(), doc.getId())) {
                 throw new UniqueConstraintException("Không thể đổi tên này trong cùng thư mục.");
             }
         } else {
-            //todo: isDeleted or not
-            if (documentService.existsByNameAndCreatedByAndFolderIsNullAndIdNot(request.getName(), SecurityUtil.getCurrentUserFromThreadLocal(),
-                    doc.getId())) {
+            if (documentService.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(request.getName(),
+                    SecurityUtil.getCurrentUserFromThreadLocal(), doc.getId())) {
                 throw new UniqueConstraintException("Không thể đổi tên này trong thư mục gốc.");
             }
         }
@@ -136,84 +148,108 @@ public class DocumentController {
                 .body(data);
     }
 
-    @DeleteMapping(path = "/secure/documents/{id}")
-    @ApiMessage(message = "Chuyển tài liệu vào thùng rác")
-    public ResponseEntity<Void> softDelete(@PathVariable Integer id) {
-        Document doc = this.documentService.getDocumentById(id);
-        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xoá");
-        }
-
-        doc.setDeleted(true);
-        this.documentService.save(doc);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-    }
-
     @DeleteMapping("/secure/documents")
-    @ApiMessage(message = "Chuyển nhiều tài liệu vào thùng rác")
-    public ResponseEntity<Void> softDeleteMany(@RequestBody List<Integer> ids) {
+    @ApiMessage(message = "Chuyển tài liệu vào thùng rác")
+    public ResponseEntity<Void> softDelete(@RequestBody List<Integer> ids) {
         List<Document> docs = this.documentService.getDocumentsByIds(ids);
-        Map<Integer, Document> docsMap = docs.stream().collect(Collectors.toMap(Document::getId, Function.identity()));
-
+        Map<Integer, Document> docsMap = docs.stream()
+                .filter(doc -> !doc.getDeleted())
+                .collect(Collectors.toMap(doc -> doc.getId(), doc -> doc));
         List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy tài liệu với các ID: " + notFoundIds);
+            throw new NotFoundException("Không tìm thấy tài liệu với các ID (hoặc đã bị xóa mềm): " + notFoundIds);
         }
 
         for (Document doc : docs) {
-            if (doc != null && !Boolean.TRUE.equals(doc.getDeleted())) {
-                doc.setDeleted(true);
-                this.documentService.save(doc);
-            }
+            doc.setDeleted(true);
+            this.documentService.save(doc);
         }
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 
-    @PatchMapping(path = "/secure/documents/restore/{id}")
+    @PatchMapping(path = "/secure/documents/restore")
     @ApiMessage(message = "Khôi phục tài liệu")
-    public ResponseEntity<Document> restore(@PathVariable Integer id) {
-        Document doc = this.documentService.getDocumentById(id);
-        if (doc == null || !Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("Tài liệu không tồn tại hoặc chưa bị xoá mềm");
+    public ResponseEntity<List<Document>> restore(@RequestBody List<Integer> ids) {
+        List<Document> docs = this.documentService.getDocumentsByIds(ids);
+        Map<Integer, Document> docsMap = docs.stream()
+                .filter(doc -> doc.getDeleted())
+                .collect(Collectors.toMap(doc -> doc.getId(), doc -> doc));
+        List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
+
+        if (!notFoundIds.isEmpty()) {
+            throw new NotFoundException("Không tìm thấy tài liệu với các ID (hoặc chưa bị xóa mềm): " + notFoundIds);
         }
 
-        doc.setDeleted(false);
-        doc = this.documentService.save(doc);
-        return ResponseEntity.status(HttpStatus.OK).body(doc);
-    }
-
-    @DeleteMapping("/secure/documents/permanent/{id}")
-    @ApiMessage(message = "Xoá vĩnh viễn tài liệu")
-    public ResponseEntity<Void> hardDelete(@PathVariable Integer id) {
-        Document doc = this.documentService.getDocumentById(id);
-        if (doc == null || !Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("Tài liệu không tồn tại hoặc chưa bị xoá mềm");
+        for (Document doc : docs) {
+            doc.setDeleted(false);
+            this.documentService.save(doc);
         }
-
-        this.documentService.hardDelete(doc);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return ResponseEntity.status(HttpStatus.OK).body(docs);
     }
 
     @DeleteMapping("/secure/documents/permanent")
-    @ApiMessage(message = "Xoá vĩnh viễn nhiều tài liệu")
-    public ResponseEntity<Void> hardDeleteMany(@RequestBody List<Integer> ids) {
+    @ApiMessage(message = "Xoá vĩnh viễn tài liệu")
+    public ResponseEntity<Void> hardDelete(@RequestBody List<Integer> ids) {
         List<Document> docs = this.documentService.getDocumentsByIds(ids);
-        Map<Integer, Document> docsMap = docs.stream().collect(Collectors.toMap(Document::getId, Function.identity()));
-
+        Map<Integer, Document> docsMap = docs.stream()
+                .filter(doc -> doc.getDeleted())
+                .collect(Collectors.toMap(doc -> doc.getId(), doc -> doc));
         List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy tài liệu với các ID: " + notFoundIds);
+            throw new NotFoundException("Không tìm thấy tài liệu với các ID (hoặc chưa bị xóa mềm): " + notFoundIds);
         }
 
         for (Document doc : docs) {
-            if (doc != null && Boolean.TRUE.equals(doc.getDeleted())) {
-                this.documentService.hardDelete(doc);
-            }
+            this.documentService.hardDelete(doc);
         }
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @PostMapping("/secure/documents/copy")
+    @ApiMessage(message = "Sao chép tài liệu")
+    public ResponseEntity<Void> copyDocuments(@RequestBody List<Integer> ids, @RequestParam(required = false) Integer targetFolderId) {
+        List<Document> docs = this.documentService.getDocumentsByIds(ids);
+        Map<Integer, Document> docsMap = docs.stream()
+                .filter(doc -> !doc.getDeleted())
+                .collect(Collectors.toMap(doc -> doc.getId(), doc -> doc));
+        List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
+
+        if (!notFoundIds.isEmpty()) {
+            throw new NotFoundException("Không tìm thấy tài liệu với các ID (hoặc đã bị xóa mềm): " + notFoundIds);
+        }
+
+        Folder folder = this.folderService.getFolderById(targetFolderId);
+        if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
+            throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+        }
+
+        this.documentService.copyDocuments(docs, folder);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/secure/documents/move")
+    @ApiMessage(message = "Di chuyển tài liệu")
+    public ResponseEntity<Void> moveDocuments(@RequestBody List<Integer> ids, @RequestParam(required = false) Integer targetFolderId) {
+        List<Document> docs = this.documentService.getDocumentsByIds(ids);
+        Map<Integer, Document> docsMap = docs.stream()
+                .filter(doc -> !doc.getDeleted())
+                .collect(Collectors.toMap(doc -> doc.getId(), doc -> doc));
+        List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
+
+        if (!notFoundIds.isEmpty()) {
+            throw new NotFoundException("Không tìm thấy tài liệu với các ID (hoặc đã bị xóa mềm): " + notFoundIds);
+        }
+
+        Folder folder = this.folderService.getFolderById(targetFolderId);
+        if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
+            throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+        }
+
+        this.documentService.cutDocuments(docs, folder);
+        return ResponseEntity.ok().build();
     }
 
 }

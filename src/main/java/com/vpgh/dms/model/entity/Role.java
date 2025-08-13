@@ -1,6 +1,7 @@
 package com.vpgh.dms.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
 
@@ -24,6 +25,7 @@ public class Role extends TimestampedEntity {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "role_permission", joinColumns = @JoinColumn(name = "role_id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id"))
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Set<Permission> permissions;
 
     public Role() {
