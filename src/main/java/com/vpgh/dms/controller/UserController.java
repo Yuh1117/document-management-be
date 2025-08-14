@@ -36,14 +36,14 @@ public class UserController {
     @Autowired
     private Validator validator;
 
-    @PostMapping(path = "/secure/users")
+    @PostMapping(path = "/admin/users")
     @ApiMessage(message = "Tạo mới người dùng")
     public ResponseEntity<UserDTO> create(@ModelAttribute @Valid UserDTO reqUser) {
         User user = this.userService.handleCreateUser(reqUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertUserToUserDTO(user));
     }
 
-    @GetMapping(path = "/secure/users")
+    @GetMapping(path = "/admin/users")
     @ApiMessage(message = "Lấy danh sách người dùng")
     public ResponseEntity<PaginationResDTO<List<UserDTO>>> list(@RequestParam Map<String, String> params) {
         String page = params.get("page");
@@ -63,7 +63,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 
-    @GetMapping(path = "/secure/users/{id}")
+    @GetMapping(path = "/admin/users/{id}")
     @ApiMessage(message = "Lấy chi tiết người dùng")
     public ResponseEntity<UserDTO> detail(@PathVariable(value = "id") Integer id) {
         User user = this.userService.getUserById(id);
@@ -74,7 +74,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserDTO(user));
     }
 
-    @PatchMapping(path = "/secure/users/{id}")
+    @PatchMapping(path = "/admin/users/{id}")
     @ApiMessage(message = "Cập nhật người dùng")
     public ResponseEntity<UserDTO> update(@PathVariable(value = "id") Integer id,
                                           @ModelAttribute UserDTO reqUser) {
@@ -99,7 +99,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserDTO(user));
     }
 
-    @DeleteMapping(path = "/secure/users/{id}")
+    @DeleteMapping(path = "/admin/users/{id}")
     @ApiMessage(message = "Xóa người dùng")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
         User user = this.userService.getUserById(id);

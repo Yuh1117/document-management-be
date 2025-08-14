@@ -31,14 +31,14 @@ public class SystemSettingController {
     @Autowired
     private Validator validator;
 
-    @PostMapping(path = "/secure/settings")
+    @PostMapping(path = "/admin/settings")
     @ApiMessage(message = "Tạo mới cài đặt")
     public ResponseEntity<SystemSetting> create(@RequestBody @Valid SystemSettingDTO reqSetting) {
         SystemSetting setting = this.systemSettingService.handleCreateSetting(reqSetting);
         return ResponseEntity.status(HttpStatus.CREATED).body(this.systemSettingService.save(setting));
     }
 
-    @GetMapping(path = "/secure/settings")
+    @GetMapping(path = "/admin/settings")
     @ApiMessage(message = "Lấy danh sách cài đặt")
     public ResponseEntity<PaginationResDTO<List<SystemSetting>>> list(@RequestParam Map<String, String> params) {
         String page = params.get("page");
@@ -57,7 +57,7 @@ public class SystemSettingController {
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 
-    @GetMapping(path = "/secure/settings/{id}")
+    @GetMapping(path = "/admin/settings/{id}")
     @ApiMessage(message = "Lấy chi tiết cài đặt")
     public ResponseEntity<SystemSetting> detail(@PathVariable(value = "id") Integer id) {
         SystemSetting setting = this.systemSettingService.getSettingById(id);
@@ -69,7 +69,7 @@ public class SystemSettingController {
     }
 
 
-    @PatchMapping(path = "/secure/settings/{id}")
+    @PatchMapping(path = "/admin/settings/{id}")
     @ApiMessage(message = "Cập nhật cài đặt")
     public ResponseEntity<SystemSetting> update(@PathVariable("id") Integer id,
                                                 @RequestBody SystemSettingDTO reqSetting) {
@@ -95,7 +95,7 @@ public class SystemSettingController {
         return ResponseEntity.status(HttpStatus.OK).body(setting);
     }
 
-    @DeleteMapping(path = "/secure/settings/{id}")
+    @DeleteMapping(path = "/admin/settings/{id}")
     @ApiMessage(message = "Xóa cài đặt")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
         SystemSetting setting = this.systemSettingService.getSettingById(id);

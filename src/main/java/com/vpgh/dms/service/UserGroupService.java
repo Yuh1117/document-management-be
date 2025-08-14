@@ -1,0 +1,25 @@
+package com.vpgh.dms.service;
+
+import com.vpgh.dms.model.UserGroupDTO;
+import com.vpgh.dms.model.entity.User;
+import com.vpgh.dms.model.entity.UserGroup;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
+import java.util.Map;
+
+public interface UserGroupService {
+    UserGroup save(UserGroup group);
+
+    UserGroup handleCreateGroup(UserGroupDTO dto);
+
+    List<UserGroup> getGroupsByUser(User user);
+
+    boolean existsByNameAndCreatedByAndIdNot(String name, User createdBy, Integer id);
+
+    Page<UserGroup> getAllGroups(Map<String, String> params);
+
+    Page<UserGroup> getAllGroupsByUser(Map<String, String> params, User user);
+
+    UserGroupDTO convertUserGroupToUserGroupDTO(UserGroup group);
+}

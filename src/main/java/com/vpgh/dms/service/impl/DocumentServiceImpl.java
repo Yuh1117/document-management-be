@@ -195,66 +195,61 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public void copyDocuments(List<Document> docs, Folder targetFolder) {
-        for (Document doc : docs) {
-            String uniqueName = generateUniqueName(doc.getName(), targetFolder);
-            String sourceKey = extractKeyFromPath(doc.getFilePath());
-            String folderPath = buildS3FolderPath(targetFolder);
-            String copiedFilename = generateStoredFilename(doc.getOriginalFilename());
-            String targetKey = buildS3Key(folderPath, copiedFilename);
+    public void copyDocument(Document doc, Folder targetFolder) {
+        String uniqueName = generateUniqueName(doc.getName(), targetFolder);
+        String sourceKey = extractKeyFromPath(doc.getFilePath());
+        String folderPath = buildS3FolderPath(targetFolder);
+        String copiedFilename = generateStoredFilename(doc.getOriginalFilename());
+        String targetKey = buildS3Key(folderPath, copiedFilename);
 
-            s3Client.copyObject(CopyObjectRequest.builder()
-                    .sourceBucket(bucketName)
-                    .sourceKey(sourceKey)
-                    .destinationBucket(bucketName)
-                    .destinationKey(targetKey)
-                    .build());
+        s3Client.copyObject(CopyObjectRequest.builder()
+                .sourceBucket(bucketName)
+                .sourceKey(sourceKey)
+                .destinationBucket(bucketName)
+                .destinationKey(targetKey)
+                .build());
 
-            Document copy = new Document();
-            copy.setName(uniqueName);
-            copy.setOriginalFilename(doc.getOriginalFilename());
-            copy.setStoredFilename(copiedFilename);
-            copy.setFilePath(buildS3Uri(targetKey));
-            copy.setFileSize(doc.getFileSize());
-            copy.setMimeType(doc.getMimeType());
-            copy.setFileHash(doc.getFileHash());
-            copy.setEncrypted(doc.getEncrypted());
-            copy.setStorageType(doc.getStorageType());
-            copy.setDeleted(false);
-            copy.setFolder(targetFolder);
+        Document copy = new Document();
+        copy.setName(uniqueName);
+        copy.setOriginalFilename(doc.getOriginalFilename());
+        copy.setStoredFilename(copiedFilename);
+        copy.setFilePath(buildS3Uri(targetKey));
+        copy.setFileSize(doc.getFileSize());
+        copy.setMimeType(doc.getMimeType());
+        copy.setFileHash(doc.getFileHash());
+        copy.setEncrypted(doc.getEncrypted());
+        copy.setStorageType(doc.getStorageType());
+        copy.setFolder(targetFolder);
 
-            this.documentRepository.save(copy);
-        }
+        this.documentRepository.save(copy);
     }
 
     @Override
-    public void cutDocuments(List<Document> docs, Folder targetFolder) {
-        for (Document doc : docs) {
-            String oldKey = extractKeyFromPath(doc.getFilePath());
-            String folderPath = buildS3FolderPath(targetFolder);
-            String storedFilename = doc.getStoredFilename();
-            String newKey = buildS3Key(folderPath, storedFilename);
+    public void moveDocument(Document doc, Folder targetFolder) {
+        String oldKey = extractKeyFromPath(doc.getFilePath());
+        String folderPath = buildS3FolderPath(targetFolder);
+        String storedFilename = doc.getStoredFilename();
+        String newKey = buildS3Key(folderPath, storedFilename);
 
-            String uniqueName = generateUniqueName(doc.getName(), targetFolder);
+        String uniqueName = generateUniqueName(doc.getName(), targetFolder);
 
-            s3Client.copyObject(CopyObjectRequest.builder()
-                    .sourceBucket(bucketName)
-                    .sourceKey(oldKey)
-                    .destinationBucket(bucketName)
-                    .destinationKey(newKey)
-                    .build());
+        s3Client.copyObject(CopyObjectRequest.builder()
+                .sourceBucket(bucketName)
+                .sourceKey(oldKey)
+                .destinationBucket(bucketName)
+                .destinationKey(newKey)
+                .build());
 
-            s3Client.deleteObject(DeleteObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(oldKey)
-                    .build());
+        s3Client.deleteObject(DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(oldKey)
+                .build());
 
-            doc.setFilePath(buildS3Uri(newKey));
-            doc.setFolder(targetFolder);
-            doc.setName(uniqueName);
+        doc.setFilePath(buildS3Uri(newKey));
+        doc.setFolder(targetFolder);
+        doc.setName(uniqueName);
 
-            this.documentRepository.save(doc);
-        }
+        this.documentRepository.save(doc);
     }
 
     private Document saveNewDocument(MultipartFile file, Folder folder, String fileName) throws IOException {
@@ -271,9 +266,7 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setFileSize((double) file.getSize());
         doc.setMimeType(file.getContentType());
         doc.setFileHash(DigestUtils.md5DigestAsHex(file.getBytes()));
-        doc.setEncrypted(false);
         doc.setStorageType(StorageType.AWS_S3);
-        doc.setDeleted(false);
         doc.setFolder(folder);
         return documentRepository.save(doc);
     }

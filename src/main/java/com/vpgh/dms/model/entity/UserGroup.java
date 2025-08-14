@@ -1,5 +1,6 @@
 package com.vpgh.dms.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.FullAuditableEntity;
 import jakarta.persistence.*;
 
@@ -19,9 +20,11 @@ public class UserGroup extends FullAuditableEntity {
     private Set<UserGroupMember> members;
 
     @OneToMany(mappedBy = "group", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<FolderPermission> folderPermissions;
 
     @OneToMany(mappedBy = "group", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<DocumentPermission> documentPermissions;
 
     public Integer getId() {
