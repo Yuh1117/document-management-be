@@ -31,11 +31,11 @@ public class Document extends FullAuditableEntity {
     private String mimeType;
     @Column(nullable = false)
     private String fileHash;
-    private Boolean isEncrypted;
+    private Boolean isEncrypted = false;
     @Enumerated(EnumType.STRING)
     private StorageType storageType;
     private String extractedText;
-    private Boolean isDeleted;
+    private Boolean isDeleted = false;
 
     @ManyToOne
     @JoinColumn(name = "folder_id")

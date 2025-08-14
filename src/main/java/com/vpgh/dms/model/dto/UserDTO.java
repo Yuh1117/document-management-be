@@ -2,7 +2,6 @@ package com.vpgh.dms.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.vpgh.dms.model.entity.Role;
 import com.vpgh.dms.util.annotation.ValidUser;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

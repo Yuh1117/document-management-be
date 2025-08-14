@@ -5,9 +5,11 @@ import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.repository.FolderRepository;
+import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.service.specification.FolderSpecification;
 import com.vpgh.dms.util.PageSize;
+import com.vpgh.dms.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -18,10 +20,7 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Stack;
+import java.util.*;
 
 @Service
 public class FolderServiceImpl implements FolderService {
@@ -31,6 +30,8 @@ public class FolderServiceImpl implements FolderService {
     @Autowired
     private DocumentRepository documentRepository;
     @Autowired
+    private DocumentService documentService;
+    @Autowired
     private S3Client s3Client;
     @Value("${aws.bucket.name}")
     private String bucketName;
@@ -38,7 +39,7 @@ public class FolderServiceImpl implements FolderService {
     @Override
     public Folder getFolderById(Integer id) {
         Optional<Folder> folder = this.folderRepository.findById(id);
-        return folder.isPresent() ? folder.get() : null;
+        return folder.orElse(null);
     }
 
     @Override
@@ -175,5 +176,88 @@ public class FolderServiceImpl implements FolderService {
     @Override
     public List<Folder> findByParentAndIsDeletedTrue(Folder parent) {
         return this.folderRepository.findByParentAndIsDeletedTrue(parent);
+    }
+
+    @Override
+    public void copyFolder(Folder folder, Folder targetFolder) {
+        Stack<Folder> stack = new Stack<>();
+        stack.push(folder);
+        Map<Integer, Folder> copiedMap = new HashMap<>();
+
+        Folder rootCopy = new Folder();
+        rootCopy.setName(generateUniqueName(folder.getName(), targetFolder));
+        rootCopy.setParent(targetFolder);
+        this.folderRepository.save(rootCopy);
+        copiedMap.put(folder.getId(), rootCopy);
+
+        while (!stack.isEmpty()) {
+            Folder current = stack.pop();
+            Folder currentCopy = copiedMap.get(current.getId());
+
+            List<Document> docs = this.documentRepository.findByFolderId(current.getId());
+            for (Document doc : docs) {
+                this.documentService.copyDocument(doc, currentCopy);
+            }
+
+            List<Folder> subFolders = this.folderRepository.findByParentId(current.getId());
+            for (Folder subFolder : subFolders) {
+                Folder subCopy = new Folder();
+                subCopy.setName(generateUniqueName(subFolder.getName(), currentCopy));
+                subCopy.setParent(currentCopy);
+                this.folderRepository.save(subCopy);
+
+                copiedMap.put(subFolder.getId(), subCopy);
+                stack.push(subFolder);
+            }
+        }
+    }
+
+    @Override
+    public void moveFolder(Folder folder, Folder targetFolder) {
+        Stack<Folder> stack = new Stack<>();
+        stack.push(folder);
+        Map<Integer, Folder> movedMap = new HashMap<>();
+
+        while (!stack.isEmpty()) {
+            Folder currentFolder = stack.pop();
+            List<Folder> subFolders = folderRepository.findByParentId(currentFolder.getId());
+
+            Folder newParent;
+            if (currentFolder.getId().equals(folder.getId())) {
+                newParent = targetFolder;
+            } else {
+                newParent = movedMap.get(currentFolder.getParent().getId());
+            }
+
+            String newName = generateUniqueName(currentFolder.getName(), newParent);
+            currentFolder.setName(newName);
+            currentFolder.setParent(newParent);
+            folderRepository.save(currentFolder);
+
+            List<Document> docs = documentRepository.findByFolderId(currentFolder.getId());
+            for (Document doc : docs) {
+                documentService.moveDocument(doc, currentFolder);
+            }
+
+            movedMap.put(currentFolder.getId(), currentFolder);
+
+            stack.addAll(subFolders);
+        }
+    }
+
+    private String generateUniqueName(String originalName, Folder targetFolder) {
+        String newName = originalName;
+        int counter = 1;
+        if (targetFolder != null) {
+            while (this.folderRepository.existsByNameAndParentAndIsDeletedFalseAndIdNot(newName, targetFolder, null)) {
+                newName = originalName + " (" + counter++ + ")";
+            }
+        } else {
+            while (this.folderRepository.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(newName,
+                    SecurityUtil.getCurrentUserFromThreadLocal(), null)) {
+                newName = originalName + " (" + counter++ + ")";
+            }
+        }
+        return newName;
     }
 }

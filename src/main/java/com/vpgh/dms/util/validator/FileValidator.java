@@ -8,6 +8,7 @@ import com.vpgh.dms.util.annotation.ValidFile;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -24,27 +25,33 @@ public class FileValidator implements ConstraintValidator<ValidFile, FileUploadR
 
         context.disableDefaultConstraintViolation();
 
-        if (fileUploadReq == null || fileUploadReq.getFile() == null || fileUploadReq.getFile().isEmpty()) {
-            context.buildConstraintViolationWithTemplate("File không được để trống!")
-                    .addPropertyNode("file")
+        MultipartFile[] files = fileUploadReq.getFiles();
+        if (files == null || files.length == 0) {
+            context.buildConstraintViolationWithTemplate("Phải chọn ít nhất một file để upload.")
+                    .addPropertyNode("files")
                     .addConstraintViolation();
             return false;
         }
 
         List<String> allowedTypes = List.of(this.systemSettingService.getSettingByKey("allowedFileType").getValue().split(";"));
-        if (!allowedTypes.contains(fileUploadReq.getFile().getContentType())) {
-            context.buildConstraintViolationWithTemplate("Loại file không hợp lệ!")
-                    .addPropertyNode("file")
-                    .addConstraintViolation();
-            return false;
-        }
-
         long maxSize = Long.parseLong(this.systemSettingService.getSettingByKey("maxFileSize").getValue());
-        if (fileUploadReq.getFile().getSize() > maxSize) {
-            context.buildConstraintViolationWithTemplate("Dung lượng file vượt quá giới hạn cho phép!")
-                    .addPropertyNode("file")
-                    .addConstraintViolation();
-            return false;
+
+        for (int i = 0; i < files.length; i++) {
+            MultipartFile file = files[i];
+
+            if (!allowedTypes.contains(file.getContentType())) {
+                context.buildConstraintViolationWithTemplate("Loại file không hợp lệ: " + file.getOriginalFilename())
+                        .addPropertyNode("file " + (i + 1))
+                        .addConstraintViolation();
+                valid = false;
+            }
+
+            if (file.getSize() > maxSize) {
+                context.buildConstraintViolationWithTemplate("Dung lượng vượt quá giới hạn: " + file.getOriginalFilename())
+                        .addPropertyNode("file " + (i + 1))
+                        .addConstraintViolation();
+                valid = false;
+            }
         }
 
         if (fileUploadReq.getFolderId() != null) {

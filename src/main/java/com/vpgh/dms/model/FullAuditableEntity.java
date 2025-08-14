@@ -1,5 +1,6 @@
 package com.vpgh.dms.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.vpgh.dms.model.entity.User;
 import jakarta.persistence.*;
 
@@ -16,9 +17,11 @@ public abstract class FullAuditableEntity {
 
     @ManyToOne
     @JoinColumn(name = "created_by")
+    @JsonSerialize(using = UserDTOSerializer.class)
     private User createdBy;
     @ManyToOne
     @JoinColumn(name = "updated_by")
+    @JsonSerialize(using = UserDTOSerializer.class)
     private User updatedBy;
 
     public User getCreatedBy() {

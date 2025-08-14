@@ -50,7 +50,7 @@ public interface DocumentService {
 
     List<Document> findByFolderAndIsDeletedTrue(Folder folder);
 
-    void copyDocuments(List<Document> docs, Folder targetFolder);
+    void copyDocument(Document doc, Folder targetFolder);
 
-    void cutDocuments(List<Document> docs, Folder targetFolder);
+    void moveDocument(Document doc, Folder targetFolder);
 }

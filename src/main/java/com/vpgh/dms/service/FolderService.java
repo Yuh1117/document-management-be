@@ -35,4 +35,8 @@ public interface FolderService {
     List<Folder> findByParentAndIsDeletedFalse(Folder parent);
 
     List<Folder> findByParentAndIsDeletedTrue(Folder parent);
+
+    void copyFolder(Folder folder, Folder targetFolder);
+
+    void moveFolder(Folder folder, Folder targetFolder);
 }
