@@ -33,14 +33,14 @@ public class PermissionController {
     @Autowired
     private Validator validator;
 
-    @PostMapping(path = "/secure/permissions")
+    @PostMapping(path = "/admin/permissions")
     @ApiMessage(message = "Tạo mới quyền")
     public ResponseEntity<Permission> create(@RequestBody @Valid PermissionDTO reqPermission) {
         Permission permission = this.permissionService.handleCreatePermission(reqPermission);
         return ResponseEntity.status(HttpStatus.CREATED).body(permission);
     }
 
-    @GetMapping(path = "/secure/permissions")
+    @GetMapping(path = "/admin/permissions")
     @ApiMessage(message = "Lấy danh sách quyền")
     public ResponseEntity<PaginationResDTO<List<Permission>>> list(@RequestParam Map<String, String> params) {
         if (params.get("all") != null && "true".equalsIgnoreCase(params.get("all"))) {
@@ -63,7 +63,7 @@ public class PermissionController {
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 
-    @GetMapping(path = "/secure/permissions/{id}")
+    @GetMapping(path = "/admin/permissions/{id}")
     @ApiMessage(message = "Lấy chi tiết quyền")
     public ResponseEntity<Permission> detail(@PathVariable(value = "id") Integer id) {
         Permission permission = this.permissionService.getPermissionById(id);
@@ -74,7 +74,7 @@ public class PermissionController {
         return ResponseEntity.status(HttpStatus.OK).body(permission);
     }
 
-    @PatchMapping(path = "/secure/permissions/{id}")
+    @PatchMapping(path = "/admin/permissions/{id}")
     @ApiMessage(message = "Cập nhật quyền")
     public ResponseEntity<Permission> update(@PathVariable("id") Integer id,
                                              @RequestBody PermissionDTO reqPermission) {
@@ -100,7 +100,7 @@ public class PermissionController {
         return ResponseEntity.status(HttpStatus.OK).body(permission);
     }
 
-    @DeleteMapping(path = "/secure/permissions/{id}")
+    @DeleteMapping(path = "/admin/permissions/{id}")
     @ApiMessage(message = "Xóa quyền")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
         Permission permission = this.permissionService.getPermissionById(id);

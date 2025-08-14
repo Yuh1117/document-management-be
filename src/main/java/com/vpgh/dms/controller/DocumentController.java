@@ -118,7 +118,7 @@ public class DocumentController {
         }
 
         if (!this.documentPermissionService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("Bạn không có quyền chỉnh sửa/xoá tài liệu này");
+            throw new ForbiddenException("Bạn không có quyền chỉnh sửa tài liệu này");
         }
 
         if (doc.getFolder() != null) {

@@ -29,14 +29,14 @@ public class RoleController {
     @Autowired
     private Validator validator;
 
-    @PostMapping(path = "/secure/roles")
+    @PostMapping(path = "/admin/roles")
     @ApiMessage(message = "Tạo mới vai trò")
     public ResponseEntity<Role> create(@RequestBody @Valid RoleDTO reqRole) {
         Role role = this.roleService.handleCreateRole(reqRole);
         return ResponseEntity.status(HttpStatus.CREATED).body(role);
     }
 
-    @GetMapping(path = "/secure/roles")
+    @GetMapping(path = "/admin/roles")
     @ApiMessage(message = "Lấy danh sách vai trò")
     public ResponseEntity<PaginationResDTO<List<Role>>> list(@RequestParam Map<String, String> params) {
         String page = params.get("page");
@@ -55,7 +55,7 @@ public class RoleController {
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 
-    @GetMapping(path = "/secure/roles/{id}")
+    @GetMapping(path = "/admin/roles/{id}")
     @ApiMessage(message = "Lấy chi tiết vai trò")
     public ResponseEntity<Role> detail(@PathVariable(value = "id") Integer id) {
         Role role = this.roleService.getRoleById(id);
@@ -66,7 +66,7 @@ public class RoleController {
         return ResponseEntity.status(HttpStatus.OK).body(role);
     }
 
-    @PatchMapping(path = "/secure/roles/{id}")
+    @PatchMapping(path = "/admin/roles/{id}")
     @ApiMessage(message = "Cập nhật vai trò")
     public ResponseEntity<Role> update(@PathVariable("id") Integer id,
                                        @RequestBody RoleDTO reqRole) {
@@ -93,7 +93,7 @@ public class RoleController {
     }
 
 
-    @DeleteMapping(path = "/secure/roles/{id}")
+    @DeleteMapping(path = "/admin/roles/{id}")
     @ApiMessage(message = "Xóa vai trò")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
         Role role = this.roleService.getRoleById(id);
