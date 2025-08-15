@@ -20,7 +20,7 @@ public interface SystemSettingService {
 
     SystemSetting getSettingById(Integer id);
 
-    SystemSetting handleUpdateSetting(Integer id, SystemSettingDTO dto);
+    SystemSetting handleUpdateSetting(SystemSetting setting, SystemSettingDTO dto);
 
     void deleteSettingById(Integer id);
 

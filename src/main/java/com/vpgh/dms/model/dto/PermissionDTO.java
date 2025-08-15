@@ -1,12 +1,13 @@
 package com.vpgh.dms.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vpgh.dms.util.annotation.ValidPermission;
 import jakarta.validation.constraints.NotNull;
 
 @ValidPermission
 public class PermissionDTO {
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Integer id;
-
     @NotNull(message = "Tên không được để trống!")
     private String name;
     @NotNull(message = "Path không được để trống!")

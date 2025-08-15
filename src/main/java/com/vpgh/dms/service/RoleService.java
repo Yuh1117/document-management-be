@@ -24,7 +24,7 @@ public interface RoleService {
 
     Role handleCreateRole(RoleDTO dto);
 
-    Role handleUpdateRole(Integer id, RoleDTO dto);
+    Role handleUpdateRole(Role role, RoleDTO dto);
 
     long count();
 

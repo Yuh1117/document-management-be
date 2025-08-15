@@ -74,7 +74,12 @@ public class SystemSettingController {
     public ResponseEntity<SystemSetting> update(@PathVariable("id") Integer id,
                                                 @RequestBody SystemSettingDTO reqSetting) {
 
-        reqSetting.setId(id);
+        SystemSetting setting = this.systemSettingService.getSettingById(id);
+        if (setting == null) {
+            throw new NotFoundException("Không tìm thấy cài đặt");
+        }
+
+        reqSetting.setId(setting.getId());
         Set<ConstraintViolation<SystemSettingDTO>> violations = validator.validate(reqSetting);
 
         if (!violations.isEmpty()) {
@@ -87,12 +92,7 @@ public class SystemSettingController {
             throw new CustomValidationException(errorList);
         }
 
-        SystemSetting setting = this.systemSettingService.handleUpdateSetting(id, reqSetting);
-        if (setting == null) {
-            throw new NotFoundException("Không tìm thấy cài đặt");
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(setting);
+        return ResponseEntity.status(HttpStatus.OK).body(this.systemSettingService.handleUpdateSetting(setting, reqSetting));
     }
 
     @DeleteMapping(path = "/admin/settings/{id}")

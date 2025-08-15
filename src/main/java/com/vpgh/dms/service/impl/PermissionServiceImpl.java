@@ -34,7 +34,7 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     public Permission getPermissionById(Integer id) {
         Optional<Permission> permission = this.permissionRepository.findById(id);
-        return permission.isPresent() ? permission.get() : null;
+        return permission.orElse(null);
     }
 
     @Override
@@ -78,16 +78,12 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     @Override
-    public Permission handleUpdatePermission(Integer id, PermissionDTO dto) {
-        Permission permission = getPermissionById(id);
-        if (permission != null) {
-            permission.setName(dto.getName());
-            permission.setApiPath(dto.getApiPath());
-            permission.setMethod(dto.getMethod());
-            permission.setModule(dto.getModule());
-            return save(permission);
-        }
-        return null;
+    public Permission handleUpdatePermission(Permission permission, PermissionDTO dto) {
+        permission.setName(dto.getName());
+        permission.setApiPath(dto.getApiPath());
+        permission.setMethod(dto.getMethod());
+        permission.setModule(dto.getModule());
+        return save(permission);
     }
 
     @Override

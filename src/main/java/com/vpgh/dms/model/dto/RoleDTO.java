@@ -9,6 +9,7 @@ import java.util.List;
 
 @ValidRole
 public class RoleDTO {
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Integer id;
     @NotBlank(message = "Tên không được để trống")
     private String name;

@@ -1,13 +1,18 @@
 package com.vpgh.dms.service.impl;
 
 import com.vpgh.dms.model.UserGroupDTO;
+import com.vpgh.dms.model.constant.MemberEnum;
+import com.vpgh.dms.model.dto.MemberDTO;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.model.entity.UserGroup;
+import com.vpgh.dms.model.entity.UserGroupMember;
 import com.vpgh.dms.repository.UserGroupMemberRepository;
 import com.vpgh.dms.repository.UserGroupRepository;
+import com.vpgh.dms.repository.UserRepository;
 import com.vpgh.dms.service.UserGroupService;
 import com.vpgh.dms.service.specification.UserGroupSpecification;
 import com.vpgh.dms.util.PageSize;
+import com.vpgh.dms.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,8 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +31,8 @@ public class UserGroupServiceImpl implements UserGroupService {
     private UserGroupRepository userGroupRepository;
     @Autowired
     private UserGroupMemberRepository userGroupMemberRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Override
     public UserGroup save(UserGroup group) {
@@ -34,10 +40,64 @@ public class UserGroupServiceImpl implements UserGroupService {
     }
 
     @Override
+    public UserGroup getGroupById(Integer id) {
+        return this.userGroupRepository.findById(id).orElse(null);
+    }
+
+    @Override
     public UserGroup handleCreateGroup(UserGroupDTO dto) {
         UserGroup group = new UserGroup();
         group.setName(dto.getName());
         group.setDescription(dto.getDescription());
+
+        UserGroupMember creatorMember = new UserGroupMember();
+        creatorMember.setUser(SecurityUtil.getCurrentUserFromThreadLocal());
+        creatorMember.setGroup(group);
+        creatorMember.setRole(MemberEnum.ADMIN);
+
+        group.setMembers(new HashSet<>(Set.of(creatorMember)));
+        return save(group);
+    }
+
+    @Override
+    public UserGroup handleUpdateGroup(UserGroup group, UserGroupDTO dto) {
+        group.setName(dto.getName());
+        group.setDescription(dto.getDescription());
+
+        if (dto.getMembers() != null) {
+            Map<Integer, UserGroupMember> existingMembersMap = group.getMembers().stream()
+                    .collect(Collectors.toMap(m -> m.getUser().getId(), m -> m));
+
+            Map<Integer, MemberDTO> requestedMembersMap = dto.getMembers().stream()
+                    .map(m -> {
+                        User user = this.userRepository.findByEmail(m.getEmail());
+                        m.setId(user.getId());
+                        return m;
+                    })
+                    .collect(Collectors.toMap(MemberDTO::getId, m -> m, (m1, m2) -> m1));
+
+            for (Map.Entry<Integer, MemberDTO> entry : requestedMembersMap.entrySet()) {
+                Integer id = entry.getKey();
+                MemberDTO memberDTO = entry.getValue();
+                User user = this.userRepository.findById(id).orElse(null);
+
+                if (!existingMembersMap.containsKey(id)) {
+                    UserGroupMember newMember = new UserGroupMember();
+                    newMember.setGroup(group);
+                    newMember.setUser(user);
+                    newMember.setRole(memberDTO.getRole() != null ? memberDTO.getRole() : MemberEnum.MEMBER);
+                    group.getMembers().add(newMember);
+                } else {
+                    UserGroupMember existingMember = existingMembersMap.get(id);
+                    existingMember.setRole(memberDTO.getRole() != null ? memberDTO.getRole() : MemberEnum.MEMBER);
+                }
+            }
+
+            group.getMembers().removeIf(m -> {
+                Integer memberId = m.getUser().getId();
+                return !requestedMembersMap.containsKey(memberId) && !memberId.equals(group.getCreatedBy().getId());
+            });
+        }
         return save(group);
     }
 
@@ -100,5 +160,28 @@ public class UserGroupServiceImpl implements UserGroupService {
         dto.setName(group.getName());
         dto.setDescription(group.getDescription());
         return dto;
+    }
+
+    @Override
+    public void deleteGroupById(Integer id) {
+        this.userGroupRepository.deleteById(id);
+    }
+
+    @Override
+    public UserGroupMember getMemberInGroup(UserGroup group, User user) {
+        Optional<UserGroupMember> member = group.getMembers().stream()
+                .filter(m -> m.getUser().getId().equals(user.getId()))
+                .findFirst();
+        return member.orElse(null);
+    }
+
+    @Override
+    public boolean isOwnerGroup(UserGroup group, User user) {
+        return group.getCreatedBy().getId().equals(user.getId());
+    }
+
+    @Override
+    public boolean isAdminGroup(UserGroupMember member) {
+        return member.getRole().equals(MemberEnum.ADMIN);
     }
 }

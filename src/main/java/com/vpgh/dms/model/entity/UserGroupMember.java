@@ -1,5 +1,8 @@
 package com.vpgh.dms.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.vpgh.dms.model.UserDTOSerializer;
 import com.vpgh.dms.model.constant.MemberEnum;
 import jakarta.persistence.*;
 
@@ -15,9 +18,11 @@ public class UserGroupMember {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonSerialize(using = UserDTOSerializer.class)
     private User user;
     @ManyToOne
     @JoinColumn(name = "group_id", nullable = false)
+    @JsonIgnore
     private UserGroup group;
 
     public User getUser() {

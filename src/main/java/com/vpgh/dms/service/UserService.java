@@ -23,7 +23,7 @@ public interface UserService {
 
     User handleCreateUser(UserDTO dto);
 
-    User handleUpdateUser(Integer id, UserDTO dto);
+    User handleUpdateUser(User user, UserDTO dto);
 
     UserDTO convertUserToUserDTO(User user);
 
