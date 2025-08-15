@@ -13,6 +13,8 @@ import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class GroupValidator implements ConstraintValidator<ValidGroup, UserGroupDTO> {
     @Autowired
@@ -47,14 +49,28 @@ public class GroupValidator implements ConstraintValidator<ValidGroup, UserGroup
             valid = false;
         }
 
-        if (groupDTO.getMembers() != null) {
-            for (MemberDTO memberDTO : groupDTO.getMembers()) {
-                User user = this.userService.getUserByEmail(memberDTO.getEmail());
-                if (user == null) {
-                    context.buildConstraintViolationWithTemplate("Không tìm thấy người dùng với email: " + memberDTO.getEmail())
-                            .addPropertyNode("email")
+        List<MemberDTO> members = groupDTO.getMembers();
+        if (members != null) {
+            for (int i = 0; i < members.size(); i++) {
+                String email = members.get(i).getEmail();
+                if (email == null || email.isEmpty()) {
+                    context.buildConstraintViolationWithTemplate("Email không được để trống.")
+                            .addPropertyNode("member " + (i + 1))
                             .addConstraintViolation();
                     valid = false;
+                } else if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
+                    context.buildConstraintViolationWithTemplate("Email không hợp lệ.")
+                            .addPropertyNode("member " + (i + 1))
+                            .addConstraintViolation();
+                    valid = false;
+                } else {
+                    User user = this.userService.getUserByEmail(members.get(i).getEmail());
+                    if (user == null) {
+                        context.buildConstraintViolationWithTemplate("Không tìm thấy người dùng với email: " + members.get(i).getEmail())
+                                .addPropertyNode("email")
+                                .addConstraintViolation();
+                        valid = false;
+                    }
                 }
             }
         }

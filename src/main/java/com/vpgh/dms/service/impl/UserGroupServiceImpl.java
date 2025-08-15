@@ -65,27 +65,38 @@ public class UserGroupServiceImpl implements UserGroupService {
         group.setDescription(dto.getDescription());
 
         if (dto.getMembers() != null) {
-            for (MemberDTO memberDTO : dto.getMembers()) {
-                User user = this.userRepository.findByEmail(memberDTO.getEmail());
-                UserGroupMember member = getMemberInGroup(group, user);
+            Map<Integer, UserGroupMember> existingMembersMap = group.getMembers().stream()
+                    .collect(Collectors.toMap(m -> m.getUser().getId(), m -> m));
 
-                if (member == null) {
+            Map<Integer, MemberDTO> requestedMembersMap = dto.getMembers().stream()
+                    .map(m -> {
+                        User user = this.userRepository.findByEmail(m.getEmail());
+                        m.setId(user.getId());
+                        return m;
+                    })
+                    .collect(Collectors.toMap(MemberDTO::getId, m -> m, (m1, m2) -> m1));
+
+            for (Map.Entry<Integer, MemberDTO> entry : requestedMembersMap.entrySet()) {
+                Integer id = entry.getKey();
+                MemberDTO memberDTO = entry.getValue();
+                User user = this.userRepository.findById(id).orElse(null);
+
+                if (!existingMembersMap.containsKey(id)) {
                     UserGroupMember newMember = new UserGroupMember();
                     newMember.setGroup(group);
                     newMember.setUser(user);
                     newMember.setRole(memberDTO.getRole() != null ? memberDTO.getRole() : MemberEnum.MEMBER);
                     group.getMembers().add(newMember);
                 } else {
-                    member.setRole(memberDTO.getRole() != null ? memberDTO.getRole() : MemberEnum.MEMBER);
+                    UserGroupMember existingMember = existingMembersMap.get(id);
+                    existingMember.setRole(memberDTO.getRole() != null ? memberDTO.getRole() : MemberEnum.MEMBER);
                 }
-
-                Set<String> emailSetFromRequest = dto.getMembers().stream()
-                        .map(MemberDTO::getEmail)
-                        .collect(Collectors.toSet());
-
-                group.getMembers().removeIf(m ->
-                        !emailSetFromRequest.contains(m.getUser().getEmail()));
             }
+
+            group.getMembers().removeIf(m -> {
+                Integer memberId = m.getUser().getId();
+                return !requestedMembersMap.containsKey(memberId) && !memberId.equals(group.getCreatedBy().getId());
+            });
         }
         return save(group);
     }

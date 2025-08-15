@@ -6,6 +6,7 @@ import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.model.entity.UserGroup;
 import com.vpgh.dms.model.entity.UserGroupMember;
 import com.vpgh.dms.service.UserGroupService;
+import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.CustomValidationException;
@@ -31,12 +32,14 @@ public class UserGroupController {
     private UserGroupService userGroupService;
     @Autowired
     private Validator validator;
+    @Autowired
+    private UserService userService;
 
     @PostMapping(path = "/secure/user-groups")
     @ApiMessage(message = "Tạo mới nhóm")
     public ResponseEntity<UserGroup> create(@RequestBody @Valid UserGroupDTO groupReq) {
         UserGroup group = this.userGroupService.handleCreateGroup(groupReq);
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.userGroupService.save(group));
+        return ResponseEntity.status(HttpStatus.CREATED).body(group);
     }
 
     @GetMapping(path = "/secure/user-groups")
@@ -108,6 +111,14 @@ public class UserGroupController {
             throw new ForbiddenException("Bạn không có quyền thực hiện.");
         }
 
+        if (groupReq.getMembers() != null) {
+            boolean check = groupReq.getMembers().stream().anyMatch(m ->
+                    this.userGroupService.isOwnerGroup(group, this.userService.getUserByEmail(m.getEmail())));
+            if (check) {
+                throw new ForbiddenException("Không thể cập nhật chủ nhóm.");
+            }
+        }
+
         return ResponseEntity.status(HttpStatus.OK).body(this.userGroupService.handleUpdateGroup(group, groupReq));
     }
 
@@ -119,9 +130,14 @@ public class UserGroupController {
             throw new NotFoundException("Nhóm không tồn tại");
         }
 
-        UserGroupMember member = this.userGroupService.getMemberInGroup(group, SecurityUtil.getCurrentUserFromThreadLocal());
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+        UserGroupMember member = this.userGroupService.getMemberInGroup(group, currentUser);
         if (member == null) {
             throw new ForbiddenException("Bạn không ở trong nhóm này.");
+        }
+
+        if (this.userGroupService.isOwnerGroup(group, currentUser)) {
+            throw new ForbiddenException("Bạn không thể rời khỏi nhóm.");
         }
 
         group.getMembers().remove(member);
