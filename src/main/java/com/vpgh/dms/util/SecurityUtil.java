@@ -15,22 +15,20 @@ import org.springframework.stereotype.Component;
 public class SecurityUtil {
     @Autowired
     private UserService userService;
-
     private static UserService staticUserService;
+    private static final ThreadLocal<User> currentUser = new ThreadLocal<>();
 
     @PostConstruct
     public void init() {
         staticUserService = userService;
     }
 
-    private static final ThreadLocal<User> currentUser = new ThreadLocal<>();
+    public static User getCurrentUserFromThreadLocal() {
+        return currentUser.get();
+    }
 
     public static void setCurrentUser(User user) {
         currentUser.set(user);
-    }
-
-    public static User getCurrentUserFromThreadLocal() {
-        return currentUser.get();
     }
 
     public static void clear() {

@@ -11,6 +11,7 @@ import java.time.Instant;
 
 @ValidUser
 public class UserDTO {
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Integer id;
     @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Email không hợp lệ!")
     @NotBlank(message = "Email không được để trống")

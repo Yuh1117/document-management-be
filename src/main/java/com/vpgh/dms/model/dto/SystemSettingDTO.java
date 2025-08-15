@@ -1,10 +1,12 @@
 package com.vpgh.dms.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vpgh.dms.util.annotation.ValidSetting;
 import jakarta.validation.constraints.NotBlank;
 
 @ValidSetting
 public class SystemSettingDTO {
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Integer id;
     @NotBlank(message = "Key không được để trống!")
     private String key;

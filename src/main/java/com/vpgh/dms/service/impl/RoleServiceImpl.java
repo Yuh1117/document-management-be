@@ -40,7 +40,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Role getRoleById(Integer id) {
         Optional<Role> role = this.roleRepository.findById(id);
-        return role.isPresent() ? role.get() : null;
+        return role.orElse(null);
     }
 
     @Override
@@ -81,19 +81,16 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public Role handleUpdateRole(Integer id, RoleDTO dto) {
-        Role role = getRoleById(id);
-        if (role != null) {
-            role.setName(dto.getName());
-            role.setDescription(dto.getDescription());
-            if (dto.getPermissions() != null) {
-                role.setPermissions(new HashSet<>(dto.getPermissions()));
-            } else {
-                role.setPermissions(null);
-            }
-            return save(role);
+    public Role handleUpdateRole(Role role, RoleDTO dto) {
+        role.setName(dto.getName());
+        role.setDescription(dto.getDescription());
+        if (dto.getPermissions() != null) {
+            role.setPermissions(new HashSet<>(dto.getPermissions()));
+        } else {
+            role.setPermissions(null);
         }
-        return null;
+        return save(role);
+
     }
 
     @Override

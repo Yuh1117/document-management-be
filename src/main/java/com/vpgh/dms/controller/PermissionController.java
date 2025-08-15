@@ -79,7 +79,12 @@ public class PermissionController {
     public ResponseEntity<Permission> update(@PathVariable("id") Integer id,
                                              @RequestBody PermissionDTO reqPermission) {
 
-        reqPermission.setId(id);
+        Permission permission = this.permissionService.getPermissionById(id);
+        if (permission == null) {
+            throw new NotFoundException("Không tìm thấy quyền");
+        }
+
+        reqPermission.setId(permission.getId());
         Set<ConstraintViolation<PermissionDTO>> violations = validator.validate(reqPermission);
 
         if (!violations.isEmpty()) {
@@ -92,12 +97,7 @@ public class PermissionController {
             throw new CustomValidationException(errorList);
         }
 
-        Permission permission = this.permissionService.handleUpdatePermission(id, reqPermission);
-        if (permission == null) {
-            throw new NotFoundException("Không tìm thấy quyền");
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(permission);
+        return ResponseEntity.status(HttpStatus.OK).body(this.permissionService.handleUpdatePermission(permission, reqPermission));
     }
 
     @DeleteMapping(path = "/admin/permissions/{id}")

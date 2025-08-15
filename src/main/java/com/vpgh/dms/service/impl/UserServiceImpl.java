@@ -65,18 +65,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User handleUpdateUser(Integer id, UserDTO dto) {
-        User user = getUserById(id);
-        if (user != null) {
-            user.setFirstName(dto.getFirstName());
-            user.setLastName(dto.getLastName());
-            user.setEmail(dto.getEmail());
-            user.setPassword(dto.getPassword());
-            user.setFile(dto.getFile());
-            user.setRole(this.roleService.getRoleById(dto.getRole().getId()));
-            return save(user);
-        }
-        return null;
+    public User handleUpdateUser(User user, UserDTO dto) {
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
+        user.setEmail(dto.getEmail());
+        user.setPassword(dto.getPassword());
+        user.setFile(dto.getFile());
+        user.setRole(this.roleService.getRoleById(dto.getRole().getId()));
+        return save(user);
     }
 
     @Override
@@ -126,7 +122,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUserById(Integer id) {
         Optional<User> user = this.userRepository.findById(id);
-        return user.isPresent() ? user.get() : null;
+        return user.orElse(null);
     }
 
     @Override

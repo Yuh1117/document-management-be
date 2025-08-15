@@ -72,20 +72,15 @@ public class SystemSettingServiceImpl implements SystemSettingService {
     @Override
     public SystemSetting getSettingById(Integer id) {
         Optional<SystemSetting> setting = this.systemSettingRepository.findById(id);
-        return setting.isPresent() ? setting.get() : null;
+        return setting.orElse(null);
     }
 
     @Override
-    public SystemSetting handleUpdateSetting(Integer id, SystemSettingDTO dto) {
-        SystemSetting setting = getSettingById(id);
-        if (setting != null) {
-            setting.setKey(dto.getKey());
-            setting.setValue(dto.getValue());
-            setting.setDescription(dto.getDescription());
-            return save(setting);
-        }
-
-        return null;
+    public SystemSetting handleUpdateSetting(SystemSetting setting, SystemSettingDTO dto) {
+        setting.setKey(dto.getKey());
+        setting.setValue(dto.getValue());
+        setting.setDescription(dto.getDescription());
+        return save(setting);
     }
 
     @Override

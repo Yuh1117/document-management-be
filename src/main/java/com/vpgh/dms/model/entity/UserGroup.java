@@ -16,7 +16,7 @@ public class UserGroup extends FullAuditableEntity {
     private String name;
     private String description;
 
-    @OneToMany(mappedBy = "group", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "group", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserGroupMember> members;
 
     @OneToMany(mappedBy = "group", fetch = FetchType.LAZY)

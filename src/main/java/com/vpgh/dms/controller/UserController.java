@@ -78,7 +78,13 @@ public class UserController {
     @ApiMessage(message = "Cập nhật người dùng")
     public ResponseEntity<UserDTO> update(@PathVariable(value = "id") Integer id,
                                           @ModelAttribute UserDTO reqUser) {
-        reqUser.setId(id);
+
+        User user = this.userService.getUserById(id);
+        if (user == null) {
+            throw new NotFoundException("Không tìm thấy người dùng!");
+        }
+
+        reqUser.setId(user.getId());
         Set<ConstraintViolation<UserDTO>> violations = validator.validate(reqUser);
 
         if (!violations.isEmpty()) {
@@ -91,12 +97,8 @@ public class UserController {
             throw new CustomValidationException(errorList);
         }
 
-        User user = this.userService.handleUpdateUser(id, reqUser);
-        if (user == null) {
-            throw new NotFoundException("Không tìm thấy người dùng!");
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserDTO(user));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(this.userService.convertUserToUserDTO(this.userService.handleUpdateUser(user, reqUser)));
     }
 
     @DeleteMapping(path = "/admin/users/{id}")

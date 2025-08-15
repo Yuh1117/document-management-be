@@ -71,7 +71,12 @@ public class RoleController {
     public ResponseEntity<Role> update(@PathVariable("id") Integer id,
                                        @RequestBody RoleDTO reqRole) {
 
-        reqRole.setId(id);
+        Role role = this.roleService.getRoleById(id);
+        if (role == null) {
+            throw new NotFoundException("Không tìm thấy vai trò");
+        }
+
+        reqRole.setId(role.getId());
         Set<ConstraintViolation<RoleDTO>> violations = validator.validate(reqRole);
 
         if (!violations.isEmpty()) {
@@ -84,12 +89,7 @@ public class RoleController {
             throw new CustomValidationException(errorList);
         }
 
-        Role role = this.roleService.handleUpdateRole(id, reqRole);
-        if (role == null) {
-            throw new NotFoundException("Không tìm thấy vai trò");
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(role);
+        return ResponseEntity.status(HttpStatus.OK).body(this.roleService.handleUpdateRole(role, reqRole));
     }
 
 

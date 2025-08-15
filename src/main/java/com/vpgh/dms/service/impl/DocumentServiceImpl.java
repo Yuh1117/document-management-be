@@ -129,7 +129,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public Document getDocumentById(Integer id) {
         Optional<Document> document = this.documentRepository.findById(id);
-        return document.isPresent() ? document.get() : null;
+        return document.orElse(null);
     }
 
     @Override

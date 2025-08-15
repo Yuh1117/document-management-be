@@ -1,7 +1,11 @@
 package com.vpgh.dms.util.validator;
 
 import com.vpgh.dms.model.UserGroupDTO;
+import com.vpgh.dms.model.dto.MemberDTO;
+import com.vpgh.dms.model.entity.User;
+import com.vpgh.dms.model.entity.UserGroup;
 import com.vpgh.dms.service.UserGroupService;
+import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ValidGroup;
 import jakarta.validation.ConstraintValidator;
@@ -13,6 +17,14 @@ import org.springframework.stereotype.Component;
 public class GroupValidator implements ConstraintValidator<ValidGroup, UserGroupDTO> {
     @Autowired
     private UserGroupService userGroupService;
+    @Autowired
+    private UserService userService;
+
+    private static final ThreadLocal<UserGroup> currentEntity = new ThreadLocal<>();
+
+    public static void setCurrentEntity(UserGroup group) {
+        currentEntity.set(group);
+    }
 
     @Override
     public boolean isValid(UserGroupDTO groupDTO, ConstraintValidatorContext context) {
@@ -20,8 +32,14 @@ public class GroupValidator implements ConstraintValidator<ValidGroup, UserGroup
 
         context.disableDefaultConstraintViolation();
 
-        boolean check = this.userGroupService.existsByNameAndCreatedByAndIdNot(groupDTO.getName(),
-                SecurityUtil.getCurrentUserFromThreadLocal(), groupDTO.getId());
+        boolean check = false;
+        if (groupDTO.getId() != null) {
+            check = this.userGroupService.existsByNameAndCreatedByAndIdNot(groupDTO.getName(),
+                    currentEntity.get().getCreatedBy(), groupDTO.getId());
+        } else {
+            check = this.userGroupService.existsByNameAndCreatedByAndIdNot(groupDTO.getName(),
+                    SecurityUtil.getCurrentUserFromThreadLocal(), groupDTO.getId());
+        }
         if (check) {
             context.buildConstraintViolationWithTemplate("Tên đã tồn tại!")
                     .addPropertyNode("name")
@@ -29,6 +47,19 @@ public class GroupValidator implements ConstraintValidator<ValidGroup, UserGroup
             valid = false;
         }
 
+        if (groupDTO.getMembers() != null) {
+            for (MemberDTO memberDTO : groupDTO.getMembers()) {
+                User user = this.userService.getUserByEmail(memberDTO.getEmail());
+                if (user == null) {
+                    context.buildConstraintViolationWithTemplate("Không tìm thấy người dùng với email: " + memberDTO.getEmail())
+                            .addPropertyNode("email")
+                            .addConstraintViolation();
+                    valid = false;
+                }
+            }
+        }
+
+        currentEntity.remove();
         return valid;
     }
 }

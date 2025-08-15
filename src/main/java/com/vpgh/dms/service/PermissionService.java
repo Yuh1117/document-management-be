@@ -21,7 +21,7 @@ public interface PermissionService {
 
     Page<Permission> getAllPermission(Map<String, String> params);
 
-    Permission handleUpdatePermission(Integer id, PermissionDTO dto);
+    Permission handleUpdatePermission(Permission permission, PermissionDTO dto);
 
     void deletePermissionById(Integer id);
 

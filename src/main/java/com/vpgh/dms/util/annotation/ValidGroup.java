@@ -1,7 +1,6 @@
 package com.vpgh.dms.util.annotation;
 
 import com.vpgh.dms.util.validator.GroupValidator;
-import com.vpgh.dms.util.validator.PermissionValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
