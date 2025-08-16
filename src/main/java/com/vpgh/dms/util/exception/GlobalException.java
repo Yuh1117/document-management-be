@@ -81,13 +81,11 @@ public class GlobalException {
     }
 
     @ExceptionHandler(value = Exception.class)
-    public ResponseEntity<CustomResponse<Object, Object>> handleAllException(Exception ex) {
-        CustomResponse<Object, Object> customResponse = new CustomResponse<>();
-        customResponse.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        customResponse.setMessage("Internal server error");
-        customResponse.setError(ex.getMessage());
+    public ResponseEntity<DataResponse<Object>> handleAllException(Exception ex) {
+        DataResponse<Object> errorResponse = new DataResponse<>();
+        errorResponse.setContent(ex.getMessage());
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(customResponse);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
 }

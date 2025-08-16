@@ -1,5 +1,7 @@
 package com.vpgh.dms.service;
 
+import com.vpgh.dms.model.dto.FolderDTO;
+import com.vpgh.dms.model.dto.SubFolderDTO;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
 import org.springframework.data.domain.Page;
@@ -39,4 +41,12 @@ public interface FolderService {
     void copyFolder(Folder folder, Folder targetFolder);
 
     void moveFolder(Folder folder, Folder targetFolder);
+
+    FolderDTO convertFolderToFolderDTO(Folder folder);
+
+    List<FolderDTO> convertFoldersToFolderDTOs(List<Folder> folders);
+
+    SubFolderDTO convertFolderToSubFolderDTO(Folder folder);
+
+    List<SubFolderDTO> convertFoldersToSubFolderDTOs(List<Folder> folders);
 }

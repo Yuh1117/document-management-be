@@ -39,7 +39,8 @@ public class FileController {
         Page<Folder> folders = this.folderService.getActiveFolders(null, currentUser, page);
         Page<Document> documents = this.documentService.getActiveDocuments(null, currentUser, page);
 
-        return ResponseEntity.status(HttpStatus.OK).body(new FileResponse(folders.getContent(), documents.getContent()));
+        return ResponseEntity.status(HttpStatus.OK).body(new FileResponse(this.folderService.convertFoldersToFolderDTOs(folders.getContent()),
+                this.documentService.convertDocumentsToDocumentDTOs(documents.getContent())));
     }
 
     @GetMapping(path = "/secure/search")
@@ -54,6 +55,7 @@ public class FileController {
         Page<Folder> folders = this.folderService.searchFolders(params, currentUser);
         Page<Document> documents = this.documentService.searchDocuments(params, currentUser);
 
-        return ResponseEntity.status(HttpStatus.OK).body(new FileResponse(folders.getContent(), documents.getContent()));
+        return ResponseEntity.status(HttpStatus.OK).body(new FileResponse(this.folderService.convertFoldersToFolderDTOs(folders.getContent()),
+                this.documentService.convertDocumentsToDocumentDTOs(documents.getContent())));
     }
 }

@@ -30,6 +30,7 @@ import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class DocumentServiceImpl implements DocumentService {
@@ -112,13 +113,17 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setFileSize(doc.getFileSize());
         dto.setMimeType(doc.getMimeType());
         dto.setStorageType(doc.getStorageType());
-        dto.setFolder(doc.getFolder());
         dto.setCreatedAt(doc.getCreatedAt());
         dto.setUpdatedAt(doc.getUpdatedAt());
         dto.setCreatedBy(this.userService.convertUserToUserDTO(doc.getCreatedBy()));
-        dto.setUpdatedBy(this.userService.convertUserToUserDTO(doc.getUpdatedBy()));
+        dto.setUpdatedBy(doc.getUpdatedBy() != null ? this.userService.convertUserToUserDTO(doc.getUpdatedBy()) : null);
 
         return dto;
+    }
+
+    @Override
+    public List<DocumentDTO> convertDocumentsToDocumentDTOs(List<Document> docs) {
+        return docs.stream().map(d -> convertDocumentToDocumentDTO(d)).collect(Collectors.toList());
     }
 
     @Override

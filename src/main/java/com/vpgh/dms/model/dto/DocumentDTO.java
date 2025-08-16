@@ -1,7 +1,6 @@
 package com.vpgh.dms.model.dto;
 
 import com.vpgh.dms.model.constant.StorageType;
-import com.vpgh.dms.model.entity.Folder;
 
 import java.time.Instant;
 
@@ -15,7 +14,6 @@ public class DocumentDTO {
     private Double fileSize;
     private String mimeType;
     private StorageType storageType;
-    private Folder folder;
 
     private UserDTO createdBy;
     private UserDTO updatedBy;
@@ -124,13 +122,5 @@ public class DocumentDTO {
 
     public void setStorageType(StorageType storageType) {
         this.storageType = storageType;
-    }
-
-    public Folder getFolder() {
-        return folder;
-    }
-
-    public void setFolder(Folder folder) {
-        this.folder = folder;
     }
 }
