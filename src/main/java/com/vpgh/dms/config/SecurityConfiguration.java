@@ -3,6 +3,7 @@ package com.vpgh.dms.config;
 import com.vpgh.dms.util.WhiteListUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -37,6 +38,11 @@ public class SecurityConfiguration {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(WhiteListUtil.getPublicWhitelist()).permitAll()
+                        .requestMatchers("/api/admin/**").access((authentication, context) -> {
+                            boolean hasAdminRole = authentication.get().getAuthorities().stream()
+                                    .anyMatch(auth -> auth.getAuthority().startsWith("ROLE_ADMIN"));
+                            return new AuthorizationDecision(hasAdminRole);
+                        })
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(Customizer.withDefaults())
