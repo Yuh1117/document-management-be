@@ -18,9 +18,9 @@ public class WebAppContextConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(apiMessageInterceptor);
-        /* registry.addInterceptor(permissionInterceptor)
-                .excludePathPatterns(Stream.concat(
-                        Stream.of(WhiteListUtil.getPublicWhitelist()),
-                        Stream.of(WhiteListUtil.getAuthenticatedWhitelist())).toArray(String[]::new)); */
+//        registry.addInterceptor(permissionInterceptor)
+//                .excludePathPatterns(Stream.concat(
+//                        Stream.of(WhiteListUtil.getPublicWhitelist()),
+//                        Stream.of(WhiteListUtil.getAuthenticatedWhitelist())).toArray(String[]::new));
     }
 }

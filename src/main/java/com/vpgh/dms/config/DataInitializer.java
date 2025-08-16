@@ -37,38 +37,38 @@ public class DataInitializer implements CommandLineRunner {
 
         if (countPermissions == 0) {
             List<Permission> arr = new ArrayList<>();
-            arr.add(new Permission("Tạo mới người dùng", "/api/secure/users", "POST", "USERS"));
-            arr.add(new Permission("Lấy danh sách người dùng", "/api/secure/users", "GET", "USERS"));
-            arr.add(new Permission("Lấy chi tiết người dùng", "/api/secure/users/{id}", "GET", "USERS"));
-            arr.add(new Permission("Cập nhật người dùng", "/api/secure/users/{id}", "PATCH", "USERS"));
-            arr.add(new Permission("Xóa người dùng", "/api/secure/users/{id}", "DELETE", "USERS"));
+            arr.add(new Permission("Tạo mới người dùng", "/api/admin/users", "POST", "USERS"));
+            arr.add(new Permission("Lấy danh sách người dùng", "/api/admin/users", "GET", "USERS"));
+            arr.add(new Permission("Lấy chi tiết người dùng", "/api/admin/users/{id}", "GET", "USERS"));
+            arr.add(new Permission("Cập nhật người dùng", "/api/admin/users/{id}", "PATCH", "USERS"));
+            arr.add(new Permission("Xóa người dùng", "/api/admin/users/{id}", "DELETE", "USERS"));
 
-            arr.add(new Permission("Tạo vai trò", "/api/secure/roles", "POST", "ROLES"));
-            arr.add(new Permission("Lấy danh sách vai trò", "/api/secure/roles", "GET", "ROLES"));
-            arr.add(new Permission("Lấy chi tiết vai trò", "/api/secure/roles/{id}", "GET", "ROLES"));
-            arr.add(new Permission("Cập nhật vai trò", "/api/secure/roles/{id}", "PATCH", "ROLES"));
-            arr.add(new Permission("Xóa vai trò", "/api/secure/roles/{id}", "DELETE", "ROLES"));
+            arr.add(new Permission("Tạo vai trò", "/api/admin/roles", "POST", "ROLES"));
+            arr.add(new Permission("Lấy danh sách vai trò", "/api/admin/roles", "GET", "ROLES"));
+            arr.add(new Permission("Lấy chi tiết vai trò", "/api/admin/roles/{id}", "GET", "ROLES"));
+            arr.add(new Permission("Cập nhật vai trò", "/api/admin/roles/{id}", "PATCH", "ROLES"));
+            arr.add(new Permission("Xóa vai trò", "/api/admin/roles/{id}", "DELETE", "ROLES"));
 
-            arr.add(new Permission("Tạo mới quyền", "/api/secure/permissions", "POST", "PERMISSIONS"));
-            arr.add(new Permission("Lấy danh sách quyền", "/api/secure/permissions", "GET", "PERMISSIONS"));
-            arr.add(new Permission("Lấy chi tiết quyền", "/api/secure/permissions/{id}", "GET", "PERMISSIONS"));
-            arr.add(new Permission("Cập nhật quyền", "/api/secure/permissions/{id}", "PATCH", "PERMISSIONS"));
-            arr.add(new Permission("Xóa quyền", "/api/secure/permissions/{id}", "DELETE", "PERMISSIONS"));
+            arr.add(new Permission("Tạo mới quyền", "/api/admin/permissions", "POST", "PERMISSIONS"));
+            arr.add(new Permission("Lấy danh sách quyền", "/api/admin/permissions", "GET", "PERMISSIONS"));
+            arr.add(new Permission("Lấy chi tiết quyền", "/api/admin/permissions/{id}", "GET", "PERMISSIONS"));
+            arr.add(new Permission("Cập nhật quyền", "/api/admin/permissions/{id}", "PATCH", "PERMISSIONS"));
+            arr.add(new Permission("Xóa quyền", "/api/admin/permissions/{id}", "DELETE", "PERMISSIONS"));
 
-            arr.add(new Permission("Tạo mới cài đặt", "/api/secure/settings", "POST", "SETTINGS"));
-            arr.add(new Permission("Lấy danh sách cài đặt", "/api/secure/settings", "GET", "SETTINGS"));
-            arr.add(new Permission("Lấy chi tiết cài đặt", "/api/secure/setting/{id}", "GET", "SETTINGS"));
-            arr.add(new Permission("Cập nhật cài đặt", "/api/secure/settings/{id}", "PATCH", "SETTINGS"));
-            arr.add(new Permission("Xóa cài đặt", "/api/secure/settings/{id}", "DELETE", "SETTINGS"));
+            arr.add(new Permission("Tạo mới cài đặt", "/api/admin/settings", "POST", "SETTINGS"));
+            arr.add(new Permission("Lấy danh sách cài đặt", "/api/admin/settings", "GET", "SETTINGS"));
+            arr.add(new Permission("Lấy chi tiết cài đặt", "/api/admin/setting/{id}", "GET", "SETTINGS"));
+            arr.add(new Permission("Cập nhật cài đặt", "/api/admin/settings/{id}", "PATCH", "SETTINGS"));
+            arr.add(new Permission("Xóa cài đặt", "/api/admin/settings/{id}", "DELETE", "SETTINGS"));
 
             this.permissionService.saveAll(arr);
         }
 
         if (countRoles == 0) {
             List<Role> roles = new ArrayList<>();
-            roles.add(new Role("ADMIN", "administrator",
+            roles.add(new Role("ROLE_ADMIN", "administrator",
                     new HashSet<>(this.permissionService.getAllPermission(null).getContent())));
-            roles.add(new Role("USER", "normal user", null));
+            roles.add(new Role("ROLE_USER", "normal user", null));
             this.roleService.saveAll(roles);
         }
 
@@ -78,7 +78,7 @@ public class DataInitializer implements CommandLineRunner {
             user.setLastName("van");
             user.setEmail("admin@gmail.com");
             user.setPassword("123456");
-            user.setRole(this.roleService.getRoleByName("ADMIN"));
+            user.setRole(this.roleService.getRoleByName("ROLE_ADMIN"));
             this.userService.save(user);
         }
 

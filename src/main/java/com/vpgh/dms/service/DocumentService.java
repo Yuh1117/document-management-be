@@ -24,6 +24,8 @@ public interface DocumentService {
 
     DocumentDTO convertDocumentToDocumentDTO(Document doc);
 
+    List<DocumentDTO> convertDocumentsToDocumentDTOs(List<Document> docs);
+
     Document getDocumentByStoredFilename(String storedFileName);
 
     Document getDocumentById(Integer id);
@@ -42,7 +44,7 @@ public interface DocumentService {
 
     Page<Document> searchDocuments(Map<String, String> params, User user);
 
-    Document findByNameAndFolderAndIsDeletedFalse (String name, Folder folder);
+    Document findByNameAndFolderAndIsDeletedFalse(String name, Folder folder);
 
     Document findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(String name, User createdBy);
 

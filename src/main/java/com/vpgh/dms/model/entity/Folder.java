@@ -26,6 +26,7 @@ public class Folder extends FullAuditableEntity {
 
     @ManyToOne
     @JoinColumn(name = "parent_id")
+    @JsonIgnore
     private Folder parent;
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
