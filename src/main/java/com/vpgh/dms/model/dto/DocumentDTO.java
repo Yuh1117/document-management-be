@@ -14,6 +14,7 @@ public class DocumentDTO {
     private Double fileSize;
     private String mimeType;
     private StorageType storageType;
+    private Boolean isDeleted;
 
     private UserDTO createdBy;
     private UserDTO updatedBy;
@@ -122,5 +123,13 @@ public class DocumentDTO {
 
     public void setStorageType(StorageType storageType) {
         this.storageType = storageType;
+    }
+
+    public Boolean getDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        isDeleted = deleted;
     }
 }

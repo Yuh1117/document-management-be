@@ -113,6 +113,7 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setFileSize(doc.getFileSize());
         dto.setMimeType(doc.getMimeType());
         dto.setStorageType(doc.getStorageType());
+        dto.setDeleted(doc.getDeleted());
         dto.setCreatedAt(doc.getCreatedAt());
         dto.setUpdatedAt(doc.getUpdatedAt());
         dto.setCreatedBy(this.userService.convertUserToUserDTO(doc.getCreatedBy()));
