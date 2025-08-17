@@ -3,7 +3,6 @@ package com.vpgh.dms.service.impl;
 import com.vpgh.dms.model.dto.*;
 import com.vpgh.dms.model.dto.response.FileItemDTO;
 import com.vpgh.dms.model.dto.response.FileItemProjection;
-import com.vpgh.dms.model.dto.response.PaginationResDTO;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.FileItemRepository;
 import com.vpgh.dms.service.FileService;
@@ -14,7 +13,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -23,13 +21,13 @@ public class FileServiceImpl implements FileService {
     private FileItemRepository fileItemRepository;
 
     @Override
-    public PaginationResDTO<List<FileItemDTO>> getUserFiles(User user, Integer parentId, Map<String, String> params) {
+    public Page<FileItemDTO> getUserFiles(User user, Integer parentId, Map<String, String> params) {
         int page = Integer.parseInt(params.get("page"));
         Pageable pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
 
         Page<FileItemProjection> pageItem = fileItemRepository.findAllByUserAndParent(user.getId(), parentId, pageable);
 
-        List<FileItemDTO> items = pageItem.getContent().stream().map(p -> {
+        Page<FileItemDTO> items = pageItem.map(p -> {
             UserDTO createdBy = new UserDTO();
             createdBy.setId(p.getCreatedById());
             createdBy.setEmail(p.getCreatedByEmail());
@@ -54,14 +52,9 @@ public class FileServiceImpl implements FileService {
                 d.setCreatedBy(createdBy);
                 dto.setDocument(d);
             }
-
             return dto;
-        }).toList();
+        });
 
-        PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
-        res.setResult(items);
-        res.setCurrentPage(pageItem.getNumber() + 1);
-        res.setTotalPages(pageItem.getTotalPages());
-        return res;
+        return items;
     }
 }

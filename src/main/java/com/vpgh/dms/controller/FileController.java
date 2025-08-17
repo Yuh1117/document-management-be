@@ -43,8 +43,14 @@ public class FileController {
         }
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
-        PaginationResDTO<List<FileItemDTO>> files = fileService.getUserFiles(currentUser, -1, params);
-        return ResponseEntity.ok(files);
+        Page<FileItemDTO> items = fileService.getUserFiles(currentUser, -1, params);
+        List<FileItemDTO> files = items.getContent();
+
+        PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
+        res.setResult(files);
+        res.setCurrentPage(items.getNumber() + 1);
+        res.setTotalPages(items.getTotalPages());
+        return ResponseEntity.status(HttpStatus.OK).body(res);
     }
 
     @GetMapping(path = "/secure/search")

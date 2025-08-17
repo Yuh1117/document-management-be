@@ -1,5 +1,6 @@
 package com.vpgh.dms.controller;
 
+import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.dto.request.CopyCutReq;
 import com.vpgh.dms.model.dto.request.FileUploadReq;
 import com.vpgh.dms.model.entity.Document;
@@ -298,4 +299,18 @@ public class DocumentController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping(path = "/secure/documents/{id}")
+    @ApiMessage(message = "Xem tài liệu")
+    public ResponseEntity<DocumentDTO> detail(@PathVariable Integer id) {
+        Document doc = this.documentService.getDocumentById(id);
+        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
+            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
+        }
+
+        if (!this.documentPermissionService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
+            throw new ForbiddenException("Bạn không có quyền xem tài liệu này");
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(this.documentService.convertDocumentToDocumentDTO(doc));
+    }
 }
