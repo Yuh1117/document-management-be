@@ -326,7 +326,7 @@ public class FolderServiceImpl implements FolderService {
 
     @Override
     public void zipFolderIterative(Folder rootFolder, ZipOutputStream zipOut) throws IOException {
-        Deque<Folder> stack = new ArrayDeque<>();
+        Stack<Folder> stack = new Stack<>();
         stack.push(rootFolder);
 
         while (!stack.isEmpty()) {
