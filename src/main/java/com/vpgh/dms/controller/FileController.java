@@ -8,17 +8,17 @@ import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FileService;
+import com.vpgh.dms.service.FolderPermissionService;
 import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
+import com.vpgh.dms.util.exception.ForbiddenException;
+import com.vpgh.dms.util.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -33,8 +33,10 @@ public class FileController {
     private DocumentService documentService;
     @Autowired
     private FileService fileService;
+    @Autowired
+    private FolderPermissionService folderPermissionService;
 
-    @GetMapping(path = "/secure/my-files")
+    @GetMapping(path = "/secure/files/my-files")
     @ApiMessage(message = "Lấy files của tôi")
     public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getMyDrive(@RequestParam Map<String, String> params) {
         String page = params.get("page");
@@ -53,7 +55,7 @@ public class FileController {
         return ResponseEntity.status(HttpStatus.OK).body(res);
     }
 
-    @GetMapping(path = "/secure/search")
+    @GetMapping(path = "/secure/files/search")
     @ApiMessage(message = "Tìm kiếm")
     public ResponseEntity<FileResponse> search(@RequestParam Map<String, String> params) {
         String page = params.get("page");
@@ -67,5 +69,33 @@ public class FileController {
 
         return ResponseEntity.status(HttpStatus.OK).body(new FileResponse(this.folderService.convertFoldersToFolderDTOs(folders.getContent()),
                 this.documentService.convertDocumentsToDocumentDTOs(documents.getContent())));
+    }
+
+    @GetMapping("/secure/files/folders/{id}")
+    @ApiMessage(message = "Lấy files trong folder")
+    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getFolderFiles(@PathVariable("id") Integer id, @RequestParam Map<String, String> params) {
+        Folder folder = this.folderService.getFolderById(id);
+        if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
+            throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+        }
+
+        if (!this.folderPermissionService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
+            throw new ForbiddenException("Bạn không có quyền xem thư mục này");
+        }
+
+        String page = params.get("page");
+        if (page == null || page.isEmpty()) {
+            params.put("page", "1");
+        }
+
+        Page<FileItemDTO> items = fileService.getFolderFiles(id, params);
+        List<FileItemDTO> files = items.getContent();
+
+        PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
+        res.setResult(files);
+        res.setCurrentPage(items.getNumber() + 1);
+        res.setTotalPages(items.getTotalPages());
+
+        return ResponseEntity.ok(res);
     }
 }

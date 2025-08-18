@@ -12,6 +12,7 @@ import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.service.specification.FolderSpecification;
 import com.vpgh.dms.util.PageSize;
+import com.vpgh.dms.util.PathUtil;
 import com.vpgh.dms.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,8 +24,12 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 public class FolderServiceImpl implements FolderService {
@@ -317,6 +322,38 @@ public class FolderServiceImpl implements FolderService {
     @Override
     public List<SubFolderDTO> convertFoldersToSubFolderDTOs(List<Folder> folders) {
         return folders.stream().map(f -> convertFolderToSubFolderDTO(f)).collect(Collectors.toList());
+    }
+
+    @Override
+    public void zipFolderIterative(Folder rootFolder, ZipOutputStream zipOut) throws IOException {
+        Stack<Folder> stack = new Stack<>();
+        stack.push(rootFolder);
+
+        while (!stack.isEmpty()) {
+            Folder folder = stack.pop();
+
+            List<Folder> subFolders = this.folderRepository.findByParentId(folder.getId());
+            List<Document> docs = this.documentRepository.findByFolderId(folder.getId());
+
+            if (docs.isEmpty() && subFolders.isEmpty()) {
+                String relativePath = PathUtil.buildRelativePath(folder, rootFolder) + "/";
+                zipOut.putNextEntry(new ZipEntry(relativePath));
+                zipOut.closeEntry();
+            }
+
+            for (Document doc : docs) {
+                try (InputStream in = this.documentService.downloadFileStream(doc.getFilePath())) {
+                    String relativePath = PathUtil.buildRelativePath(doc, rootFolder);
+                    zipOut.putNextEntry(new ZipEntry(relativePath));
+                    in.transferTo(zipOut);
+                    zipOut.closeEntry();
+                }
+            }
+
+            for (Folder sub : subFolders) {
+                stack.push(sub);
+            }
+        }
     }
 
     private String generateUniqueName(String originalName, Folder targetFolder) {

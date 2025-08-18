@@ -7,8 +7,10 @@ import com.vpgh.dms.model.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipOutputStream;
 
 @Service
 public interface FolderService {
@@ -49,4 +51,6 @@ public interface FolderService {
     SubFolderDTO convertFolderToSubFolderDTO(Folder folder);
 
     List<SubFolderDTO> convertFoldersToSubFolderDTOs(List<Folder> folders);
+
+    void zipFolderIterative(Folder rootFolder, ZipOutputStream zipOut) throws IOException;
 }

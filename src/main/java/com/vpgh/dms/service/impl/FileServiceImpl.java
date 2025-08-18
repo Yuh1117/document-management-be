@@ -25,36 +25,50 @@ public class FileServiceImpl implements FileService {
         int page = Integer.parseInt(params.get("page"));
         Pageable pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
 
-        Page<FileItemProjection> pageItem = fileItemRepository.findAllByUserAndParent(user.getId(), parentId, pageable);
+        Page<FileItemProjection> pageItem = fileItemRepository.findAllByUserAndParent(user.getId(), parentId, false, pageable);
 
-        Page<FileItemDTO> items = pageItem.map(p -> {
-            UserDTO createdBy = new UserDTO();
-            createdBy.setId(p.getCreatedById());
-            createdBy.setEmail(p.getCreatedByEmail());
-
-            FileItemDTO dto = new FileItemDTO();
-            dto.setType(p.getType());
-
-            if ("folder".equals(p.getType())) {
-                FolderDTO f = new FolderDTO();
-                f.setId(p.getId());
-                f.setName(p.getName());
-                f.setCreatedAt(p.getCreatedAt());
-                f.setUpdatedAt(p.getUpdatedAt());
-                f.setCreatedBy(createdBy);
-                dto.setFolder(f);
-            } else {
-                DocumentDTO d = new DocumentDTO();
-                d.setId(p.getId());
-                d.setName(p.getName());
-                d.setCreatedAt(p.getCreatedAt());
-                d.setUpdatedAt(p.getUpdatedAt());
-                d.setCreatedBy(createdBy);
-                dto.setDocument(d);
-            }
-            return dto;
-        });
-
+        Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
         return items;
+    }
+
+    @Override
+    public Page<FileItemDTO> getFolderFiles(Integer folderId, Map<String, String> params) {
+        int page = Integer.parseInt(params.get("page"));
+        Pageable pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
+
+        Page<FileItemProjection> pageItem = fileItemRepository.findFolderFiles(folderId, false, pageable);
+
+        Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
+        return items;
+    }
+
+    private FileItemDTO mapToFileItemDTO(FileItemProjection p) {
+        UserDTO createdBy = new UserDTO();
+        createdBy.setId(p.getCreatedById());
+        createdBy.setEmail(p.getCreatedByEmail());
+
+        FileItemDTO dto = new FileItemDTO();
+        dto.setType(p.getType());
+
+        if ("folder".equals(p.getType())) {
+            FolderDTO f = new FolderDTO();
+            f.setId(p.getId());
+            f.setName(p.getName());
+            f.setCreatedAt(p.getCreatedAt());
+            f.setUpdatedAt(p.getUpdatedAt());
+            f.setCreatedBy(createdBy);
+            f.setDeleted(p.getIsDeleted());
+            dto.setFolder(f);
+        } else {
+            DocumentDTO d = new DocumentDTO();
+            d.setId(p.getId());
+            d.setName(p.getName());
+            d.setCreatedAt(p.getCreatedAt());
+            d.setUpdatedAt(p.getUpdatedAt());
+            d.setCreatedBy(createdBy);
+            d.setDeleted(p.getIsDeleted());
+            dto.setDocument(d);
+        }
+        return dto;
     }
 }
