@@ -1,10 +1,13 @@
 package com.vpgh.dms.service;
 
+import com.vpgh.dms.model.constant.PermissionType;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.User;
 
 public interface DocumentPermissionService {
+    boolean checkCanView(User user, Document doc);
+
     boolean checkCanEdit(User user, Document doc);
 
-    boolean checkUserOrGroupPermission(User user, Document doc, String permission);
+    boolean checkUserOrGroupPermission(User user, Document doc, PermissionType permission);
 }

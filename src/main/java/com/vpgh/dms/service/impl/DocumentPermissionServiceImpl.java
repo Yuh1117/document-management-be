@@ -23,11 +23,11 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     private UserGroupService userGroupService;
 
     @Override
-    public boolean checkCanEdit(User user, Document doc) {
+    public boolean checkCanView(User user, Document doc) {
         if (Objects.equals(doc.getCreatedBy().getId(), user.getId()))
             return true;
 
-        boolean hasPermission = checkUserOrGroupPermission(user, doc, "EDIT");
+        boolean hasPermission = checkUserOrGroupPermission(user, doc, PermissionType.VIEW);
         if (hasPermission)
             return true;
 
@@ -35,9 +35,21 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     }
 
     @Override
-    public boolean checkUserOrGroupPermission(User user, Document doc, String permission) {
+    public boolean checkCanEdit(User user, Document doc) {
+        if (Objects.equals(doc.getCreatedBy().getId(), user.getId()))
+            return true;
+
+        boolean hasPermission = checkUserOrGroupPermission(user, doc, PermissionType.EDIT);
+        if (hasPermission)
+            return true;
+
+        return false;
+    }
+
+    @Override
+    public boolean checkUserOrGroupPermission(User user, Document doc, PermissionType permission) {
         Optional<DocumentPermission> userPermission = documentPermissionRepository
-                .findByDocumentAndUserAndPermissionType(doc, user, PermissionType.EDIT);
+                .findByDocumentAndUserAndPermissionType(doc, user, permission);
 
         if (userPermission.isPresent()) {
             return true;
@@ -46,7 +58,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         List<UserGroup> userGroups = this.userGroupService.getGroupsByUser(user);
         if (!userGroups.isEmpty()) {
             Optional<DocumentPermission> groupPermission = documentPermissionRepository
-                    .findByDocumentAndGroupInAndPermissionType(doc, userGroups, PermissionType.EDIT);
+                    .findByDocumentAndGroupInAndPermissionType(doc, userGroups, permission);
 
             if (groupPermission.isPresent()) {
                 return true;

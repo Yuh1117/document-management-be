@@ -15,15 +15,17 @@ import com.vpgh.dms.util.exception.NotFoundException;
 import com.vpgh.dms.util.exception.UniqueConstraintException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -139,21 +141,22 @@ public class DocumentController {
     }
 
     @GetMapping(path = "/secure/documents/download/{id}")
-    public ResponseEntity<byte[]> download(@PathVariable(value = "id") Integer id) {
+    public ResponseEntity<InputStreamResource> download(@PathVariable Integer id) {
         Document doc = this.documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xoá");
         }
-        byte[] data = this.documentService.downloadFile(doc.getFilePath());
+
+        InputStream inputStream = documentService.downloadFileStream(doc.getFilePath());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + doc.getName() + "\"")
                 .contentType(MediaType.parseMediaType(doc.getMimeType()))
-                .body(data);
+                .body(new InputStreamResource(inputStream));
     }
 
     @PostMapping("/secure/documents/download/multiple")
-    public ResponseEntity<byte[]> downloadMultiple(@RequestBody List<Integer> ids) throws IOException {
+    public ResponseEntity<StreamingResponseBody> downloadMultiple(@RequestBody List<Integer> ids) throws IOException {
         List<Document> docs = this.documentService.getDocumentsByIds(ids);
         Map<Integer, Document> docsMap = docs.stream()
                 .filter(doc -> !doc.getDeleted())
@@ -164,25 +167,23 @@ public class DocumentController {
             throw new NotFoundException("Không tìm thấy tài liệu với các ID (hoặc đã bị xóa mềm): " + notFoundIds);
         }
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ZipOutputStream zipOut = new ZipOutputStream(baos);
-
-        for (Document doc : docs) {
-            byte[] fileData = documentService.downloadFile(doc.getFilePath());
-
-            String originalName = doc.getName();
-            ZipEntry entry = new ZipEntry(originalName);
-            zipOut.putNextEntry(entry);
-            zipOut.write(fileData);
-            zipOut.closeEntry();
-        }
-
-        zipOut.close();
+        StreamingResponseBody stream = outputStream -> {
+            try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+                for (Document doc : docs) {
+                    try (InputStream in = documentService.downloadFileStream(doc.getFilePath())) {
+                        ZipEntry entry = new ZipEntry(doc.getName());
+                        zipOut.putNextEntry(entry);
+                        in.transferTo(zipOut);
+                        zipOut.closeEntry();
+                    }
+                }
+            }
+        };
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"documents.zip\"")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(baos.toByteArray());
+                .body(stream);
     }
 
     @DeleteMapping("/secure/documents")
@@ -307,7 +308,7 @@ public class DocumentController {
             throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
         }
 
-        if (!this.documentPermissionService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
+        if (!this.documentPermissionService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
             throw new ForbiddenException("Bạn không có quyền xem tài liệu này");
         }
 

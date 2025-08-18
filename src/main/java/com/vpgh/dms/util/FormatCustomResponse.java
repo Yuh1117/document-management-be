@@ -4,6 +4,7 @@ import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.context.ApiMessageContext;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.MethodParameter;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.ServerHttpRequest;
@@ -22,7 +23,7 @@ public class FormatCustomResponse implements ResponseBodyAdvice<Object> {
     public boolean supports(MethodParameter returnType, Class converterType) {
         Class<?> paramType = returnType.getParameterType();
 
-        if (paramType == byte[].class) {
+        if (paramType == byte[].class || Resource.class.isAssignableFrom(paramType)) {
             return false;
         }
 
@@ -31,7 +32,8 @@ public class FormatCustomResponse implements ResponseBodyAdvice<Object> {
             Type rawType = parameterizedType.getRawType();
             if (rawType == ResponseEntity.class) {
                 Type actualType = parameterizedType.getActualTypeArguments()[0];
-                if (actualType == byte[].class) {
+                if (actualType == byte[].class || actualType instanceof Class &&
+                        Resource.class.isAssignableFrom((Class<?>) actualType)) {
                     return false;
                 }
             }

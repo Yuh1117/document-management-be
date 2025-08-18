@@ -12,13 +12,17 @@ import com.vpgh.dms.util.exception.NotFoundException;
 import com.vpgh.dms.util.exception.UniqueConstraintException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.zip.ZipOutputStream;
 
 @RestController
 @RequestMapping("/api")
@@ -53,6 +57,52 @@ public class FolderController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(this.folderService.save(folder));
     }
+
+    @GetMapping("/secure/folders/download/{id}")
+    public ResponseEntity<StreamingResponseBody> downloadFolder(@PathVariable Integer id) {
+        Folder rootFolder = folderService.getFolderById(id);
+        if (rootFolder == null || Boolean.TRUE.equals(rootFolder.getDeleted())) {
+            throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+        }
+
+        StreamingResponseBody stream = outputStream -> {
+            try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+                this.folderService.zipFolderIterative(rootFolder, zipOut);
+            }
+        };
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + rootFolder.getName() + ".zip\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(stream);
+    }
+
+    @PostMapping("/secure/folders/download/multiple")
+    public ResponseEntity<StreamingResponseBody> downloadMultiple(@RequestBody List<Integer> folderIds) {
+        List<Folder> folders = folderService.getFoldersByIds(folderIds);
+        Map<Integer, Folder> folderMap = folders.stream()
+                .filter(f -> !f.getDeleted())
+                .collect(Collectors.toMap(Folder::getId, f -> f));
+        List<Integer> notFoundIds = folderIds.stream().filter(id -> !folderMap.containsKey(id)).toList();
+
+        if (!notFoundIds.isEmpty()) {
+            throw new NotFoundException("Không tìm thấy thư mục với ID: " + notFoundIds);
+        }
+
+        StreamingResponseBody stream = outputStream -> {
+            try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+                for (Folder folder : folders) {
+                    this.folderService.zipFolderIterative(folder, zipOut);
+                }
+            }
+        };
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"folders.zip\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(stream);
+    }
+
 
     @PatchMapping(path = "/secure/folders/{id}")
     @ApiMessage(message = "Cập nhật thư mục")
@@ -198,7 +248,7 @@ public class FolderController {
             throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
         }
 
-        if (!this.folderPermissionService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
+        if (!this.folderPermissionService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
             throw new ForbiddenException("Bạn không có quyền xem thư mục này");
         }
 

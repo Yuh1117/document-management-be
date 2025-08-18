@@ -8,4 +8,6 @@ import java.util.Map;
 
 public interface FileService {
     Page<FileItemDTO> getUserFiles(User user, Integer parentId, Map<String, String> params);
+
+    Page<FileItemDTO> getFolderFiles(Integer folderId, Map<String, String> params);
 }

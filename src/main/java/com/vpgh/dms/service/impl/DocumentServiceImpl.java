@@ -8,6 +8,7 @@ import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.repository.DocumentVersionRepository;
+import com.vpgh.dms.repository.FolderRepository;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.service.specification.DocumentSpecification;
@@ -23,12 +24,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,8 @@ public class DocumentServiceImpl implements DocumentService {
     private UserService userService;
     @Autowired
     private DocumentVersionRepository documentVersionRepository;
+    @Autowired
+    private FolderRepository folderRepository;
     @Autowired
     private S3Client s3Client;
     @Value("${aws.bucket.name}")
@@ -81,15 +84,25 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
 
+//    @Override
+//    public byte[] downloadFile(String filePath) {
+//        String key = extractKeyFromPath(filePath);
+//        ResponseBytes<GetObjectResponse> objectAsBytes = s3Client.getObjectAsBytes(GetObjectRequest.builder()
+//                .bucket(bucketName)
+//                .key(key)
+//                .build());
+//        return objectAsBytes.asByteArray();
+//    }
+
     @Override
-    public byte[] downloadFile(String filePath) {
+    public InputStream downloadFileStream(String filePath) {
         String key = extractKeyFromPath(filePath);
-        ResponseBytes<GetObjectResponse> objectAsBytes = s3Client.getObjectAsBytes(GetObjectRequest.builder()
+        return s3Client.getObject(GetObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
                 .build());
-        return objectAsBytes.asByteArray();
     }
+
 
     @Override
     public void hardDelete(Document doc) {

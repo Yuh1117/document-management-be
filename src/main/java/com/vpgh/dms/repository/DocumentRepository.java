@@ -18,7 +18,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     Document findByStoredFilename(String storedFileName);
 
-    Optional<Document> findById(Integer integer);
+    Optional<Document> findById(Integer id);
 
     List<Document> findByIdIn(List<Integer> ids);
 

@@ -23,11 +23,11 @@ public class FolderPermissionServiceImpl implements FolderPermissionService {
     private UserGroupService userGroupService;
 
     @Override
-    public boolean checkCanEdit(User user, Folder folder) {
+    public boolean checkCanView(User user, Folder folder) {
         if (Objects.equals(folder.getCreatedBy().getId(), user.getId()))
             return true;
 
-        boolean hasPermission = checkUserOrGroupPermission(user, folder, "EDIT");
+        boolean hasPermission = checkUserOrGroupPermission(user, folder, PermissionType.VIEW);
         if (hasPermission)
             return true;
 
@@ -35,9 +35,21 @@ public class FolderPermissionServiceImpl implements FolderPermissionService {
     }
 
     @Override
-    public boolean checkUserOrGroupPermission(User user, Folder folder, String permission) {
+    public boolean checkCanEdit(User user, Folder folder) {
+        if (Objects.equals(folder.getCreatedBy().getId(), user.getId()))
+            return true;
+
+        boolean hasPermission = checkUserOrGroupPermission(user, folder, PermissionType.EDIT);
+        if (hasPermission)
+            return true;
+
+        return false;
+    }
+
+    @Override
+    public boolean checkUserOrGroupPermission(User user, Folder folder, PermissionType permission) {
         Optional<FolderPermission> userPermission = this.folderPermissionRepository
-                .findByFolderAndUserAndPermissionType(folder, user, PermissionType.EDIT);
+                .findByFolderAndUserAndPermissionType(folder, user, permission);
 
         if (userPermission.isPresent()) {
             return true;
@@ -46,7 +58,7 @@ public class FolderPermissionServiceImpl implements FolderPermissionService {
         List<UserGroup> userGroups = this.userGroupService.getGroupsByUser(user);
         if (!userGroups.isEmpty()) {
             Optional<FolderPermission> groupPermission = this.folderPermissionRepository
-                    .findByFolderAndGroupInAndPermissionType(folder, userGroups, PermissionType.EDIT);
+                    .findByFolderAndGroupInAndPermissionType(folder, userGroups, permission);
 
             if (groupPermission.isPresent()) {
                 return true;

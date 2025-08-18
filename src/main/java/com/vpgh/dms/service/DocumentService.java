@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +19,9 @@ public interface DocumentService {
 
     Document uploadKeepBothFiles(MultipartFile file, Folder folder) throws IOException;
 
-    byte[] downloadFile(String key);
+//    byte[] downloadFile(String key);
+
+    InputStream downloadFileStream(String filePath);
 
     Document save(Document document);
 
