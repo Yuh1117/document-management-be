@@ -21,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
@@ -354,6 +355,42 @@ public class FolderServiceImpl implements FolderService {
                 stack.push(sub);
             }
         }
+    }
+
+    @Override
+    public Folder uploadNewFolder(Folder parentFolder, List<MultipartFile> files, List<String> relativePaths) throws IOException {
+        Folder rootFolder = null;
+
+        for (int i = 0; i < files.size(); i++) {
+            MultipartFile file = files.get(i);
+            String relativePath = relativePaths.get(i);
+
+            Folder currentParent = parentFolder;
+
+            if (relativePath != null && !relativePath.isEmpty()) {
+                String[] parts = relativePath.split("/");
+
+                for (int j = 0; j < parts.length - 1; j++) {
+                    String folderName = parts[j];
+                    Folder existing = folderRepository.findByNameAndParentAndIsDeletedFalse(folderName, currentParent);
+                    if (existing == null) {
+                        Folder newFolder = new Folder();
+                        newFolder.setName(folderName);
+                        newFolder.setParent(currentParent);
+                        currentParent = folderRepository.save(newFolder);
+                    } else {
+                        currentParent = existing;
+                    }
+                    if (j == 0 && rootFolder == null) {
+                        rootFolder = currentParent;
+                    }
+                }
+            }
+
+            this.documentService.uploadNewFile(file, currentParent);
+        }
+
+        return rootFolder;
     }
 
     private String generateUniqueName(String originalName, Folder targetFolder) {

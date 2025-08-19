@@ -3,16 +3,18 @@ package com.vpgh.dms.model.dto.request;
 import com.vpgh.dms.util.annotation.ValidFile;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @ValidFile
 public class FileUploadReq {
-    private MultipartFile[] files;
+    private List<MultipartFile> files;
     private Integer folderId;
 
-    public MultipartFile[] getFiles() {
+    public List<MultipartFile> getFiles() {
         return files;
     }
 
-    public void setFiles(MultipartFile[] files) {
+    public void setFiles(List<MultipartFile> files) {
         this.files = files;
     }
 

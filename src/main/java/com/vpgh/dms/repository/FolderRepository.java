@@ -35,4 +35,6 @@ public interface FolderRepository extends JpaRepository<Folder, Integer>, JpaSpe
     List<Folder> findByParentAndIsDeletedFalse(Folder parent);
 
     List<Folder> findByParentAndIsDeletedTrue(Folder parent);
+
+    Folder findByNameAndParentAndIsDeletedFalse(String name, Folder parent);
 }

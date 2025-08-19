@@ -2,7 +2,9 @@ package com.vpgh.dms.controller;
 
 import com.vpgh.dms.model.dto.FolderDTO;
 import com.vpgh.dms.model.dto.request.CopyCutReq;
+import com.vpgh.dms.model.dto.request.FolderUploadReq;
 import com.vpgh.dms.model.entity.Folder;
+import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FolderPermissionService;
 import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.util.SecurityUtil;
@@ -19,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,6 +35,8 @@ public class FolderController {
     private FolderService folderService;
     @Autowired
     private FolderPermissionService folderPermissionService;
+    @Autowired
+    private DocumentService documentService;
 
     @PostMapping(path = "/secure/folders")
     @ApiMessage(message = "Tạo mới thư mục")
@@ -49,13 +54,45 @@ public class FolderController {
                 throw new UniqueConstraintException("Không thể tạo thư mục với tên này trong cùng thư mục cha.");
             }
         } else {
-            if (folderService.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(folder.getName(), SecurityUtil.getCurrentUserFromThreadLocal(),
-                    folder.getId())) {
-                throw new UniqueConstraintException("Không thể tạo thư mục gốc với tên này.");
+            if (folderService.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(folder.getName(),
+                    SecurityUtil.getCurrentUserFromThreadLocal(), folder.getId())) {
+                throw new UniqueConstraintException("Không thể tạo thư mục này trong thư mục gốc.");
             }
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(this.folderService.save(folder));
+    }
+
+    @PostMapping(path = "/secure/folders/upload")
+    @ApiMessage(message = "Upload thư mục")
+    public ResponseEntity<Folder> uploadFolder(@Valid @ModelAttribute FolderUploadReq folderUploadReq) throws IOException {
+        Folder parentFolder = null;
+        if (folderUploadReq.getParentId() != null) {
+            parentFolder = this.folderService.getFolderById(folderUploadReq.getParentId());
+            if (parentFolder == null || Boolean.TRUE.equals(parentFolder.getDeleted())) {
+                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+            }
+        }
+
+        for (String relativePath : folderUploadReq.getRelativePaths()) {
+            if (relativePath == null || relativePath.isEmpty()) continue;
+            String[] parts = relativePath.split("/");
+            String firstFolderName = parts[0];
+
+            if (parentFolder != null) {
+                if (folderService.existsByNameAndParentAndIsDeletedFalseAndIdNot(firstFolderName, parentFolder, null)) {
+                    throw new UniqueConstraintException("Không thể tạo thư mục với tên này trong cùng thư mục cha.");
+                }
+            } else {
+                if (folderService.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(firstFolderName,
+                        SecurityUtil.getCurrentUserFromThreadLocal(), null)) {
+                    throw new UniqueConstraintException("Không thể tạo thư mục này trong thư mục gốc.");
+                }
+            }
+        }
+
+        Folder uploadedFolder = folderService.uploadNewFolder(parentFolder, folderUploadReq.getFiles(), folderUploadReq.getRelativePaths());
+        return ResponseEntity.status(HttpStatus.CREATED).body(uploadedFolder);
     }
 
     @GetMapping("/secure/folders/download/{id}")
@@ -102,7 +139,6 @@ public class FolderController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(stream);
     }
-
 
     @PatchMapping(path = "/secure/folders/{id}")
     @ApiMessage(message = "Cập nhật thư mục")

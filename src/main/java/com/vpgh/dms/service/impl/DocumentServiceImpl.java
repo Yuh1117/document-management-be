@@ -30,6 +30,7 @@ import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -57,7 +58,8 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public Document uploadNewFile(MultipartFile file, Folder folder) throws IOException {
-        return saveNewDocument(file, folder, file.getOriginalFilename());
+        String fileName = Paths.get(file.getOriginalFilename()).getFileName().toString();
+        return saveNewDocument(file, folder, fileName);
     }
 
     @Override

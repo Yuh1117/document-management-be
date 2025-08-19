@@ -46,7 +46,13 @@ public class DocumentController {
     @PostMapping(path = "/secure/documents/upload")
     @ApiMessage(message = "Upload tài liệu")
     public ResponseEntity<List<Document>> upload(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
-        Folder folder = fileUploadReq.getFolderId() != null ? folderService.getFolderById(fileUploadReq.getFolderId()) : null;
+        Folder folder = null;
+        if (fileUploadReq.getFolderId() != null) {
+            folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
+            if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
+                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+            }
+        }
 
         List<Document> uploadedDocs = new ArrayList<>();
         for (MultipartFile file : fileUploadReq.getFiles()) {
@@ -71,7 +77,13 @@ public class DocumentController {
     @PostMapping(path = "/secure/documents/upload-replace")
     @ApiMessage(message = "Upload và thay thế")
     public ResponseEntity<List<Document>> uploadReplace(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
-        Folder folder = fileUploadReq.getFolderId() != null ? folderService.getFolderById(fileUploadReq.getFolderId()) : null;
+        Folder folder = null;
+        if (fileUploadReq.getFolderId() != null) {
+            folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
+            if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
+                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+            }
+        }
 
         List<Document> replacedDocs = new ArrayList<>();
         for (MultipartFile file : fileUploadReq.getFiles()) {
@@ -101,7 +113,13 @@ public class DocumentController {
     @PostMapping(path = "/secure/documents/upload-keep")
     @ApiMessage(message = "Upload và giữ cả 2")
     public ResponseEntity<List<Document>> uploadKeep(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
-        Folder folder = fileUploadReq.getFolderId() != null ? folderService.getFolderById(fileUploadReq.getFolderId()) : null;
+        Folder folder = null;
+        if (fileUploadReq.getFolderId() != null) {
+            folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
+            if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
+                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+            }
+        }
 
         List<Document> uploadedDocs = new ArrayList<>();
         for (MultipartFile file : fileUploadReq.getFiles()) {
