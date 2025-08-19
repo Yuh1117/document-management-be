@@ -359,13 +359,13 @@ public class FolderServiceImpl implements FolderService {
 
     @Override
     public Folder uploadNewFolder(Folder parentFolder, List<MultipartFile> files, List<String> relativePaths) throws IOException {
-        Folder rootFolder = parentFolder;
+        Folder rootFolder = null;
 
         for (int i = 0; i < files.size(); i++) {
             MultipartFile file = files.get(i);
             String relativePath = relativePaths.get(i);
 
-            Folder currentParent = rootFolder;
+            Folder currentParent = parentFolder;
 
             if (relativePath != null && !relativePath.isEmpty()) {
                 String[] parts = relativePath.split("/");
@@ -381,7 +381,7 @@ public class FolderServiceImpl implements FolderService {
                     } else {
                         currentParent = existing;
                     }
-                    if (rootFolder == null) {
+                    if (j == 0 && rootFolder == null) {
                         rootFolder = currentParent;
                     }
                 }
