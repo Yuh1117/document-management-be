@@ -16,12 +16,19 @@ import com.vpgh.dms.util.exception.ForbiddenException;
 import com.vpgh.dms.util.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @RestController
 @RequestMapping("/api")
@@ -97,5 +104,50 @@ public class FileController {
         res.setTotalPages(items.getTotalPages());
 
         return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/secure/files/download/multiple")
+    public ResponseEntity<StreamingResponseBody> downloadMixed(@RequestBody Map<String, List<Integer>> request) {
+        List<Folder> folders = folderService.getFoldersByIds(request.get("folderIds"));
+        List<Document> docs = documentService.getDocumentsByIds(request.get("documentIds"));
+
+        Map<Integer, Folder> folderMap = folders.stream()
+                .filter(f -> !f.getDeleted())
+                .collect(Collectors.toMap(Folder::getId, f -> f));
+        Map<Integer, Document> docMap = docs.stream()
+                .filter(d -> !d.getDeleted())
+                .collect(Collectors.toMap(Document::getId, d -> d));
+
+        List<Integer> notFoundFolders = request.get("folderIds").stream()
+                .filter(id -> !folderMap.containsKey(id))
+                .toList();
+        List<Integer> notFoundDocs = request.get("documentIds").stream()
+                .filter(id -> !docMap.containsKey(id))
+                .toList();
+
+        if (!notFoundFolders.isEmpty() || !notFoundDocs.isEmpty()) {
+            throw new NotFoundException("Không tìm thấy: folderIds=" + notFoundFolders + ", docIds=" + notFoundDocs);
+        }
+
+        StreamingResponseBody stream = outputStream -> {
+            try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+                for (Folder folder : folders) {
+                    folderService.zipFolderIterative(folder, zipOut);
+                }
+                for (Document doc : docs) {
+                    try (InputStream in = documentService.downloadFileStream(doc.getFilePath())) {
+                        ZipEntry entry = new ZipEntry(doc.getName());
+                        zipOut.putNextEntry(entry);
+                        in.transferTo(zipOut);
+                        zipOut.closeEntry();
+                    }
+                }
+            }
+        };
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"folders-documents.zip\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(stream);
     }
 }

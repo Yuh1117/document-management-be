@@ -25,8 +25,8 @@ public class FileValidator implements ConstraintValidator<ValidFile, FileUploadR
 
         context.disableDefaultConstraintViolation();
 
-        MultipartFile[] files = fileUploadReq.getFiles();
-        if (files == null || files.length == 0) {
+        List<MultipartFile> files = fileUploadReq.getFiles();
+        if (files == null || files.isEmpty()) {
             context.buildConstraintViolationWithTemplate("Phải chọn ít nhất một file để upload.")
                     .addPropertyNode("files")
                     .addConstraintViolation();
@@ -36,8 +36,8 @@ public class FileValidator implements ConstraintValidator<ValidFile, FileUploadR
         List<String> allowedTypes = List.of(this.systemSettingService.getSettingByKey("allowedFileType").getValue().split(";"));
         long maxSize = Long.parseLong(this.systemSettingService.getSettingByKey("maxFileSize").getValue());
 
-        for (int i = 0; i < files.length; i++) {
-            MultipartFile file = files[i];
+        for (int i = 0; i < files.size(); i++) {
+            MultipartFile file = files.get(i);
 
             if (!allowedTypes.contains(file.getContentType())) {
                 context.buildConstraintViolationWithTemplate("Loại file không hợp lệ: " + file.getOriginalFilename())
@@ -51,16 +51,6 @@ public class FileValidator implements ConstraintValidator<ValidFile, FileUploadR
                         .addPropertyNode("file " + (i + 1))
                         .addConstraintViolation();
                 valid = false;
-            }
-        }
-
-        if (fileUploadReq.getFolderId() != null) {
-            Folder folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
-            if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
-                context.buildConstraintViolationWithTemplate("Thư mục không tồn tại hoặc đã bị xóa")
-                        .addPropertyNode("folderId")
-                        .addConstraintViolation();
-                return false;
             }
         }
 
