@@ -35,7 +35,7 @@ public class Folder extends FullAuditableEntity {
 
     @OneToMany(mappedBy = "folder", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<FolderPermission> folderPermissions;
+    private Set<FolderShare> folderShares;
 
     public Integer getId() {
         return id;
@@ -94,12 +94,11 @@ public class Folder extends FullAuditableEntity {
         this.folders = folders;
     }
 
-    public Set<FolderPermission> getFolderPermissions() {
-        return folderPermissions;
+    public Set<FolderShare> getFolderShares() {
+        return folderShares;
     }
 
-    public void setFolderPermissions(Set<FolderPermission> folderPermissions) {
-        this.folderPermissions = folderPermissions;
+    public void setFolderShares(Set<FolderShare> folderShares) {
+        this.folderShares = folderShares;
     }
-
 }

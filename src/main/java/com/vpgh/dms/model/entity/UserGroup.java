@@ -21,11 +21,11 @@ public class UserGroup extends FullAuditableEntity {
 
     @OneToMany(mappedBy = "group", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<FolderPermission> folderPermissions;
+    private Set<FolderShare> folderShares;
 
     @OneToMany(mappedBy = "group", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<DocumentPermission> documentPermissions;
+    private Set<DocumentShare> documentShares;
 
     public Integer getId() {
         return id;

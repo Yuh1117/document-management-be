@@ -1,12 +1,12 @@
 package com.vpgh.dms.service.impl;
 
-import com.vpgh.dms.model.constant.PermissionType;
+import com.vpgh.dms.model.constant.ShareType;
 import com.vpgh.dms.model.entity.Folder;
-import com.vpgh.dms.model.entity.FolderPermission;
+import com.vpgh.dms.model.entity.FolderShare;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.model.entity.UserGroup;
-import com.vpgh.dms.repository.FolderPermissionRepository;
-import com.vpgh.dms.service.FolderPermissionService;
+import com.vpgh.dms.repository.FolderShareRepository;
+import com.vpgh.dms.service.FolderShareService;
 import com.vpgh.dms.service.UserGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,9 +16,9 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Service
-public class FolderPermissionServiceImpl implements FolderPermissionService {
+public class FolderShareServiceImpl implements FolderShareService {
     @Autowired
-    private FolderPermissionRepository folderPermissionRepository;
+    private FolderShareRepository folderShareRepository;
     @Autowired
     private UserGroupService userGroupService;
 
@@ -27,7 +27,7 @@ public class FolderPermissionServiceImpl implements FolderPermissionService {
         if (Objects.equals(folder.getCreatedBy().getId(), user.getId()))
             return true;
 
-        boolean hasPermission = checkUserOrGroupPermission(user, folder, PermissionType.VIEW);
+        boolean hasPermission = checkUserOrGroupPermission(user, folder, ShareType.VIEW);
         if (hasPermission)
             return true;
 
@@ -39,7 +39,7 @@ public class FolderPermissionServiceImpl implements FolderPermissionService {
         if (Objects.equals(folder.getCreatedBy().getId(), user.getId()))
             return true;
 
-        boolean hasPermission = checkUserOrGroupPermission(user, folder, PermissionType.EDIT);
+        boolean hasPermission = checkUserOrGroupPermission(user, folder, ShareType.EDIT);
         if (hasPermission)
             return true;
 
@@ -47,9 +47,9 @@ public class FolderPermissionServiceImpl implements FolderPermissionService {
     }
 
     @Override
-    public boolean checkUserOrGroupPermission(User user, Folder folder, PermissionType permission) {
-        Optional<FolderPermission> userPermission = this.folderPermissionRepository
-                .findByFolderAndUserAndPermissionType(folder, user, permission);
+    public boolean checkUserOrGroupPermission(User user, Folder folder, ShareType permission) {
+        Optional<FolderShare> userPermission = this.folderShareRepository
+                .findByFolderAndUserAndShareType(folder, user, permission);
 
         if (userPermission.isPresent()) {
             return true;
@@ -57,8 +57,8 @@ public class FolderPermissionServiceImpl implements FolderPermissionService {
 
         List<UserGroup> userGroups = this.userGroupService.getGroupsByUser(user);
         if (!userGroups.isEmpty()) {
-            Optional<FolderPermission> groupPermission = this.folderPermissionRepository
-                    .findByFolderAndGroupInAndPermissionType(folder, userGroups, permission);
+            Optional<FolderShare> groupPermission = this.folderShareRepository
+                    .findByFolderAndGroupInAndShareType(folder, userGroups, permission);
 
             if (groupPermission.isPresent()) {
                 return true;

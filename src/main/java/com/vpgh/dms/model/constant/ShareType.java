@@ -1,6 +1,6 @@
 package com.vpgh.dms.model.constant;
 
-public enum PermissionType {
+public enum ShareType {
     VIEW,
     EDIT
 }

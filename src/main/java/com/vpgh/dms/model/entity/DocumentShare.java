@@ -1,18 +1,18 @@
 package com.vpgh.dms.model.entity;
 
 import com.vpgh.dms.model.FullAuditableEntity;
-import com.vpgh.dms.model.constant.PermissionType;
+import com.vpgh.dms.model.constant.ShareType;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "document_permissions")
-public class DocumentPermission extends FullAuditableEntity {
+@Table(name = "document_shares")
+public class DocumentShare extends FullAuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Enumerated(EnumType.STRING)
-    private PermissionType permissionType;
+    private ShareType shareType;
 
     @ManyToOne
     @JoinColumn(name = "document_id")
@@ -24,20 +24,28 @@ public class DocumentPermission extends FullAuditableEntity {
     @JoinColumn(name = "group_id")
     private UserGroup group;
 
+    public ShareType getShareType() {
+        return shareType;
+    }
+
+    public void setShareType(ShareType shareType) {
+        this.shareType = shareType;
+    }
+
+    public UserGroup getGroup() {
+        return group;
+    }
+
+    public void setGroup(UserGroup group) {
+        this.group = group;
+    }
+
     public Integer getId() {
         return id;
     }
 
     public void setId(Integer id) {
         this.id = id;
-    }
-
-    public PermissionType getPermissionType() {
-        return permissionType;
-    }
-
-    public void setPermissionType(PermissionType permissionType) {
-        this.permissionType = permissionType;
     }
 
     public Document getDocument() {
