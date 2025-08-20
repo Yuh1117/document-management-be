@@ -52,7 +52,7 @@ public class FileController {
         }
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
-        Page<FileItemDTO> items = fileService.getUserFiles(currentUser, -1, params);
+        Page<FileItemDTO> items = fileService.getUserFiles(currentUser, null, params);
         List<FileItemDTO> files = items.getContent();
 
         PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
@@ -71,7 +71,7 @@ public class FileController {
         }
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
-        Page<FileItemDTO> items = fileService.getTrashFiles(currentUser, -1, params);
+        Page<FileItemDTO> items = fileService.getTrashFiles(currentUser, params);
         List<FileItemDTO> files = items.getContent();
 
         PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
@@ -83,18 +83,21 @@ public class FileController {
 
     @GetMapping(path = "/secure/files/search")
     @ApiMessage(message = "Tìm kiếm")
-    public ResponseEntity<FileResponse> search(@RequestParam Map<String, String> params) {
+    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> search(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
             params.put("page", "1");
         }
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
-        Page<Folder> folders = this.folderService.searchFolders(params, currentUser);
-        Page<Document> documents = this.documentService.searchDocuments(params, currentUser);
+        Page<FileItemDTO> items = fileService.getUserFiles(currentUser, -1, params);
+        List<FileItemDTO> files = items.getContent();
 
-        return ResponseEntity.status(HttpStatus.OK).body(new FileResponse(this.folderService.convertFoldersToFolderDTOs(folders.getContent()),
-                this.documentService.convertDocumentsToDocumentDTOs(documents.getContent())));
+        PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
+        res.setResult(files);
+        res.setCurrentPage(items.getNumber() + 1);
+        res.setTotalPages(items.getTotalPages());
+        return ResponseEntity.status(HttpStatus.OK).body(res);
     }
 
     @GetMapping("/secure/files/folders/{id}")
@@ -168,5 +171,40 @@ public class FileController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"folders-documents.zip\"")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(stream);
+    }
+
+    @DeleteMapping("/secure/files/permanent")
+    @ApiMessage(message = "Dọn sạch thùng rác")
+    public ResponseEntity<Void> cleanTrash(@RequestBody Map<String, List<Integer>> request) {
+        List<Folder> folders = folderService.getFoldersByIds(request.get("folderIds"));
+        List<Document> docs = documentService.getDocumentsByIds(request.get("documentIds"));
+
+        Map<Integer, Folder> folderMap = folders.stream()
+                .filter(f -> f.getDeleted())
+                .collect(Collectors.toMap(Folder::getId, f -> f));
+        Map<Integer, Document> docMap = docs.stream()
+                .filter(d -> d.getDeleted())
+                .collect(Collectors.toMap(Document::getId, d -> d));
+
+        List<Integer> notFoundFolders = request.get("folderIds").stream()
+                .filter(id -> !folderMap.containsKey(id))
+                .toList();
+        List<Integer> notFoundDocs = request.get("documentIds").stream()
+                .filter(id -> !docMap.containsKey(id))
+                .toList();
+
+        if (!notFoundFolders.isEmpty() || !notFoundDocs.isEmpty()) {
+            throw new NotFoundException("Không tìm thấy: folderIds=" + notFoundFolders + ", docIds=" + notFoundDocs);
+        }
+
+        for (Folder f : folders) {
+            this.folderService.hardDeleteFolderAndChildren(f);
+        }
+
+        for (Document doc : docs) {
+            this.documentService.hardDelete(doc);
+        }
+
+        return ResponseEntity.noContent().build();
     }
 }
