@@ -24,10 +24,6 @@ public interface FolderRepository extends JpaRepository<Folder, Integer>, JpaSpe
 
     List<Folder> findByParentId(Integer id);
 
-    Page<Folder> findByParentAndCreatedByAndIsDeletedFalse(Folder parent, User createdBy, Pageable pageable);
-
-    Page<Folder> findByParentAndCreatedByAndIsDeletedTrue(Folder parent, User createdBy, Pageable pageable);
-
     Page<Folder> findAll(Specification<Folder> specification, Pageable pageable);
 
     List<Folder> findByIdIn(List<Integer> ids);

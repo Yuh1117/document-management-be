@@ -28,10 +28,6 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     List<Document> findByFolderId(Integer id);
 
-    Page<Document> findByFolderAndCreatedByAndIsDeletedFalse(Folder folder, User createdBy, Pageable pageable);
-
-    Page<Document> findByFolderAndCreatedByAndIsDeletedTrue(Folder folder, User createdBy, Pageable pageable);
-
     Page<Document> findAll(Specification<Document> specification, Pageable pageable);
 
     Optional<Document> findByNameAndFolderAndIsDeletedFalse(String name, Folder folder);

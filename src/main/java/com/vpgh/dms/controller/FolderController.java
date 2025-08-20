@@ -163,7 +163,7 @@ public class FolderController {
         return ResponseEntity.status(HttpStatus.OK).body(this.folderService.convertFolderToFolderDTO(this.folderService.save(folder)));
     }
 
-    @DeleteMapping(path = "/secure/folders")
+    @PatchMapping(path = "/secure/folders")
     @ApiMessage(message = "Chuyển thư mục vào thùng rác")
     public ResponseEntity<Void> softDelete(@RequestBody List<Integer> ids) {
         List<Folder> folders = this.folderService.getFoldersByIds(ids);

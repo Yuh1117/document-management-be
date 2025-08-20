@@ -10,16 +10,10 @@ import com.vpgh.dms.repository.FolderRepository;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.service.UserService;
-import com.vpgh.dms.service.specification.FolderSpecification;
-import com.vpgh.dms.util.PageSize;
 import com.vpgh.dms.util.PathUtil;
 import com.vpgh.dms.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -151,33 +145,6 @@ public class FolderServiceImpl implements FolderService {
 
     private String extractKeyFromPath(String s3Path) {
         return s3Path.replace("s3://" + bucketName + "/", "");
-    }
-
-    @Override
-    public Page<Folder> getActiveFolders(Folder parent, User createdBy, String page) {
-        Pageable pageable = PageRequest.of(Integer.parseInt(page) - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
-        return this.folderRepository.findByParentAndCreatedByAndIsDeletedFalse(parent, createdBy, pageable);
-    }
-
-    @Override
-    public Page<Folder> getInactiveFolders(Folder parent, User createdBy, String page) {
-        Pageable pageable = PageRequest.of(Integer.parseInt(page) - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
-        return this.folderRepository.findByParentAndCreatedByAndIsDeletedTrue(parent, createdBy, pageable);
-    }
-
-    @Override
-    public Page<Folder> searchFolders(Map<String, String> params, User user) {
-        int page = Integer.parseInt(params.get("page"));
-        String kw = params.get("kw");
-
-        Pageable pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
-        Specification<Folder> combinedSpec = Specification.allOf();
-        if (kw != null && !kw.isEmpty()) {
-            Specification<Folder> spec = FolderSpecification.filterByKeyword(params.get("kw"), user);
-            combinedSpec = combinedSpec.and(spec);
-        }
-
-        return this.folderRepository.findAll(combinedSpec, pageable);
     }
 
     @Override

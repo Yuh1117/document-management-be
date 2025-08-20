@@ -8,6 +8,7 @@ import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.service.DocumentShareService;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FolderService;
+import com.vpgh.dms.util.DataResponse;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.ForbiddenException;
@@ -204,7 +205,7 @@ public class DocumentController {
                 .body(stream);
     }
 
-    @DeleteMapping("/secure/documents")
+    @PatchMapping("/secure/documents")
     @ApiMessage(message = "Chuyển tài liệu vào thùng rác")
     public ResponseEntity<Void> softDelete(@RequestBody List<Integer> ids) {
         List<Document> docs = this.documentService.getDocumentsByIds(ids);
@@ -331,5 +332,23 @@ public class DocumentController {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(this.documentService.convertDocumentToDocumentDTO(doc));
+    }
+
+    @PostMapping(path = "/secure/documents/share-url")
+    @ApiMessage(message = "Tạo signed url")
+    public ResponseEntity<DataResponse<String>> getSignedUrl(@RequestBody Map<String, String> request) {
+        Document doc = this.documentService.getDocumentById(Integer.parseInt(request.get("documentId")));
+        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
+            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
+        }
+
+        String url = this.documentService.generateSignedDownloadUrl(doc.getFilePath(), Integer.parseInt(request.get("expiredTime")));
+        DataResponse<String> res = new DataResponse<>();
+        res.setContent(url);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.CACHE_CONTROL, "no-store, no-cache, must-revalidate, max-age=0")
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .header(HttpHeaders.EXPIRES, "0")
+                .body(res);
     }
 }

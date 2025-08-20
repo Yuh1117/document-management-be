@@ -31,12 +31,6 @@ public interface FolderService {
 
     void hardDeleteFolderAndChildren(Folder folder);
 
-    Page<Folder> getActiveFolders(Folder parent, User createdBy, String page);
-
-    Page<Folder> getInactiveFolders(Folder parent, User createdBy, String page);
-
-    Page<Folder> searchFolders(Map<String, String> params, User user);
-
     List<Folder> findByParentAndIsDeletedFalse(Folder parent);
 
     List<Folder> findByParentAndIsDeletedTrue(Folder parent);
