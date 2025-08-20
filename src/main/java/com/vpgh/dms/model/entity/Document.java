@@ -43,7 +43,7 @@ public class Document extends FullAuditableEntity {
 
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<DocumentPermission> documentPermissions;
+    private Set<DocumentShare> documentShares;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "document_tag_assignments", joinColumns = @JoinColumn(name = "document_id"),
@@ -175,12 +175,12 @@ public class Document extends FullAuditableEntity {
         this.folder = folder;
     }
 
-    public Set<DocumentPermission> getDocumentPermissions() {
-        return documentPermissions;
+    public Set<DocumentShare> getDocumentShares() {
+        return documentShares;
     }
 
-    public void setDocumentPermissions(Set<DocumentPermission> documentPermissions) {
-        this.documentPermissions = documentPermissions;
+    public void setDocumentShares(Set<DocumentShare> documentShares) {
+        this.documentShares = documentShares;
     }
 
     public Set<DocumentTag> getTags() {

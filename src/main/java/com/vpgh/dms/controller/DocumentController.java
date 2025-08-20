@@ -5,7 +5,7 @@ import com.vpgh.dms.model.dto.request.CopyCutReq;
 import com.vpgh.dms.model.dto.request.FileUploadReq;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.Folder;
-import com.vpgh.dms.service.DocumentPermissionService;
+import com.vpgh.dms.service.DocumentShareService;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.util.SecurityUtil;
@@ -41,7 +41,7 @@ public class DocumentController {
     @Autowired
     private FolderService folderService;
     @Autowired
-    private DocumentPermissionService documentPermissionService;
+    private DocumentShareService documentShareService;
 
     @PostMapping(path = "/secure/documents/upload")
     @ApiMessage(message = "Upload tài liệu")
@@ -138,7 +138,7 @@ public class DocumentController {
             throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xoá.");
         }
 
-        if (!this.documentPermissionService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
+        if (!this.documentShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
             throw new ForbiddenException("Bạn không có quyền chỉnh sửa tài liệu này");
         }
 
@@ -326,7 +326,7 @@ public class DocumentController {
             throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
         }
 
-        if (!this.documentPermissionService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
+        if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
             throw new ForbiddenException("Bạn không có quyền xem tài liệu này");
         }
 

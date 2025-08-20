@@ -1,12 +1,12 @@
 package com.vpgh.dms.service.impl;
 
-import com.vpgh.dms.model.constant.PermissionType;
+import com.vpgh.dms.model.constant.ShareType;
 import com.vpgh.dms.model.entity.Document;
-import com.vpgh.dms.model.entity.DocumentPermission;
+import com.vpgh.dms.model.entity.DocumentShare;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.model.entity.UserGroup;
-import com.vpgh.dms.repository.DocumentPermissionRepository;
-import com.vpgh.dms.service.DocumentPermissionService;
+import com.vpgh.dms.repository.DocumentShareRepository;
+import com.vpgh.dms.service.DocumentShareService;
 import com.vpgh.dms.service.UserGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,9 +16,9 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Service
-public class DocumentPermissionServiceImpl implements DocumentPermissionService {
+public class DocumentShareServiceImpl implements DocumentShareService {
     @Autowired
-    private DocumentPermissionRepository documentPermissionRepository;
+    private DocumentShareRepository documentShareRepository;
     @Autowired
     private UserGroupService userGroupService;
 
@@ -27,7 +27,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         if (Objects.equals(doc.getCreatedBy().getId(), user.getId()))
             return true;
 
-        boolean hasPermission = checkUserOrGroupPermission(user, doc, PermissionType.VIEW);
+        boolean hasPermission = checkUserOrGroupPermission(user, doc, ShareType.VIEW);
         if (hasPermission)
             return true;
 
@@ -39,7 +39,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         if (Objects.equals(doc.getCreatedBy().getId(), user.getId()))
             return true;
 
-        boolean hasPermission = checkUserOrGroupPermission(user, doc, PermissionType.EDIT);
+        boolean hasPermission = checkUserOrGroupPermission(user, doc, ShareType.EDIT);
         if (hasPermission)
             return true;
 
@@ -47,9 +47,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     }
 
     @Override
-    public boolean checkUserOrGroupPermission(User user, Document doc, PermissionType permission) {
-        Optional<DocumentPermission> userPermission = documentPermissionRepository
-                .findByDocumentAndUserAndPermissionType(doc, user, permission);
+    public boolean checkUserOrGroupPermission(User user, Document doc, ShareType permission) {
+        Optional<DocumentShare> userPermission = documentShareRepository
+                .findByDocumentAndUserAndShareType(doc, user, permission);
 
         if (userPermission.isPresent()) {
             return true;
@@ -57,8 +57,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
         List<UserGroup> userGroups = this.userGroupService.getGroupsByUser(user);
         if (!userGroups.isEmpty()) {
-            Optional<DocumentPermission> groupPermission = documentPermissionRepository
-                    .findByDocumentAndGroupInAndPermissionType(doc, userGroups, permission);
+            Optional<DocumentShare> groupPermission = documentShareRepository
+                    .findByDocumentAndGroupInAndShareType(doc, userGroups, permission);
 
             if (groupPermission.isPresent()) {
                 return true;

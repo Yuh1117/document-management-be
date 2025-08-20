@@ -1,18 +1,18 @@
 package com.vpgh.dms.model.entity;
 
 import com.vpgh.dms.model.FullAuditableEntity;
-import com.vpgh.dms.model.constant.PermissionType;
+import com.vpgh.dms.model.constant.ShareType;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "folder_permissions")
-public class FolderPermission extends FullAuditableEntity {
+@Table(name = "folder_shares")
+public class FolderShare extends FullAuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Enumerated(EnumType.STRING)
-    private PermissionType permissionType;
+    private ShareType shareType;
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
@@ -32,12 +32,20 @@ public class FolderPermission extends FullAuditableEntity {
         this.id = id;
     }
 
-    public PermissionType getPermissionType() {
-        return permissionType;
+    public ShareType getShareType() {
+        return shareType;
     }
 
-    public void setPermissionType(PermissionType permissionType) {
-        this.permissionType = permissionType;
+    public void setShareType(ShareType shareType) {
+        this.shareType = shareType;
+    }
+
+    public UserGroup getGroup() {
+        return group;
+    }
+
+    public void setGroup(UserGroup group) {
+        this.group = group;
     }
 
     public Folder getFolder() {

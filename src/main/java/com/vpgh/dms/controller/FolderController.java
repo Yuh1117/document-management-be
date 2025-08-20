@@ -5,7 +5,7 @@ import com.vpgh.dms.model.dto.request.CopyCutReq;
 import com.vpgh.dms.model.dto.request.FolderUploadReq;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.service.DocumentService;
-import com.vpgh.dms.service.FolderPermissionService;
+import com.vpgh.dms.service.FolderShareService;
 import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
@@ -34,7 +34,7 @@ public class FolderController {
     @Autowired
     private FolderService folderService;
     @Autowired
-    private FolderPermissionService folderPermissionService;
+    private FolderShareService folderShareService;
     @Autowired
     private DocumentService documentService;
 
@@ -284,7 +284,7 @@ public class FolderController {
             throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
         }
 
-        if (!this.folderPermissionService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
+        if (!this.folderShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
             throw new ForbiddenException("Bạn không có quyền xem thư mục này");
         }
 

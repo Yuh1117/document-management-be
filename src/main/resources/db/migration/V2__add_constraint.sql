@@ -1,8 +1,8 @@
 ALTER TABLE ONLY public.access_logs
     ADD CONSTRAINT access_logs_pkey PRIMARY KEY (id);
 
-ALTER TABLE ONLY public.document_permissions
-    ADD CONSTRAINT document_permissions_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.document_shares
+    ADD CONSTRAINT document_shares_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY public.document_tag_assignments
     ADD CONSTRAINT document_tag_assignments_pkey PRIMARY KEY (document_id, document_tag_id);
@@ -16,8 +16,8 @@ ALTER TABLE ONLY public.document_versions
 ALTER TABLE ONLY public.documents
     ADD CONSTRAINT documents_pkey PRIMARY KEY (id);
 
-ALTER TABLE ONLY public.folder_permissions
-    ADD CONSTRAINT folder_permissions_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.folder_shares
+    ADD CONSTRAINT folder_shares_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY public.folders
     ADD CONSTRAINT folders_pkey PRIMARY KEY (id);
@@ -52,20 +52,20 @@ ALTER TABLE ONLY public.access_logs
 ALTER TABLE ONLY public.access_logs
     ADD CONSTRAINT fk_access_logs_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE;
 --
-ALTER TABLE ONLY public.document_permissions
-    ADD CONSTRAINT fk_document_permissions_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE ONLY public.document_shares
+    ADD CONSTRAINT fk_document_shares_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE ONLY public.document_permissions
-    ADD CONSTRAINT fk_document_permissions_document FOREIGN KEY (document_id) REFERENCES public.documents(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE ONLY public.document_shares
+    ADD CONSTRAINT fk_document_shares_document FOREIGN KEY (document_id) REFERENCES public.documents(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE ONLY public.document_permissions
-    ADD CONSTRAINT fk_document_permissions_group FOREIGN KEY (group_id) REFERENCES public.user_groups(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE ONLY public.document_shares
+    ADD CONSTRAINT fk_document_shares_group FOREIGN KEY (group_id) REFERENCES public.user_groups(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE ONLY public.document_permissions
-    ADD CONSTRAINT fk_document_permissions_updated_by FOREIGN KEY (updated_by) REFERENCES public.users(id) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE ONLY public.document_shares
+    ADD CONSTRAINT fk_document_shares_updated_by FOREIGN KEY (updated_by) REFERENCES public.users(id) ON DELETE SET NULL ON UPDATE CASCADE;
 
-ALTER TABLE ONLY public.document_permissions
-    ADD CONSTRAINT fk_document_permissions_created_by FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE ONLY public.document_shares
+    ADD CONSTRAINT fk_document_shares_created_by FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE;
 --
 ALTER TABLE ONLY public.document_tag_assignments
     ADD CONSTRAINT fk_document_tag_assignments_document FOREIGN KEY (document_id) REFERENCES public.documents(id) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -91,20 +91,20 @@ ALTER TABLE ONLY public.documents
 ALTER TABLE ONLY public.documents
     ADD CONSTRAINT fk_documents_updated_by FOREIGN KEY (updated_by) REFERENCES public.users(id) ON DELETE SET NULL ON UPDATE CASCADE;
 --
-ALTER TABLE ONLY public.folder_permissions
-    ADD CONSTRAINT fk_folder_permissions_created_by FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE ONLY public.folder_shares
+    ADD CONSTRAINT fk_folder_shares_created_by FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE ONLY public.folder_permissions
-    ADD CONSTRAINT fk_folder_permissions_group FOREIGN KEY (group_id) REFERENCES public.user_groups(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE ONLY public.folder_shares
+    ADD CONSTRAINT fk_folder_shares_group FOREIGN KEY (group_id) REFERENCES public.user_groups(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE ONLY public.folder_permissions
-    ADD CONSTRAINT fk_folder_permissions_folder FOREIGN KEY (folder_id) REFERENCES public.folders(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE ONLY public.folder_shares
+    ADD CONSTRAINT fk_folder_shares_folder FOREIGN KEY (folder_id) REFERENCES public.folders(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE ONLY public.folder_permissions
-    ADD CONSTRAINT fk_folder_permissions_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE ONLY public.folder_shares
+    ADD CONSTRAINT fk_folder_shares_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE ONLY public.folder_permissions
-    ADD CONSTRAINT fk_folder_permissions_updated_by FOREIGN KEY (updated_by) REFERENCES public.users(id) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE ONLY public.folder_shares
+    ADD CONSTRAINT fk_folder_shares_updated_by FOREIGN KEY (updated_by) REFERENCES public.users(id) ON DELETE SET NULL ON UPDATE CASCADE;
 --
 ALTER TABLE ONLY public.folders
     ADD CONSTRAINT fk_folders_created_by FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -163,10 +163,10 @@ ALTER TABLE ONLY public.system_settings
 ALTER TABLE ONLY public.permissions
     ADD CONSTRAINT api_path_method_unique UNIQUE (api_path, method);
 
-ALTER TABLE ONLY public.folder_permissions
+ALTER TABLE ONLY public.folder_shares
     ADD CONSTRAINT folder_group_unique UNIQUE (folder_id, group_id);
 
-ALTER TABLE ONLY public.folder_permissions
+ALTER TABLE ONLY public.folder_shares
     ADD CONSTRAINT folder_user_unique UNIQUE (folder_id, user_id);
 
 ALTER TABLE ONLY public.document_versions
@@ -175,10 +175,10 @@ ALTER TABLE ONLY public.document_versions
 ALTER TABLE ONLY public.document_tags
     ADD CONSTRAINT name_color_user_unique UNIQUE (name, color, created_by);
 
-ALTER TABLE ONLY public.document_permissions
+ALTER TABLE ONLY public.document_shares
     ADD CONSTRAINT document_group_unique UNIQUE (document_id, group_id);
 
-ALTER TABLE ONLY public.document_permissions
+ALTER TABLE ONLY public.document_shares
     ADD CONSTRAINT document_user_unique UNIQUE (document_id, user_id);
 
 ALTER TABLE ONLY public.documents

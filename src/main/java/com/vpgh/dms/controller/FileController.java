@@ -8,7 +8,7 @@ import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FileService;
-import com.vpgh.dms.service.FolderPermissionService;
+import com.vpgh.dms.service.FolderShareService;
 import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
@@ -41,7 +41,7 @@ public class FileController {
     @Autowired
     private FileService fileService;
     @Autowired
-    private FolderPermissionService folderPermissionService;
+    private FolderShareService folderShareService;
 
     @GetMapping(path = "/secure/files/my-files")
     @ApiMessage(message = "Lấy files của tôi")
@@ -53,6 +53,25 @@ public class FileController {
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         Page<FileItemDTO> items = fileService.getUserFiles(currentUser, -1, params);
+        List<FileItemDTO> files = items.getContent();
+
+        PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
+        res.setResult(files);
+        res.setCurrentPage(items.getNumber() + 1);
+        res.setTotalPages(items.getTotalPages());
+        return ResponseEntity.status(HttpStatus.OK).body(res);
+    }
+
+    @GetMapping(path = "/secure/files/trash")
+    @ApiMessage(message = "Lấy files trong thùng rác")
+    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getTrashFiles(@RequestParam Map<String, String> params) {
+        String page = params.get("page");
+        if (page == null || page.isEmpty()) {
+            params.put("page", "1");
+        }
+
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+        Page<FileItemDTO> items = fileService.getTrashFiles(currentUser, -1, params);
         List<FileItemDTO> files = items.getContent();
 
         PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
@@ -86,7 +105,7 @@ public class FileController {
             throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
         }
 
-        if (!this.folderPermissionService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
+        if (!this.folderShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
             throw new ForbiddenException("Bạn không có quyền xem thư mục này");
         }
 

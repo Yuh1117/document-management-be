@@ -83,23 +83,23 @@ public class User extends TimestampedEntity {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<FolderPermission> folderPermissions;
+    private Set<FolderShare> folderShares;
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<FolderPermission> createdFolderPermissions;
+    private Set<FolderShare> createdFolderShares;
     @OneToMany(mappedBy = "updatedBy", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<FolderPermission> updatedFolderPermissions;
+    private Set<FolderShare> updatedFolderShares;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<DocumentPermission> documentPermissions;
+    private Set<DocumentShare> documentShares;
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<DocumentPermission> createdDocumentPermissions;
+    private Set<DocumentShare> createdDocumentShares;
     @OneToMany(mappedBy = "updatedBy", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<DocumentPermission> updatedDocumentPermissions;
+    private Set<DocumentShare> updatedDocumentShares;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonIgnore
@@ -111,38 +111,6 @@ public class User extends TimestampedEntity {
     @OneToMany(mappedBy = "updatedBy", fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<DocumentTag> updatedTags;
-
-    public MultipartFile getFile() {
-        return file;
-    }
-
-    public void setFile(MultipartFile file) {
-        this.file = file;
-    }
-
-    public Set<DocumentTag> getCreatedTags() {
-        return createdTags;
-    }
-
-    public void setCreatedTags(Set<DocumentTag> createdTags) {
-        this.createdTags = createdTags;
-    }
-
-    public Set<DocumentTag> getUpdatedTags() {
-        return updatedTags;
-    }
-
-    public void setUpdatedTags(Set<DocumentTag> updatedTags) {
-        this.updatedTags = updatedTags;
-    }
-
-    public Set<DocumentPermission> getDocumentPermissions() {
-        return documentPermissions;
-    }
-
-    public void setDocumentPermissions(Set<DocumentPermission> documentPermissions) {
-        this.documentPermissions = documentPermissions;
-    }
 
     public Integer getId() {
         return id;
@@ -214,6 +182,14 @@ public class User extends TimestampedEntity {
 
     public void setActive(Boolean active) {
         isActive = active;
+    }
+
+    public MultipartFile getFile() {
+        return file;
+    }
+
+    public void setFile(MultipartFile file) {
+        this.file = file;
     }
 
     public Role getRole() {
@@ -304,44 +280,52 @@ public class User extends TimestampedEntity {
         this.updatedDocuments = updatedDocuments;
     }
 
-    public Set<FolderPermission> getFolderPermissions() {
-        return folderPermissions;
+    public Set<FolderShare> getFolderShares() {
+        return folderShares;
     }
 
-    public void setFolderPermissions(Set<FolderPermission> folderPermissions) {
-        this.folderPermissions = folderPermissions;
+    public void setFolderShares(Set<FolderShare> folderShares) {
+        this.folderShares = folderShares;
     }
 
-    public Set<FolderPermission> getCreatedFolderPermissions() {
-        return createdFolderPermissions;
+    public Set<FolderShare> getCreatedFolderShares() {
+        return createdFolderShares;
     }
 
-    public void setCreatedFolderPermissions(Set<FolderPermission> createdFolderPermissions) {
-        this.createdFolderPermissions = createdFolderPermissions;
+    public void setCreatedFolderShares(Set<FolderShare> createdFolderShares) {
+        this.createdFolderShares = createdFolderShares;
     }
 
-    public Set<FolderPermission> getUpdatedFolderPermissions() {
-        return updatedFolderPermissions;
+    public Set<FolderShare> getUpdatedFolderShares() {
+        return updatedFolderShares;
     }
 
-    public void setUpdatedFolderPermissions(Set<FolderPermission> updatedFolderPermissions) {
-        this.updatedFolderPermissions = updatedFolderPermissions;
+    public void setUpdatedFolderShares(Set<FolderShare> updatedFolderShares) {
+        this.updatedFolderShares = updatedFolderShares;
     }
 
-    public Set<DocumentPermission> getCreatedDocumentPermissions() {
-        return createdDocumentPermissions;
+    public Set<DocumentShare> getDocumentShares() {
+        return documentShares;
     }
 
-    public void setCreatedDocumentPermissions(Set<DocumentPermission> createdDocumentPermissions) {
-        this.createdDocumentPermissions = createdDocumentPermissions;
+    public void setDocumentShares(Set<DocumentShare> documentShares) {
+        this.documentShares = documentShares;
     }
 
-    public Set<DocumentPermission> getUpdatedDocumentPermissions() {
-        return updatedDocumentPermissions;
+    public Set<DocumentShare> getCreatedDocumentShares() {
+        return createdDocumentShares;
     }
 
-    public void setUpdatedDocumentPermissions(Set<DocumentPermission> updatedDocumentPermissions) {
-        this.updatedDocumentPermissions = updatedDocumentPermissions;
+    public void setCreatedDocumentShares(Set<DocumentShare> createdDocumentShares) {
+        this.createdDocumentShares = createdDocumentShares;
+    }
+
+    public Set<DocumentShare> getUpdatedDocumentShares() {
+        return updatedDocumentShares;
+    }
+
+    public void setUpdatedDocumentShares(Set<DocumentShare> updatedDocumentShares) {
+        this.updatedDocumentShares = updatedDocumentShares;
     }
 
     public Set<AccessLog> getAccessLogs() {
@@ -350,5 +334,21 @@ public class User extends TimestampedEntity {
 
     public void setAccessLogs(Set<AccessLog> accessLogs) {
         this.accessLogs = accessLogs;
+    }
+
+    public Set<DocumentTag> getCreatedTags() {
+        return createdTags;
+    }
+
+    public void setCreatedTags(Set<DocumentTag> createdTags) {
+        this.createdTags = createdTags;
+    }
+
+    public Set<DocumentTag> getUpdatedTags() {
+        return updatedTags;
+    }
+
+    public void setUpdatedTags(Set<DocumentTag> updatedTags) {
+        this.updatedTags = updatedTags;
     }
 }

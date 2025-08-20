@@ -24,9 +24,16 @@ public class FileServiceImpl implements FileService {
     public Page<FileItemDTO> getUserFiles(User user, Integer parentId, Map<String, String> params) {
         int page = Integer.parseInt(params.get("page"));
         Pageable pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
-
         Page<FileItemProjection> pageItem = fileItemRepository.findAllByUserAndParent(user.getId(), parentId, false, pageable);
+        Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
+        return items;
+    }
 
+    @Override
+    public Page<FileItemDTO> getTrashFiles(User user, Integer parentId, Map<String, String> params) {
+        int page = Integer.parseInt(params.get("page"));
+        Pageable pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
+        Page<FileItemProjection> pageItem = fileItemRepository.findAllByUserAndParent(user.getId(), parentId, true, pageable);
         Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
         return items;
     }
@@ -35,9 +42,7 @@ public class FileServiceImpl implements FileService {
     public Page<FileItemDTO> getFolderFiles(Integer folderId, Map<String, String> params) {
         int page = Integer.parseInt(params.get("page"));
         Pageable pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
-
         Page<FileItemProjection> pageItem = fileItemRepository.findFolderFiles(folderId, false, pageable);
-
         Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
         return items;
     }
