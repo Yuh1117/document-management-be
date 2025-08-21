@@ -3,6 +3,7 @@ package com.vpgh.dms.controller;
 import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.dto.request.CopyCutReq;
 import com.vpgh.dms.model.dto.request.FileUploadReq;
+import com.vpgh.dms.model.dto.request.SignedUrlRequest;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.service.DocumentShareService;
@@ -336,15 +337,16 @@ public class DocumentController {
 
     @PostMapping(path = "/secure/documents/share-url")
     @ApiMessage(message = "Tạo signed url")
-    public ResponseEntity<DataResponse<String>> getSignedUrl(@RequestBody Map<String, String> request) {
-        Document doc = this.documentService.getDocumentById(Integer.parseInt(request.get("documentId")));
+    public ResponseEntity<DataResponse<String>> getSignedUrl(@Valid @RequestBody SignedUrlRequest request) {
+        Document doc = this.documentService.getDocumentById(request.getDocumentId());
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
         }
 
-        String url = this.documentService.generateSignedDownloadUrl(doc.getFilePath(), Integer.parseInt(request.get("expiredTime")));
+        String url = this.documentService.generateSignedUrl(doc, Integer.parseInt(request.getExpiredTime()));
         DataResponse<String> res = new DataResponse<>();
         res.setContent(url);
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .header(HttpHeaders.CACHE_CONTROL, "no-store, no-cache, must-revalidate, max-age=0")
                 .header(HttpHeaders.PRAGMA, "no-cache")

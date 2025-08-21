@@ -226,46 +226,19 @@ public class FolderServiceImpl implements FolderService {
 
     @Override
     public FolderDTO convertFolderToFolderDTO(Folder folder) {
-        Map<Folder, FolderDTO> folderMap = new HashMap<>();
-        Stack<Folder> stack = new Stack<>();
+        FolderDTO dto = new FolderDTO();
+        dto.setId(folder.getId());
+        dto.setName(folder.getName());
+        dto.setDeleted(folder.getDeleted());
+        dto.setInheritPermissions(folder.getInheritPermissions());
+        dto.setDocuments(new HashSet<>(this.documentService.convertDocumentsToDocumentDTOs(new ArrayList<>(folder.getDocuments()))));
+        dto.setFolders(new HashSet<>(convertFoldersToSubFolderDTOs(new ArrayList<>(folder.getFolders()))));
+        dto.setCreatedAt(folder.getCreatedAt());
+        dto.setUpdatedAt(folder.getUpdatedAt());
+        dto.setCreatedBy(this.userService.convertUserToUserDTO(folder.getCreatedBy()));
+        dto.setUpdatedBy(folder.getUpdatedBy() != null ? this.userService.convertUserToUserDTO(folder.getUpdatedBy()) : null);
 
-        stack.push(folder);
-
-        while (!stack.isEmpty()) {
-            Folder current = stack.peek();
-
-            if (!folderMap.containsKey(current)) {
-                FolderDTO dto = new FolderDTO();
-                dto.setId(current.getId());
-                dto.setName(current.getName());
-                dto.setDeleted(current.getDeleted());
-                dto.setInheritPermissions(current.getInheritPermissions());
-                dto.setDocuments(new HashSet<>(this.documentService.convertDocumentsToDocumentDTOs(new ArrayList<>(current.getDocuments()))));
-                dto.setCreatedAt(current.getCreatedAt());
-                dto.setUpdatedAt(current.getUpdatedAt());
-                dto.setCreatedBy(this.userService.convertUserToUserDTO(current.getCreatedBy()));
-                dto.setUpdatedBy(current.getUpdatedBy() != null ? this.userService.convertUserToUserDTO(current.getUpdatedBy()) : null);
-
-                folderMap.put(current, dto);
-
-                for (Folder child : current.getFolders()) {
-                    if (!folderMap.containsKey(child)) {
-                        stack.push(child);
-                    }
-                }
-            } else {
-                Folder processed = stack.pop();
-                FolderDTO dto = folderMap.get(processed);
-
-                List<SubFolderDTO> childDTOs = processed.getFolders().stream()
-                        .map(f -> convertFolderToSubFolderDTO(f))
-                        .collect(Collectors.toList());
-
-                dto.setFolders(new HashSet<>(childDTOs));
-            }
-        }
-
-        return folderMap.get(folder);
+        return dto;
     }
 
     @Override

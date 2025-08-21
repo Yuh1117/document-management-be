@@ -13,6 +13,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -22,12 +24,16 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public Page<FileItemDTO> getUserFiles(User user, Integer parentId, Map<String, String> params) {
-        int page = Integer.parseInt(params.get("page"));
-        Pageable pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
+        Pageable pageable = Pageable.unpaged();
+        String keyword = null;
+        if (params != null) {
+            int page = Integer.parseInt(params.get("page"));
+            pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
 
-        String keyword = params.get("kw");
-        if (keyword != null && keyword.trim().isEmpty()) {
-            keyword = null;
+            keyword = params.get("kw");
+            if (keyword != null && keyword.trim().isEmpty()) {
+                keyword = null;
+            }
         }
 
         Page<FileItemProjection> pageItem = fileItemRepository.findAllByUserAndParent(user.getId(), parentId, false, keyword, pageable);
@@ -37,17 +43,37 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public Page<FileItemDTO> getTrashFiles(User user, Map<String, String> params) {
-        int page = Integer.parseInt(params.get("page"));
-        Pageable pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
+        Pageable pageable = Pageable.unpaged();
+        if (params != null) {
+            int page = Integer.parseInt(params.get("page"));
+            pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
+        }
         Page<FileItemProjection> pageItem = fileItemRepository.findTrashFiles(user.getId(), pageable);
         Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
         return items;
     }
 
+    public List<FileItemDTO> getAllTrashFiles(User user) {
+        Page<FileItemDTO> page = this.getTrashFiles(user, Map.of("page", "1"));
+        List<FileItemDTO> allItems = new ArrayList<>(page.getContent());
+
+        while (page.hasNext()) {
+            page = this.getTrashFiles(user, Map.of("page", String.valueOf(page.getNumber() + 2)));
+            allItems.addAll(page.getContent());
+        }
+
+        return allItems;
+    }
+
+
     @Override
     public Page<FileItemDTO> getFolderFiles(Integer folderId, Map<String, String> params) {
-        int page = Integer.parseInt(params.get("page"));
-        Pageable pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
+        Pageable pageable = Pageable.unpaged();
+        if (params != null) {
+            int page = Integer.parseInt(params.get("page"));
+            pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
+        }
+
         Page<FileItemProjection> pageItem = fileItemRepository.findFolderFiles(folderId, false, pageable);
         Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
         return items;
@@ -74,6 +100,7 @@ public class FileServiceImpl implements FileService {
             DocumentDTO d = new DocumentDTO();
             d.setId(p.getId());
             d.setName(p.getName());
+            d.setDescription(p.getDescription());
             d.setCreatedAt(p.getCreatedAt());
             d.setUpdatedAt(p.getUpdatedAt());
             d.setCreatedBy(createdBy);

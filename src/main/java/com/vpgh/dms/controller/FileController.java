@@ -1,7 +1,6 @@
 package com.vpgh.dms.controller;
 
 import com.vpgh.dms.model.dto.response.FileItemDTO;
-import com.vpgh.dms.model.dto.response.FileResponse;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.Folder;
@@ -175,32 +174,25 @@ public class FileController {
 
     @DeleteMapping("/secure/files/permanent")
     @ApiMessage(message = "Dọn sạch thùng rác")
-    public ResponseEntity<Void> cleanTrash(@RequestBody Map<String, List<Integer>> request) {
-        List<Folder> folders = folderService.getFoldersByIds(request.get("folderIds"));
-        List<Document> docs = documentService.getDocumentsByIds(request.get("documentIds"));
+    public ResponseEntity<Void> cleanTrash() {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+        List<FileItemDTO> files = this.fileService.getAllTrashFiles(currentUser);
 
-        Map<Integer, Folder> folderMap = folders.stream()
-                .filter(f -> f.getDeleted())
-                .collect(Collectors.toMap(Folder::getId, f -> f));
-        Map<Integer, Document> docMap = docs.stream()
-                .filter(d -> d.getDeleted())
-                .collect(Collectors.toMap(Document::getId, d -> d));
-
-        List<Integer> notFoundFolders = request.get("folderIds").stream()
-                .filter(id -> !folderMap.containsKey(id))
-                .toList();
-        List<Integer> notFoundDocs = request.get("documentIds").stream()
-                .filter(id -> !docMap.containsKey(id))
-                .toList();
-
-        if (!notFoundFolders.isEmpty() || !notFoundDocs.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy: folderIds=" + notFoundFolders + ", docIds=" + notFoundDocs);
+        if (files.isEmpty()) {
+            throw new NotFoundException("Thùng rác không có rác.");
         }
+
+        List<Integer> folderIds = files.stream().filter(f -> "folder".equals(f.getType()) && f.getFolder() != null)
+                .map(f -> f.getFolder().getId()).toList();
+        List<Integer> documentIds = files.stream().filter(f -> "document".equals(f.getType()) && f.getDocument() != null)
+                .map(f -> f.getDocument().getId()).toList();
+
+        List<Folder> folders = this.folderService.getFoldersByIds(folderIds);
+        List<Document> docs = this.documentService.getDocumentsByIds(documentIds);
 
         for (Folder f : folders) {
             this.folderService.hardDeleteFolderAndChildren(f);
         }
-
         for (Document doc : docs) {
             this.documentService.hardDelete(doc);
         }

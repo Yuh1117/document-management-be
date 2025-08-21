@@ -247,14 +247,17 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public String generateSignedDownloadUrl(String filePath, int expiryInMinutes) {
-        String key = extractKeyFromPath(filePath);
+    public String generateSignedUrl(Document doc, int expiryInMinutes) {
+        String key = extractKeyFromPath(doc.getFilePath());
 
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
                 .signatureDuration(Duration.ofMinutes(expiryInMinutes))
                 .getObjectRequest(GetObjectRequest.builder()
                         .bucket(bucketName)
                         .key(key)
+                        .responseCacheControl("no-store")
+                        .responseContentDisposition("inline; filename=\"" + doc.getName() + "\"")
+                        .responseContentType(doc.getMimeType())
                         .build())
                 .build();
 

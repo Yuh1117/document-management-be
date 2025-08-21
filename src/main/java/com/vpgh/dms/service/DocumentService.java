@@ -53,5 +53,5 @@ public interface DocumentService {
 
     void moveDocument(Document doc, Folder targetFolder);
 
-    String generateSignedDownloadUrl(String filePath, int expiryInMinutes);
+    String generateSignedUrl(Document doc, int expiryInMinutes);
 }
