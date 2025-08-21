@@ -10,17 +10,19 @@ import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ValidGroup;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
 public class GroupValidator implements ConstraintValidator<ValidGroup, UserGroupDTO> {
-    @Autowired
-    private UserGroupService userGroupService;
-    @Autowired
-    private UserService userService;
+    private final UserGroupService userGroupService;
+    private final UserService userService;
+
+    public GroupValidator(UserGroupService userGroupService, UserService userService) {
+        this.userGroupService = userGroupService;
+        this.userService = userService;
+    }
 
     private static final ThreadLocal<UserGroup> currentEntity = new ThreadLocal<>();
 

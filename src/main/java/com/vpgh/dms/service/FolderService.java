@@ -4,13 +4,11 @@ import com.vpgh.dms.model.dto.FolderDTO;
 import com.vpgh.dms.model.dto.SubFolderDTO;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.zip.ZipOutputStream;
 
 @Service
@@ -30,12 +28,6 @@ public interface FolderService {
     void restoreFolderAndChildren(Folder folder);
 
     void hardDeleteFolderAndChildren(Folder folder);
-
-    Page<Folder> getActiveFolders(Folder parent, User createdBy, String page);
-
-    Page<Folder> getInactiveFolders(Folder parent, User createdBy, String page);
-
-    Page<Folder> searchFolders(Map<String, String> params, User user);
 
     List<Folder> findByParentAndIsDeletedFalse(Folder parent);
 

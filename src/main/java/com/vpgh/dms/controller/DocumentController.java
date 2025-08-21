@@ -3,18 +3,19 @@ package com.vpgh.dms.controller;
 import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.dto.request.CopyCutReq;
 import com.vpgh.dms.model.dto.request.FileUploadReq;
+import com.vpgh.dms.model.dto.request.SignedUrlRequest;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.service.DocumentShareService;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FolderService;
+import com.vpgh.dms.util.DataResponse;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.ForbiddenException;
 import com.vpgh.dms.util.exception.NotFoundException;
 import com.vpgh.dms.util.exception.UniqueConstraintException;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -36,12 +37,15 @@ import java.util.zip.ZipOutputStream;
 @RestController
 @RequestMapping("/api")
 public class DocumentController {
-    @Autowired
-    private DocumentService documentService;
-    @Autowired
-    private FolderService folderService;
-    @Autowired
-    private DocumentShareService documentShareService;
+    private final DocumentService documentService;
+    private final FolderService folderService;
+    private final DocumentShareService documentShareService;
+
+    public DocumentController(DocumentService documentService, FolderService folderService, DocumentShareService documentShareService) {
+        this.documentService = documentService;
+        this.folderService = folderService;
+        this.documentShareService = documentShareService;
+    }
 
     @PostMapping(path = "/secure/documents/upload")
     @ApiMessage(message = "Upload tài liệu")
@@ -204,7 +208,7 @@ public class DocumentController {
                 .body(stream);
     }
 
-    @DeleteMapping("/secure/documents")
+    @PatchMapping("/secure/documents")
     @ApiMessage(message = "Chuyển tài liệu vào thùng rác")
     public ResponseEntity<Void> softDelete(@RequestBody List<Integer> ids) {
         List<Document> docs = this.documentService.getDocumentsByIds(ids);
@@ -331,5 +335,24 @@ public class DocumentController {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(this.documentService.convertDocumentToDocumentDTO(doc));
+    }
+
+    @PostMapping(path = "/secure/documents/share-url")
+    @ApiMessage(message = "Tạo signed url")
+    public ResponseEntity<DataResponse<String>> getSignedUrl(@Valid @RequestBody SignedUrlRequest request) {
+        Document doc = this.documentService.getDocumentById(request.getDocumentId());
+        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
+            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
+        }
+
+        String url = this.documentService.generateSignedUrl(doc, Integer.parseInt(request.getExpiredTime()));
+        DataResponse<String> res = new DataResponse<>();
+        res.setContent(url);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.CACHE_CONTROL, "no-store, no-cache, must-revalidate, max-age=0")
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .header(HttpHeaders.EXPIRES, "0")
+                .body(res);
     }
 }

@@ -16,7 +16,6 @@ import com.vpgh.dms.util.validator.GroupValidator;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,12 +27,15 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api")
 public class UserGroupController {
-    @Autowired
-    private UserGroupService userGroupService;
-    @Autowired
-    private Validator validator;
-    @Autowired
-    private UserService userService;
+    private final UserGroupService userGroupService;
+    private final Validator validator;
+    private final UserService userService;
+
+    public UserGroupController(UserGroupService userGroupService, Validator validator, UserService userService) {
+        this.userGroupService = userGroupService;
+        this.validator = validator;
+        this.userService = userService;
+    }
 
     @PostMapping(path = "/secure/user-groups")
     @ApiMessage(message = "Tạo mới nhóm")

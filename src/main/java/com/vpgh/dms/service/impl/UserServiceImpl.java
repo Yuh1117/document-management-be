@@ -9,7 +9,6 @@ import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.service.specification.UserSpecification;
 import com.vpgh.dms.util.PageSize;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,14 +25,17 @@ import java.util.logging.Logger;
 
 @Service
 public class UserServiceImpl implements UserService {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private Cloudinary cloudinary;
-    @Autowired
-    private RoleService roleService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final Cloudinary cloudinary;
+    private final RoleService roleService;
+
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, Cloudinary cloudinary, RoleService roleService) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.cloudinary = cloudinary;
+        this.roleService = roleService;
+    }
 
     @Override
     public User save(User user) {

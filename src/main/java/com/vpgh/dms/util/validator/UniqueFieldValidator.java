@@ -4,14 +4,15 @@ import com.vpgh.dms.repository.UniqueCheckRepository;
 import com.vpgh.dms.util.annotation.Unique;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UniqueFieldValidator implements ConstraintValidator<Unique, Object> {
+    private final UniqueCheckRepository uniqueCheckRepository;
 
-    @Autowired
-    private UniqueCheckRepository uniqueCheckRepository;
+    public UniqueFieldValidator(UniqueCheckRepository uniqueCheckRepository) {
+        this.uniqueCheckRepository = uniqueCheckRepository;
+    }
 
     private Class<?> entityClass;
     private String fieldName;

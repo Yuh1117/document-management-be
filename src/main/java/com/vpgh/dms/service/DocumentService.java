@@ -41,12 +41,6 @@ public interface DocumentService {
 
     boolean existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, Integer id);
 
-    Page<Document> getActiveDocuments(Folder folder, User createdBy, String page);
-
-    Page<Document> getInactiveDocuments(Folder folder, User createdBy, String page);
-
-    Page<Document> searchDocuments(Map<String, String> params, User user);
-
     Document findByNameAndFolderAndIsDeletedFalse(String name, Folder folder);
 
     Document findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(String name, User createdBy);
@@ -58,4 +52,6 @@ public interface DocumentService {
     void copyDocument(Document doc, Folder targetFolder);
 
     void moveDocument(Document doc, Folder targetFolder);
+
+    String generateSignedUrl(Document doc, int expiryInMinutes);
 }

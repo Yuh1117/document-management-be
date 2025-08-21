@@ -6,7 +6,6 @@ import com.vpgh.dms.repository.SystemSettingRepository;
 import com.vpgh.dms.service.SystemSettingService;
 import com.vpgh.dms.service.specification.SystemSettingSpecification;
 import com.vpgh.dms.util.PageSize;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,8 +20,11 @@ import java.util.Optional;
 @Service
 public class SystemSettingServiceImpl implements SystemSettingService {
 
-    @Autowired
-    private SystemSettingRepository systemSettingRepository;
+    private final SystemSettingRepository systemSettingRepository;
+
+    public SystemSettingServiceImpl(SystemSettingRepository systemSettingRepository) {
+        this.systemSettingRepository = systemSettingRepository;
+    }
 
     @Override
     public SystemSetting getSettingByKey(String key) {

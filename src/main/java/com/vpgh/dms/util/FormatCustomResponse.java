@@ -65,15 +65,15 @@ public class FormatCustomResponse implements ResponseBodyAdvice<Object> {
                 res.setData(body);
             }
         } else {
+            if (status == 500) {
+                res.setMessage("Internal server error");
+            } else {
+                res.setMessage(ApiMessageUtil.getFailedMessage(apiMessage));
+            }
             if (body instanceof DataResponse<?> err) {
-                if (status == 500) {
-                    res.setMessage("Internal server error");
-                } else {
-                    res.setMessage(ApiMessageUtil.getFailedMessage(apiMessage));
-                }
                 res.setError(err.getContent());
             } else {
-                return body;
+                res.setError(body);
             }
         }
         ApiMessageContext.clear();

@@ -1,6 +1,5 @@
 package com.vpgh.dms.util.exception;
 
-import com.vpgh.dms.util.CustomResponse;
 import com.vpgh.dms.util.DataResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,9 +30,7 @@ public class GlobalException {
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    public ResponseEntity<DataResponse<List<Map<String, String>>>> handleException(MethodArgumentNotValidException ex) {
-        DataResponse<List<Map<String, String>>> errorResponse = new DataResponse<>();
-
+    public ResponseEntity<List<Map<String, String>>> handleException(MethodArgumentNotValidException ex) {
         List<Map<String, String>> errors = new ArrayList<>();
         if (ex.getBindingResult().hasErrors()) {
             errors = ex.getBindingResult().getFieldErrors().stream().map(error -> {
@@ -43,17 +40,13 @@ public class GlobalException {
                 return err;
             }).collect(Collectors.toList());
         }
-        errorResponse.setContent(errors);
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
 
     @ExceptionHandler(CustomValidationException.class)
-    public ResponseEntity<DataResponse<List<Map<String, String>>>> handleException(CustomValidationException ex) {
-        DataResponse<List<Map<String, String>>> errorResponse = new DataResponse<>();
-        errorResponse.setContent(ex.getErrors());
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    public ResponseEntity<List<Map<String, String>>> handleException(CustomValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getErrors());
     }
 
     @ExceptionHandler(value = BadCredentialsException.class)

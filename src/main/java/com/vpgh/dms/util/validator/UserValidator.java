@@ -6,16 +6,17 @@ import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.annotation.ValidUser;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UserValidator implements ConstraintValidator<ValidUser, UserDTO> {
+    private final UserService userService;
+    private final RoleService roleService;
 
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private RoleService roleService;
+    public UserValidator(UserService userService, RoleService roleService) {
+        this.userService = userService;
+        this.roleService = roleService;
+    }
 
     @Override
     public boolean isValid(UserDTO user, ConstraintValidatorContext context) {
@@ -38,12 +39,14 @@ public class UserValidator implements ConstraintValidator<ValidUser, UserDTO> {
             }
         }
 
-        boolean existEmail = this.userService.existsByEmailAndIdNot(user.getEmail(), user.getId());
-        if (existEmail) {
-            context.buildConstraintViolationWithTemplate("Email đã tồn tại!")
-                    .addPropertyNode("email")
-                    .addConstraintViolation();
-            valid = false;
+        if (user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
+            boolean existEmail = this.userService.existsByEmailAndIdNot(user.getEmail(), user.getId());
+            if (existEmail) {
+                context.buildConstraintViolationWithTemplate("Email đã tồn tại!")
+                        .addPropertyNode("email")
+                        .addConstraintViolation();
+                valid = false;
+            }
         }
 
         return valid;

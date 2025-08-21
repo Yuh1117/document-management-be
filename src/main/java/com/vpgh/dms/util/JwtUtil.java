@@ -1,7 +1,6 @@
 package com.vpgh.dms.util;
 
 import com.vpgh.dms.model.dto.UserDTO;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
@@ -16,13 +15,14 @@ import java.util.Map;
 
 @Service
 public class JwtUtil {
+    private final JwtEncoder jwtEncoder;
     public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
-
     @Value("${jwt.token-validity-in-seconds}")
     public long tokenExpiration;
 
-    @Autowired
-    private JwtEncoder jwtEncoder;
+    public JwtUtil(JwtEncoder jwtEncoder) {
+        this.jwtEncoder = jwtEncoder;
+    }
 
     public String createToken(UserDTO user) {
         Instant now = Instant.now();

@@ -10,7 +10,6 @@ import com.vpgh.dms.util.exception.NotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,11 +24,13 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api")
 public class SystemSettingController {
+    private final SystemSettingService systemSettingService;
+    private final Validator validator;
 
-    @Autowired
-    private SystemSettingService systemSettingService;
-    @Autowired
-    private Validator validator;
+    public SystemSettingController(SystemSettingService systemSettingService, Validator validator) {
+        this.systemSettingService = systemSettingService;
+        this.validator = validator;
+    }
 
     @PostMapping(path = "/admin/settings")
     @ApiMessage(message = "Tạo mới cài đặt")

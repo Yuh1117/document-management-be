@@ -11,7 +11,6 @@ import com.vpgh.dms.util.annotation.ApiMessage;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,14 +26,13 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api")
 public class UserController {
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private RoleService roleService;
-    @Autowired
-    private Validator validator;
+    private final UserService userService;
+    private final Validator validator;
+
+    public UserController(UserService userService, Validator validator) {
+        this.userService = userService;
+        this.validator = validator;
+    }
 
     @PostMapping(path = "/admin/users")
     @ApiMessage(message = "Tạo mới người dùng")

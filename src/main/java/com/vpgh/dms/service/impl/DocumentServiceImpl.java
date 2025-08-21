@@ -11,45 +11,46 @@ import com.vpgh.dms.repository.DocumentVersionRepository;
 import com.vpgh.dms.repository.FolderRepository;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.UserService;
-import com.vpgh.dms.service.specification.DocumentSpecification;
-import com.vpgh.dms.util.PageSize;
 import com.vpgh.dms.util.SecurityUtil;
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class DocumentServiceImpl implements DocumentService {
 
-    @Autowired
-    private DocumentRepository documentRepository;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private DocumentVersionRepository documentVersionRepository;
-    @Autowired
-    private FolderRepository folderRepository;
-    @Autowired
-    private S3Client s3Client;
+    private final DocumentRepository documentRepository;
+    private final UserService userService;
+    private final DocumentVersionRepository documentVersionRepository;
+    private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
     @Value("${aws.bucket.name}")
     private String bucketName;
     private static final String ROOT_FOLDER_PREFIX = "root";
+
+    public DocumentServiceImpl(S3Presigner s3Presigner, S3Client s3Client, DocumentVersionRepository documentVersionRepository,
+                               UserService userService, DocumentRepository documentRepository) {
+        this.s3Presigner = s3Presigner;
+        this.s3Client = s3Client;
+        this.documentVersionRepository = documentVersionRepository;
+        this.userService = userService;
+        this.documentRepository = documentRepository;
+    }
 
     @Override
     public Document save(Document document) {
@@ -169,33 +170,6 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public Page<Document> getActiveDocuments(Folder folder, User createdBy, String page) {
-        Pageable pageable = PageRequest.of(Integer.parseInt(page) - 1, PageSize.DOCUMENT_PAGE_SIZE.getSize());
-        return this.documentRepository.findByFolderAndCreatedByAndIsDeletedFalse(folder, createdBy, pageable);
-    }
-
-    @Override
-    public Page<Document> getInactiveDocuments(Folder folder, User createdBy, String page) {
-        Pageable pageable = PageRequest.of(Integer.parseInt(page) - 1, PageSize.DOCUMENT_PAGE_SIZE.getSize());
-        return this.documentRepository.findByFolderAndCreatedByAndIsDeletedTrue(folder, createdBy, pageable);
-    }
-
-    @Override
-    public Page<Document> searchDocuments(Map<String, String> params, User user) {
-        int page = Integer.parseInt(params.get("page"));
-        String kw = params.get("kw");
-
-        Pageable pageable = PageRequest.of(page - 1, PageSize.DOCUMENT_PAGE_SIZE.getSize());
-        Specification<Document> combinedSpec = Specification.allOf();
-        if (kw != null && !kw.isEmpty()) {
-            Specification<Document> spec = DocumentSpecification.filterByKeyword(params.get("kw"), user);
-            combinedSpec = combinedSpec.and(spec);
-        }
-
-        return this.documentRepository.findAll(combinedSpec, pageable);
-    }
-
-    @Override
     public Document findByNameAndFolderAndIsDeletedFalse(String name, Folder folder) {
         return this.documentRepository.findByNameAndFolderAndIsDeletedFalse(name, folder).orElse(null);
     }
@@ -271,6 +245,26 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setName(uniqueName);
 
         this.documentRepository.save(doc);
+    }
+
+    @Override
+    public String generateSignedUrl(Document doc, int expiryInMinutes) {
+        String key = extractKeyFromPath(doc.getFilePath());
+
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(expiryInMinutes))
+                .getObjectRequest(GetObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(key)
+                        .responseCacheControl("no-store")
+                        .responseContentDisposition("inline; filename=\"" + doc.getName() + "\"")
+                        .responseContentType(doc.getMimeType())
+                        .build())
+                .build();
+
+        URL signedUrl = s3Presigner.presignGetObject(presignRequest).url();
+
+        return signedUrl.toString();
     }
 
     private Document saveNewDocument(MultipartFile file, Folder folder, String fileName) throws IOException {

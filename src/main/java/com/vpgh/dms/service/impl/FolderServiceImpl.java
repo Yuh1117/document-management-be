@@ -10,16 +10,9 @@ import com.vpgh.dms.repository.FolderRepository;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.service.UserService;
-import com.vpgh.dms.service.specification.FolderSpecification;
-import com.vpgh.dms.util.PageSize;
 import com.vpgh.dms.util.PathUtil;
 import com.vpgh.dms.util.SecurityUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -35,18 +28,22 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class FolderServiceImpl implements FolderService {
 
-    @Autowired
-    private FolderRepository folderRepository;
-    @Autowired
-    private DocumentRepository documentRepository;
-    @Autowired
-    private DocumentService documentService;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private S3Client s3Client;
+    private final FolderRepository folderRepository;
+    private final DocumentRepository documentRepository;
+    private final DocumentService documentService;
+    private final UserService userService;
+    private final S3Client s3Client;
     @Value("${aws.bucket.name}")
     private String bucketName;
+
+    public FolderServiceImpl(FolderRepository folderRepository, DocumentRepository documentRepository, DocumentService documentService,
+                             UserService userService, S3Client s3Client) {
+        this.folderRepository = folderRepository;
+        this.documentRepository = documentRepository;
+        this.documentService = documentService;
+        this.userService = userService;
+        this.s3Client = s3Client;
+    }
 
     @Override
     public Folder getFolderById(Integer id) {
@@ -154,33 +151,6 @@ public class FolderServiceImpl implements FolderService {
     }
 
     @Override
-    public Page<Folder> getActiveFolders(Folder parent, User createdBy, String page) {
-        Pageable pageable = PageRequest.of(Integer.parseInt(page) - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
-        return this.folderRepository.findByParentAndCreatedByAndIsDeletedFalse(parent, createdBy, pageable);
-    }
-
-    @Override
-    public Page<Folder> getInactiveFolders(Folder parent, User createdBy, String page) {
-        Pageable pageable = PageRequest.of(Integer.parseInt(page) - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
-        return this.folderRepository.findByParentAndCreatedByAndIsDeletedTrue(parent, createdBy, pageable);
-    }
-
-    @Override
-    public Page<Folder> searchFolders(Map<String, String> params, User user) {
-        int page = Integer.parseInt(params.get("page"));
-        String kw = params.get("kw");
-
-        Pageable pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
-        Specification<Folder> combinedSpec = Specification.allOf();
-        if (kw != null && !kw.isEmpty()) {
-            Specification<Folder> spec = FolderSpecification.filterByKeyword(params.get("kw"), user);
-            combinedSpec = combinedSpec.and(spec);
-        }
-
-        return this.folderRepository.findAll(combinedSpec, pageable);
-    }
-
-    @Override
     public List<Folder> findByParentAndIsDeletedFalse(Folder parent) {
         return this.folderRepository.findByParentAndIsDeletedFalse(parent);
     }
@@ -259,46 +229,19 @@ public class FolderServiceImpl implements FolderService {
 
     @Override
     public FolderDTO convertFolderToFolderDTO(Folder folder) {
-        Map<Folder, FolderDTO> folderMap = new HashMap<>();
-        Stack<Folder> stack = new Stack<>();
+        FolderDTO dto = new FolderDTO();
+        dto.setId(folder.getId());
+        dto.setName(folder.getName());
+        dto.setDeleted(folder.getDeleted());
+        dto.setInheritPermissions(folder.getInheritPermissions());
+        dto.setDocuments(new HashSet<>(this.documentService.convertDocumentsToDocumentDTOs(new ArrayList<>(folder.getDocuments()))));
+        dto.setFolders(new HashSet<>(convertFoldersToSubFolderDTOs(new ArrayList<>(folder.getFolders()))));
+        dto.setCreatedAt(folder.getCreatedAt());
+        dto.setUpdatedAt(folder.getUpdatedAt());
+        dto.setCreatedBy(this.userService.convertUserToUserDTO(folder.getCreatedBy()));
+        dto.setUpdatedBy(folder.getUpdatedBy() != null ? this.userService.convertUserToUserDTO(folder.getUpdatedBy()) : null);
 
-        stack.push(folder);
-
-        while (!stack.isEmpty()) {
-            Folder current = stack.peek();
-
-            if (!folderMap.containsKey(current)) {
-                FolderDTO dto = new FolderDTO();
-                dto.setId(current.getId());
-                dto.setName(current.getName());
-                dto.setDeleted(current.getDeleted());
-                dto.setInheritPermissions(current.getInheritPermissions());
-                dto.setDocuments(new HashSet<>(this.documentService.convertDocumentsToDocumentDTOs(new ArrayList<>(current.getDocuments()))));
-                dto.setCreatedAt(current.getCreatedAt());
-                dto.setUpdatedAt(current.getUpdatedAt());
-                dto.setCreatedBy(this.userService.convertUserToUserDTO(current.getCreatedBy()));
-                dto.setUpdatedBy(current.getUpdatedBy() != null ? this.userService.convertUserToUserDTO(current.getUpdatedBy()) : null);
-
-                folderMap.put(current, dto);
-
-                for (Folder child : current.getFolders()) {
-                    if (!folderMap.containsKey(child)) {
-                        stack.push(child);
-                    }
-                }
-            } else {
-                Folder processed = stack.pop();
-                FolderDTO dto = folderMap.get(processed);
-
-                List<SubFolderDTO> childDTOs = processed.getFolders().stream()
-                        .map(f -> convertFolderToSubFolderDTO(f))
-                        .collect(Collectors.toList());
-
-                dto.setFolders(new HashSet<>(childDTOs));
-            }
-        }
-
-        return folderMap.get(folder);
+        return dto;
     }
 
     @Override

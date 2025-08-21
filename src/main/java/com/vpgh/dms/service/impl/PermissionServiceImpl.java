@@ -7,7 +7,6 @@ import com.vpgh.dms.repository.PermissionRepository;
 import com.vpgh.dms.service.PermissionService;
 import com.vpgh.dms.service.specification.PermissionSpecification;
 import com.vpgh.dms.util.PageSize;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,8 +22,11 @@ import java.util.Optional;
 @Service
 public class PermissionServiceImpl implements PermissionService {
 
-    @Autowired
-    private PermissionRepository permissionRepository;
+    private final PermissionRepository permissionRepository;
+
+    public PermissionServiceImpl(PermissionRepository permissionRepository) {
+        this.permissionRepository = permissionRepository;
+    }
 
     @Override
     public List<Permission> findPermissionsByIdIn(List<Integer> ids) {

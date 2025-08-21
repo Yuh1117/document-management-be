@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.vpgh.dms.model.dto.UserDTO;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -14,8 +13,11 @@ import java.io.IOException;
 @Component
 public class UserDTOSerializer extends JsonSerializer<User> {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    public UserDTOSerializer(UserService userService) {
+        this.userService = userService;
+    }
 
     @Override
     public void serialize(User user, JsonGenerator gen, SerializerProvider serializers) throws IOException {

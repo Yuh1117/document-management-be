@@ -7,6 +7,8 @@ public interface FileItemProjection {
 
     String getName();
 
+    String getDescription();
+
     String getType();
 
     Instant getCreatedAt();

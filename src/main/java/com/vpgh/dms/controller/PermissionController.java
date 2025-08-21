@@ -3,10 +3,8 @@ package com.vpgh.dms.controller;
 import com.vpgh.dms.model.dto.PermissionDTO;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
 import com.vpgh.dms.model.entity.Permission;
-import com.vpgh.dms.model.entity.Role;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.service.PermissionService;
-import com.vpgh.dms.util.DataResponse;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.CustomValidationException;
@@ -15,7 +13,6 @@ import com.vpgh.dms.util.exception.NotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -28,10 +25,13 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api")
 public class PermissionController {
-    @Autowired
-    private PermissionService permissionService;
-    @Autowired
-    private Validator validator;
+    private final PermissionService permissionService;
+    private final Validator validator;
+
+    public PermissionController(PermissionService permissionService, Validator validator) {
+        this.permissionService = permissionService;
+        this.validator = validator;
+    }
 
     @PostMapping(path = "/admin/permissions")
     @ApiMessage(message = "Tạo mới quyền")
@@ -118,14 +118,12 @@ public class PermissionController {
     }
 
     @PostMapping("/secure/check-permissions")
-    public ResponseEntity<DataResponse<Map<String, Boolean>>> checkPermissions(@RequestBody List<Map<String, String>> requests) {
-        DataResponse<Map<String, Boolean>> res = new DataResponse<>();
+    public ResponseEntity<Map<String, Boolean>> checkPermissions(@RequestBody List<Map<String, String>> requests) {
         Map<String, Boolean> resultMap = new HashMap<>();
-        res.setContent(resultMap);
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         if (currentUser == null || currentUser.getRole() == null) {
-            return ResponseEntity.status(HttpStatus.OK).body(res);
+            return ResponseEntity.status(HttpStatus.OK).body(resultMap);
         }
 
         Set<Permission> userPermissions = new HashSet<>(permissionService.getPermissionsByRole(currentUser.getRole()));
@@ -137,6 +135,6 @@ public class PermissionController {
             resultMap.put(key, matched);
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(res);
+        return ResponseEntity.status(HttpStatus.OK).body(resultMap);
     }
 }

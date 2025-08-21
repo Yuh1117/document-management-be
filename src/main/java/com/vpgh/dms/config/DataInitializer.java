@@ -8,7 +8,6 @@ import com.vpgh.dms.service.PermissionService;
 import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.SystemSettingService;
 import com.vpgh.dms.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 
@@ -16,15 +15,18 @@ import java.util.*;
 
 @Service
 public class DataInitializer implements CommandLineRunner {
+    private final RoleService roleService;
+    private final UserService userService;
+    private final SystemSettingService systemSettingService;
+    private final PermissionService permissionService;
 
-    @Autowired
-    private RoleService roleService;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private SystemSettingService systemSettingService;
-    @Autowired
-    private PermissionService permissionService;
+    public DataInitializer(RoleService roleService, UserService userService, SystemSettingService systemSettingService,
+                           PermissionService permissionService) {
+        this.roleService = roleService;
+        this.userService = userService;
+        this.systemSettingService = systemSettingService;
+        this.permissionService = permissionService;
+    }
 
     @Override
     public void run(String... args) throws Exception {
