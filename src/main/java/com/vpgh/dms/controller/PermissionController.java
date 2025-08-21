@@ -13,7 +13,6 @@ import com.vpgh.dms.util.exception.NotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -26,10 +25,13 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api")
 public class PermissionController {
-    @Autowired
-    private PermissionService permissionService;
-    @Autowired
-    private Validator validator;
+    private final PermissionService permissionService;
+    private final Validator validator;
+
+    public PermissionController(PermissionService permissionService, Validator validator) {
+        this.permissionService = permissionService;
+        this.validator = validator;
+    }
 
     @PostMapping(path = "/admin/permissions")
     @ApiMessage(message = "Tạo mới quyền")

@@ -7,17 +7,17 @@ import com.vpgh.dms.service.SystemSettingService;
 import com.vpgh.dms.util.annotation.ValidFile;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public class FileValidator implements ConstraintValidator<ValidFile, FileUploadReq> {
 
-    @Autowired
-    private SystemSettingService systemSettingService;
-    @Autowired
-    private FolderService folderService;
+    private final SystemSettingService systemSettingService;
+
+    public FileValidator(SystemSettingService systemSettingService) {
+        this.systemSettingService = systemSettingService;
+    }
 
     @Override
     public boolean isValid(FileUploadReq fileUploadReq, ConstraintValidatorContext context) {
@@ -31,26 +31,26 @@ public class FileValidator implements ConstraintValidator<ValidFile, FileUploadR
                     .addPropertyNode("files")
                     .addConstraintViolation();
             return false;
-        }
+        } else {
+            List<String> allowedTypes = List.of(this.systemSettingService.getSettingByKey("allowedFileType").getValue().split(";"));
+            long maxSize = Long.parseLong(this.systemSettingService.getSettingByKey("maxFileSize").getValue());
 
-        List<String> allowedTypes = List.of(this.systemSettingService.getSettingByKey("allowedFileType").getValue().split(";"));
-        long maxSize = Long.parseLong(this.systemSettingService.getSettingByKey("maxFileSize").getValue());
+            for (int i = 0; i < files.size(); i++) {
+                MultipartFile file = files.get(i);
 
-        for (int i = 0; i < files.size(); i++) {
-            MultipartFile file = files.get(i);
+                if (!allowedTypes.contains(file.getContentType())) {
+                    context.buildConstraintViolationWithTemplate("Loại file không hợp lệ: " + file.getOriginalFilename())
+                            .addPropertyNode("file " + (i + 1))
+                            .addConstraintViolation();
+                    valid = false;
+                }
 
-            if (!allowedTypes.contains(file.getContentType())) {
-                context.buildConstraintViolationWithTemplate("Loại file không hợp lệ: " + file.getOriginalFilename())
-                        .addPropertyNode("file " + (i + 1))
-                        .addConstraintViolation();
-                valid = false;
-            }
-
-            if (file.getSize() > maxSize) {
-                context.buildConstraintViolationWithTemplate("Dung lượng vượt quá giới hạn: " + file.getOriginalFilename())
-                        .addPropertyNode("file " + (i + 1))
-                        .addConstraintViolation();
-                valid = false;
+                if (file.getSize() > maxSize) {
+                    context.buildConstraintViolationWithTemplate("Dung lượng vượt quá giới hạn: " + file.getOriginalFilename())
+                            .addPropertyNode("file " + (i + 1))
+                            .addConstraintViolation();
+                    valid = false;
+                }
             }
         }
 

@@ -13,7 +13,6 @@ import com.vpgh.dms.util.exception.ForbiddenException;
 import com.vpgh.dms.util.exception.NotFoundException;
 import com.vpgh.dms.util.exception.UniqueConstraintException;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -30,13 +29,13 @@ import java.util.zip.ZipOutputStream;
 @RestController
 @RequestMapping("/api")
 public class FolderController {
+    private final FolderService folderService;
+    private final FolderShareService folderShareService;
 
-    @Autowired
-    private FolderService folderService;
-    @Autowired
-    private FolderShareService folderShareService;
-    @Autowired
-    private DocumentService documentService;
+    public FolderController(FolderService folderService, FolderShareService folderShareService, DocumentService documentService) {
+        this.folderService = folderService;
+        this.folderShareService = folderShareService;
+    }
 
     @PostMapping(path = "/secure/folders")
     @ApiMessage(message = "Tạo mới thư mục")

@@ -16,7 +16,6 @@ import com.vpgh.dms.util.JwtUtil;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,14 +34,10 @@ import java.util.Map;
 @RequestMapping("/api")
 public class AuthController {
 
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private AuthenticationManagerBuilder authenticationManagerBuilder;
-    @Autowired
-    private JwtUtil jwtUtil;
-    @Autowired
-    private RoleService roleService;
+    private final UserService userService;
+    private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final JwtUtil jwtUtil;
+    private final RoleService roleService;
     @Value("${google.client-id}")
     private String clientId;
     @Value("${google.client-secret}")
@@ -50,6 +45,12 @@ public class AuthController {
     @Value("${google.token-url}")
     private String googleTokenUrl;
 
+    public AuthController(UserService userService, AuthenticationManagerBuilder authenticationManagerBuilder, JwtUtil jwtUtil, RoleService roleService) {
+        this.userService = userService;
+        this.authenticationManagerBuilder = authenticationManagerBuilder;
+        this.jwtUtil = jwtUtil;
+        this.roleService = roleService;
+    }
 
     @PostMapping("/login")
     @ApiMessage(message = "Đăng nhập")

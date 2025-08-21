@@ -8,7 +8,6 @@ import com.vpgh.dms.model.entity.UserGroup;
 import com.vpgh.dms.repository.DocumentShareRepository;
 import com.vpgh.dms.service.DocumentShareService;
 import com.vpgh.dms.service.UserGroupService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,10 +16,13 @@ import java.util.Optional;
 
 @Service
 public class DocumentShareServiceImpl implements DocumentShareService {
-    @Autowired
-    private DocumentShareRepository documentShareRepository;
-    @Autowired
-    private UserGroupService userGroupService;
+    private final DocumentShareRepository documentShareRepository;
+    private final UserGroupService userGroupService;
+
+    public DocumentShareServiceImpl(DocumentShareRepository documentShareRepository, UserGroupService userGroupService) {
+        this.documentShareRepository = documentShareRepository;
+        this.userGroupService = userGroupService;
+    }
 
     @Override
     public boolean checkCanView(User user, Document doc) {

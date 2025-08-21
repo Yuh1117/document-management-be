@@ -13,7 +13,6 @@ import com.vpgh.dms.service.UserGroupService;
 import com.vpgh.dms.service.specification.UserGroupSpecification;
 import com.vpgh.dms.util.PageSize;
 import com.vpgh.dms.util.SecurityUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,12 +26,16 @@ import java.util.stream.Collectors;
 @Service
 public class UserGroupServiceImpl implements UserGroupService {
 
-    @Autowired
-    private UserGroupRepository userGroupRepository;
-    @Autowired
-    private UserGroupMemberRepository userGroupMemberRepository;
-    @Autowired
-    private UserRepository userRepository;
+    private final UserGroupRepository userGroupRepository;
+    private final UserGroupMemberRepository userGroupMemberRepository;
+    private final UserRepository userRepository;
+
+    public UserGroupServiceImpl(UserGroupRepository userGroupRepository, UserGroupMemberRepository userGroupMemberRepository,
+                                UserRepository userRepository) {
+        this.userGroupRepository = userGroupRepository;
+        this.userGroupMemberRepository = userGroupMemberRepository;
+        this.userRepository = userRepository;
+    }
 
     @Override
     public UserGroup save(UserGroup group) {

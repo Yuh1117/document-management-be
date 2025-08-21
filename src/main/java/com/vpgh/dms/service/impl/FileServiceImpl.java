@@ -7,7 +7,6 @@ import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.FileItemRepository;
 import com.vpgh.dms.service.FileService;
 import com.vpgh.dms.util.PageSize;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,8 +18,11 @@ import java.util.Map;
 
 @Service
 public class FileServiceImpl implements FileService {
-    @Autowired
-    private FileItemRepository fileItemRepository;
+    private final FileItemRepository fileItemRepository;
+
+    public FileServiceImpl(FileItemRepository fileItemRepository) {
+        this.fileItemRepository = fileItemRepository;
+    }
 
     @Override
     public Page<FileItemDTO> getUserFiles(User user, Integer parentId, Map<String, String> params) {

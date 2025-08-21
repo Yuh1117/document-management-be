@@ -7,7 +7,6 @@ import com.vpgh.dms.repository.RoleRepository;
 import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.specification.RoleSpecification;
 import com.vpgh.dms.util.PageSize;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,10 +21,13 @@ import java.util.stream.Collectors;
 @Service
 public class RoleServiceImpl implements RoleService {
 
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    private PermissionRepository permissionRepository;
+    private final RoleRepository roleRepository;
+    private final PermissionRepository permissionRepository;
+
+    public RoleServiceImpl(RoleRepository roleRepository, PermissionRepository permissionRepository) {
+        this.roleRepository = roleRepository;
+        this.permissionRepository = permissionRepository;
+    }
 
     @Override
     public Role getRoleByName(String name) {

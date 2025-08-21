@@ -7,17 +7,17 @@ import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.util.annotation.ValidRole;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class RoleValidator implements ConstraintValidator<ValidRole, RoleDTO> {
+    private final RoleService roleService;
+    private final PermissionService permissionService;
 
-    @Autowired
-    private RoleService roleService;
-
-    @Autowired
-    private PermissionService permissionService;
+    public RoleValidator(RoleService roleService, PermissionService permissionService) {
+        this.roleService = roleService;
+        this.permissionService = permissionService;
+    }
 
     @Override
     public boolean isValid(RoleDTO role, ConstraintValidatorContext context) {
@@ -25,12 +25,14 @@ public class RoleValidator implements ConstraintValidator<ValidRole, RoleDTO> {
 
         context.disableDefaultConstraintViolation();
 
-        boolean existName = this.roleService.existsByNameAndIdNot(role.getName(), role.getId());
-        if (existName) {
-            context.buildConstraintViolationWithTemplate("Tên đã tồn tại!")
-                    .addPropertyNode("name")
-                    .addConstraintViolation();
-            valid = false;
+        if (role.getName() != null && !role.getName().trim().isEmpty()) {
+            boolean existName = this.roleService.existsByNameAndIdNot(role.getName(), role.getId());
+            if (existName) {
+                context.buildConstraintViolationWithTemplate("Tên đã tồn tại!")
+                        .addPropertyNode("name")
+                        .addConstraintViolation();
+                valid = false;
+            }
         }
 
         if (role.getPermissions() != null) {

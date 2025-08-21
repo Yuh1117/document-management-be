@@ -16,7 +16,6 @@ import com.vpgh.dms.util.exception.ForbiddenException;
 import com.vpgh.dms.util.exception.NotFoundException;
 import com.vpgh.dms.util.exception.UniqueConstraintException;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -38,12 +37,15 @@ import java.util.zip.ZipOutputStream;
 @RestController
 @RequestMapping("/api")
 public class DocumentController {
-    @Autowired
-    private DocumentService documentService;
-    @Autowired
-    private FolderService folderService;
-    @Autowired
-    private DocumentShareService documentShareService;
+    private final DocumentService documentService;
+    private final FolderService folderService;
+    private final DocumentShareService documentShareService;
+
+    public DocumentController(DocumentService documentService, FolderService folderService, DocumentShareService documentShareService) {
+        this.documentService = documentService;
+        this.folderService = folderService;
+        this.documentShareService = documentShareService;
+    }
 
     @PostMapping(path = "/secure/documents/upload")
     @ApiMessage(message = "Upload tài liệu")

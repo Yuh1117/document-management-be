@@ -11,7 +11,6 @@ import com.vpgh.dms.util.exception.NotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -24,10 +23,13 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api")
 public class RoleController {
-    @Autowired
-    private RoleService roleService;
-    @Autowired
-    private Validator validator;
+    private final RoleService roleService;
+    private final Validator validator;
+
+    public RoleController(RoleService roleService, Validator validator) {
+        this.roleService = roleService;
+        this.validator = validator;
+    }
 
     @PostMapping(path = "/admin/roles")
     @ApiMessage(message = "Tạo mới vai trò")

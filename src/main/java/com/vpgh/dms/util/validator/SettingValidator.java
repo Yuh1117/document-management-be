@@ -5,12 +5,13 @@ import com.vpgh.dms.service.SystemSettingService;
 import com.vpgh.dms.util.annotation.ValidSetting;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.springframework.beans.factory.annotation.Autowired;
 
 public class SettingValidator implements ConstraintValidator<ValidSetting, SystemSettingDTO> {
+    private final SystemSettingService systemSettingService;
 
-    @Autowired
-    private SystemSettingService systemSettingService;
+    public SettingValidator(SystemSettingService systemSettingService) {
+        this.systemSettingService = systemSettingService;
+    }
 
     @Override
     public boolean isValid(SystemSettingDTO setting, ConstraintValidatorContext context) {
@@ -18,12 +19,14 @@ public class SettingValidator implements ConstraintValidator<ValidSetting, Syste
 
         context.disableDefaultConstraintViolation();
 
-        boolean check = this.systemSettingService.existsByKeyAndIdNot(setting.getKey(), setting.getId());
-        if (check) {
-            context.buildConstraintViolationWithTemplate("Key đã tồn tại!")
-                    .addPropertyNode("key")
-                    .addConstraintViolation();
-            valid = false;
+        if (setting.getKey() != null && !setting.getKey().trim().isEmpty()) {
+            boolean check = this.systemSettingService.existsByKeyAndIdNot(setting.getKey(), setting.getId());
+            if (check) {
+                context.buildConstraintViolationWithTemplate("Key đã tồn tại!")
+                        .addPropertyNode("key")
+                        .addConstraintViolation();
+                valid = false;
+            }
         }
 
         return valid;

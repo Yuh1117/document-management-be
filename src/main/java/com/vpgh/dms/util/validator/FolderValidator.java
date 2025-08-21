@@ -5,15 +5,17 @@ import com.vpgh.dms.service.SystemSettingService;
 import com.vpgh.dms.util.annotation.ValidFolder;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public class FolderValidator implements ConstraintValidator<ValidFolder, FolderUploadReq> {
 
-    @Autowired
-    private SystemSettingService systemSettingService;
+    private final SystemSettingService systemSettingService;
+
+    public FolderValidator(SystemSettingService systemSettingService) {
+        this.systemSettingService = systemSettingService;
+    }
 
     @Override
     public boolean isValid(FolderUploadReq folderUploadReq, ConstraintValidatorContext context) {
@@ -22,10 +24,11 @@ public class FolderValidator implements ConstraintValidator<ValidFolder, FolderU
         context.disableDefaultConstraintViolation();
 
         List<MultipartFile> files = folderUploadReq.getFiles();
-        List<String> allowedTypes = List.of(this.systemSettingService.getSettingByKey("allowedFileType").getValue().split(";"));
-        long maxSize = Long.parseLong(this.systemSettingService.getSettingByKey("maxFileSize").getValue());
 
         if (files != null && !files.isEmpty()) {
+            List<String> allowedTypes = List.of(this.systemSettingService.getSettingByKey("allowedFileType").getValue().split(";"));
+            long maxSize = Long.parseLong(this.systemSettingService.getSettingByKey("maxFileSize").getValue());
+
             for (int i = 0; i < files.size(); i++) {
                 MultipartFile file = files.get(i);
 

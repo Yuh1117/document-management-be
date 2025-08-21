@@ -12,7 +12,6 @@ import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.PathUtil;
 import com.vpgh.dms.util.SecurityUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,18 +28,22 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class FolderServiceImpl implements FolderService {
 
-    @Autowired
-    private FolderRepository folderRepository;
-    @Autowired
-    private DocumentRepository documentRepository;
-    @Autowired
-    private DocumentService documentService;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private S3Client s3Client;
+    private final FolderRepository folderRepository;
+    private final DocumentRepository documentRepository;
+    private final DocumentService documentService;
+    private final UserService userService;
+    private final S3Client s3Client;
     @Value("${aws.bucket.name}")
     private String bucketName;
+
+    public FolderServiceImpl(FolderRepository folderRepository, DocumentRepository documentRepository, DocumentService documentService,
+                             UserService userService, S3Client s3Client) {
+        this.folderRepository = folderRepository;
+        this.documentRepository = documentRepository;
+        this.documentService = documentService;
+        this.userService = userService;
+        this.s3Client = s3Client;
+    }
 
     @Override
     public Folder getFolderById(Integer id) {

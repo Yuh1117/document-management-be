@@ -8,7 +8,6 @@ import com.vpgh.dms.model.entity.UserGroup;
 import com.vpgh.dms.repository.FolderShareRepository;
 import com.vpgh.dms.service.FolderShareService;
 import com.vpgh.dms.service.UserGroupService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,10 +16,13 @@ import java.util.Optional;
 
 @Service
 public class FolderShareServiceImpl implements FolderShareService {
-    @Autowired
-    private FolderShareRepository folderShareRepository;
-    @Autowired
-    private UserGroupService userGroupService;
+    private final FolderShareRepository folderShareRepository;
+    private final UserGroupService userGroupService;
+
+    public FolderShareServiceImpl(FolderShareRepository folderShareRepository, UserGroupService userGroupService) {
+        this.folderShareRepository = folderShareRepository;
+        this.userGroupService = userGroupService;
+    }
 
     @Override
     public boolean checkCanView(User user, Folder folder) {

@@ -13,7 +13,6 @@ import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.SecurityUtil;
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
@@ -35,21 +34,23 @@ import java.util.stream.Collectors;
 @Service
 public class DocumentServiceImpl implements DocumentService {
 
-    @Autowired
-    private DocumentRepository documentRepository;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private DocumentVersionRepository documentVersionRepository;
-    @Autowired
-    private FolderRepository folderRepository;
-    @Autowired
-    private S3Client s3Client;
-    @Autowired
-    private S3Presigner s3Presigner;
+    private final DocumentRepository documentRepository;
+    private final UserService userService;
+    private final DocumentVersionRepository documentVersionRepository;
+    private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
     @Value("${aws.bucket.name}")
     private String bucketName;
     private static final String ROOT_FOLDER_PREFIX = "root";
+
+    public DocumentServiceImpl(S3Presigner s3Presigner, S3Client s3Client, DocumentVersionRepository documentVersionRepository,
+                               UserService userService, DocumentRepository documentRepository) {
+        this.s3Presigner = s3Presigner;
+        this.s3Client = s3Client;
+        this.documentVersionRepository = documentVersionRepository;
+        this.userService = userService;
+        this.documentRepository = documentRepository;
+    }
 
     @Override
     public Document save(Document document) {

@@ -13,7 +13,6 @@ import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.ForbiddenException;
 import com.vpgh.dms.util.exception.NotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -33,14 +32,17 @@ import java.util.zip.ZipOutputStream;
 @RequestMapping("/api")
 public class FileController {
 
-    @Autowired
-    private FolderService folderService;
-    @Autowired
-    private DocumentService documentService;
-    @Autowired
-    private FileService fileService;
-    @Autowired
-    private FolderShareService folderShareService;
+    private final FolderService folderService;
+    private final DocumentService documentService;
+    private final FileService fileService;
+    private final FolderShareService folderShareService;
+
+    public FileController(FolderService folderService, DocumentService documentService, FileService fileService, FolderShareService folderShareService) {
+        this.folderService = folderService;
+        this.documentService = documentService;
+        this.fileService = fileService;
+        this.folderShareService = folderShareService;
+    }
 
     @GetMapping(path = "/secure/files/my-files")
     @ApiMessage(message = "Lấy files của tôi")
