@@ -186,19 +186,19 @@ ALTER TABLE ONLY public.documents
 
 CREATE UNIQUE INDEX unique_doc_name_per_parent
     ON public.documents(name, folder_id)
-    WHERE folder_id IS NOT NULL;
+    WHERE folder_id IS NOT NULL AND is_deleted = false;
 
 CREATE UNIQUE INDEX unique_doc_name_per_user
     ON public.documents(name, created_by)
-    WHERE folder_id IS NULL;
+    WHERE folder_id IS NULL AND is_deleted = false;
 
 CREATE UNIQUE INDEX unique_folder_name_per_parent
     ON public.folders(name, parent_id)
-    WHERE parent_id IS NOT NULL;
+    WHERE parent_id IS NOT NULL AND is_deleted = false;
 
 CREATE UNIQUE INDEX unique_folder_name_per_user
     ON public.folders(name, created_by)
-    WHERE parent_id IS NULL;
+    WHERE parent_id IS NULL AND is_deleted = false;
 
 CREATE INDEX idx_documents_name_lower_pattern ON public.documents (lower(name) text_pattern_ops);
 

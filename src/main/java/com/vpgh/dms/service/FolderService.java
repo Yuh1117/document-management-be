@@ -37,6 +37,8 @@ public interface FolderService {
 
     void moveFolder(Folder folder, Folder targetFolder);
 
+    boolean isDescendant(Folder source, Folder target);
+
     FolderDTO convertFolderToFolderDTO(Folder folder);
 
     List<FolderDTO> convertFoldersToFolderDTOs(List<Folder> folders);

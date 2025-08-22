@@ -21,7 +21,8 @@ public class GlobalException {
     @ExceptionHandler(value = {
             UniqueConstraintException.class,
             UsernameNotFoundException.class,
-            NotFoundException.class})
+            NotFoundException.class,
+            FileException.class})
     public ResponseEntity<DataResponse<String>> handleException(Exception ex) {
         DataResponse<String> errorResponse = new DataResponse<>();
         errorResponse.setContent(ex.getMessage());
