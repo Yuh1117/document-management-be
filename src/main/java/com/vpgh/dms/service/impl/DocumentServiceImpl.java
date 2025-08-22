@@ -226,8 +226,6 @@ public class DocumentServiceImpl implements DocumentService {
         String storedFilename = doc.getStoredFilename();
         String newKey = buildS3Key(folderPath, storedFilename);
 
-        String uniqueName = generateUniqueName(doc.getName(), targetFolder);
-
         s3Client.copyObject(CopyObjectRequest.builder()
                 .sourceBucket(bucketName)
                 .sourceKey(oldKey)
@@ -240,9 +238,13 @@ public class DocumentServiceImpl implements DocumentService {
                 .key(oldKey)
                 .build());
 
+        String newName = doc.getName();
+        if (!doc.getFolder().equals(targetFolder)) {
+            newName = generateUniqueName(doc.getName(), targetFolder);
+        }
         doc.setFilePath(buildS3Uri(newKey));
         doc.setFolder(targetFolder);
-        doc.setName(uniqueName);
+        doc.setName(newName);
 
         this.documentRepository.save(doc);
     }
@@ -310,21 +312,21 @@ public class DocumentServiceImpl implements DocumentService {
     private String generateUniqueName(String originalName, Folder folder) {
         String baseName = FilenameUtils.getBaseName(originalName);
         String extension = FilenameUtils.getExtension(originalName);
+        baseName = baseName.replaceAll("\\s*\\(\\d+\\)$", "");
 
         String newName = originalName;
         int counter = 1;
         if (folder != null) {
             while (this.documentRepository.findByNameAndFolderAndIsDeletedFalse(newName, folder).isPresent()) {
-                newName = baseName + "(" + counter + ")" + (extension.isEmpty() ? "" : "." + extension);
-                counter++;
+                newName = baseName + " (" + counter++ + ")" + (extension.isEmpty() ? "" : "." + extension);
             }
         } else {
-            while (this.documentRepository.findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(newName,
-                    SecurityUtil.getCurrentUserFromThreadLocal()).isPresent()) {
-                newName = baseName + "(" + counter + ")" + (extension.isEmpty() ? "" : "." + extension);
-                counter++;
+            while (this.documentRepository.findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(
+                    newName, SecurityUtil.getCurrentUserFromThreadLocal()).isPresent()) {
+                newName = baseName + " (" + counter++ + ")" + (extension.isEmpty() ? "" : "." + extension);
             }
         }
+
         return newName;
     }
 

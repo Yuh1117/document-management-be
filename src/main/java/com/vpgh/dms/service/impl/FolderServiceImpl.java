@@ -128,13 +128,7 @@ public class FolderServiceImpl implements FolderService {
 
             List<Document> documents = this.documentRepository.findByFolderId(currentFolder.getId());
             for (Document doc : documents) {
-                if (Boolean.TRUE.equals(doc.getDeleted())) {
-                    s3Client.deleteObject(DeleteObjectRequest.builder()
-                            .bucket(bucketName)
-                            .key(extractKeyFromPath(doc.getFilePath()))
-                            .build());
-                    this.documentRepository.delete(doc);
-                }
+                this.documentService.hardDelete(doc);
             }
 
             List<Folder> subFolders = this.folderRepository.findByParentId(currentFolder.getId());
@@ -142,12 +136,8 @@ public class FolderServiceImpl implements FolderService {
                 stack.push(subFolder);
             }
 
-            this.folderRepository.delete(currentFolder);
         }
-    }
-
-    private String extractKeyFromPath(String s3Path) {
-        return s3Path.replace("s3://" + bucketName + "/", "");
+        this.folderRepository.delete(folder);
     }
 
     @Override
@@ -184,7 +174,7 @@ public class FolderServiceImpl implements FolderService {
             List<Folder> subFolders = this.folderRepository.findByParentId(current.getId());
             for (Folder subFolder : subFolders) {
                 Folder subCopy = new Folder();
-                subCopy.setName(generateUniqueName(subFolder.getName(), currentCopy));
+                subCopy.setName(subFolder.getName());
                 subCopy.setParent(currentCopy);
                 this.folderRepository.save(subCopy);
 
@@ -207,12 +197,12 @@ public class FolderServiceImpl implements FolderService {
             Folder newParent;
             if (currentFolder.getId().equals(folder.getId())) {
                 newParent = targetFolder;
+                String newName = generateUniqueName(currentFolder.getName(), newParent);
+                currentFolder.setName(newName);
             } else {
                 newParent = movedMap.get(currentFolder.getParent().getId());
             }
 
-            String newName = generateUniqueName(currentFolder.getName(), newParent);
-            currentFolder.setName(newName);
             currentFolder.setParent(newParent);
             folderRepository.save(currentFolder);
 
@@ -337,18 +327,32 @@ public class FolderServiceImpl implements FolderService {
     }
 
     private String generateUniqueName(String originalName, Folder targetFolder) {
+        String baseName = originalName.replaceAll("\\s*\\(\\d+\\)$", "");
         String newName = originalName;
+
         int counter = 1;
         if (targetFolder != null) {
             while (this.folderRepository.existsByNameAndParentAndIsDeletedFalseAndIdNot(newName, targetFolder, null)) {
-                newName = originalName + " (" + counter++ + ")";
+                newName = baseName + " (" + counter++ + ")";
             }
         } else {
             while (this.folderRepository.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(newName,
                     SecurityUtil.getCurrentUserFromThreadLocal(), null)) {
-                newName = originalName + " (" + counter++ + ")";
+                newName = baseName + " (" + counter++ + ")";
             }
         }
         return newName;
+    }
+
+    @Override
+    public boolean isDescendant(Folder source, Folder target) {
+        Folder current = target;
+        while (current != null) {
+            if (current.getId().equals(source.getId())) {
+                return true;
+            }
+            current = current.getParent();
+        }
+        return false;
     }
 }

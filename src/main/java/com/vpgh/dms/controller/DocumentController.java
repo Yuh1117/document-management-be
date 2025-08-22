@@ -317,6 +317,11 @@ public class DocumentController {
         }
 
         for (Document doc : docs) {
+            if (doc.getFolder() == null) {
+                if (targetFolder == null) continue;
+            } else {
+                if (doc.getFolder().equals(targetFolder)) continue;
+            }
             this.documentService.moveDocument(doc, targetFolder);
         }
         return ResponseEntity.ok().build();

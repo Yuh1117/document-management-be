@@ -9,6 +9,7 @@ import com.vpgh.dms.service.FolderShareService;
 import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
+import com.vpgh.dms.util.exception.FileException;
 import com.vpgh.dms.util.exception.ForbiddenException;
 import com.vpgh.dms.util.exception.NotFoundException;
 import com.vpgh.dms.util.exception.UniqueConstraintException;
@@ -243,6 +244,10 @@ public class FolderController {
         }
 
         for (Folder folder : folders) {
+            if (targetFolder != null
+                    && (folder.getId().equals(targetFolder.getId()) || this.folderService.isDescendant(folder, targetFolder))) {
+                throw new FileException("Không thể sao chép thư mục vào chính nó hoặc thư mục con của nó: " + folder.getName());
+            }
             this.folderService.copyFolder(folder, targetFolder);
         }
         return ResponseEntity.ok().build();
@@ -270,6 +275,16 @@ public class FolderController {
         }
 
         for (Folder folder : folders) {
+            if (folder.getParent() == null) {
+                if (targetFolder == null) continue;
+            } else {
+                if (folder.getParent().equals(targetFolder)) continue;
+            }
+
+            if (targetFolder != null
+                    && (folder.getId().equals(targetFolder.getId()) || this.folderService.isDescendant(folder, targetFolder))) {
+                throw new FileException("Không thể di chuyển thư mục vào chính nó hoặc thư mục con của nó: " + folder.getName());
+            }
             this.folderService.moveFolder(folder, targetFolder);
         }
         return ResponseEntity.ok().build();
