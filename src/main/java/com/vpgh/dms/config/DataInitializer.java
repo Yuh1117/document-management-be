@@ -76,12 +76,20 @@ public class DataInitializer implements CommandLineRunner {
 
         if (countUser == 0) {
             User user = new User();
-            user.setFirstName("huy");
-            user.setLastName("van");
+            user.setFirstName("min");
+            user.setLastName("ad");
             user.setEmail("admin@gmail.com");
             user.setPassword("123456");
             user.setRole(this.roleService.getRoleByName("ROLE_ADMIN"));
             this.userService.save(user);
+
+            User user1 = new User();
+            user1.setFirstName("huy");
+            user1.setLastName("gia");
+            user1.setEmail("huy@gmail.com");
+            user1.setPassword("123456");
+            user1.setRole(this.roleService.getRoleByName("ROLE_USER"));
+            this.userService.save(user1);
         }
 
         if (countSettings == 0) {

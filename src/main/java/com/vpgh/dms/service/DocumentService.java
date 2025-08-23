@@ -54,4 +54,6 @@ public interface DocumentService {
     void moveDocument(Document doc, Folder targetFolder);
 
     String generateSignedUrl(Document doc, int expiryInMinutes);
+
+    boolean isOwnerDoc(Document doc, User user);
 }

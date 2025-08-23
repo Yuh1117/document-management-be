@@ -269,6 +269,11 @@ public class DocumentServiceImpl implements DocumentService {
         return signedUrl.toString();
     }
 
+    @Override
+    public boolean isOwnerDoc(Document doc, User user) {
+        return doc.getCreatedBy().getId().equals(user.getId());
+    }
+
     private Document saveNewDocument(MultipartFile file, Folder folder, String fileName) throws IOException {
         String folderPath = buildS3FolderPath(folder);
         String storedFilename = generateStoredFilename(fileName);

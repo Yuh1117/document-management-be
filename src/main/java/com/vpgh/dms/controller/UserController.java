@@ -5,7 +5,6 @@ import com.vpgh.dms.util.exception.CustomValidationException;
 import com.vpgh.dms.util.exception.NotFoundException;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
 import com.vpgh.dms.model.entity.User;
-import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import jakarta.validation.ConstraintViolation;
@@ -14,7 +13,6 @@ import jakarta.validation.Validator;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;

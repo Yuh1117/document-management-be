@@ -50,4 +50,6 @@ public interface FolderService {
     void zipFolderIterative(Folder rootFolder, ZipOutputStream zipOut) throws IOException;
 
     Folder uploadNewFolder(Folder parentFolder, List<MultipartFile> files, List<String> relativePaths) throws IOException;
+
+    boolean isOwnerFolder(Folder folder, User user);
 }

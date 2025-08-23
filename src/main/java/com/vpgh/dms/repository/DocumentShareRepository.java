@@ -16,4 +16,11 @@ public interface DocumentShareRepository extends JpaRepository<DocumentShare, In
     Optional<DocumentShare> findByDocumentAndUserAndShareType(Document document, User user, ShareType shareType);
 
     Optional<DocumentShare> findByDocumentAndGroupInAndShareType(Document document, List<UserGroup> groups, ShareType shareType);
+
+    Optional<DocumentShare> findByDocumentAndUser(Document document, User user);
+
+    List<DocumentShare> findByDocument(Document document);
+
+    void deleteByDocumentAndUserIn(Document doc, List<User> users);
+
 }

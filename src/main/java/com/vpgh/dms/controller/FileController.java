@@ -129,6 +129,25 @@ public class FileController {
         return ResponseEntity.ok(res);
     }
 
+    @GetMapping(path = "/secure/files/shared")
+    @ApiMessage(message = "Lấy files được chia sẻ")
+    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getSharedFiles(@RequestParam Map<String, String> params) {
+        String page = params.get("page");
+        if (page == null || page.isEmpty()) {
+            params.put("page", "1");
+        }
+
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+        Page<FileItemDTO> items = fileService.getSharedFiles(currentUser, params);
+        List<FileItemDTO> files = items.getContent();
+
+        PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
+        res.setResult(files);
+        res.setCurrentPage(items.getNumber() + 1);
+        res.setTotalPages(items.getTotalPages());
+        return ResponseEntity.status(HttpStatus.OK).body(res);
+    }
+
     @PostMapping("/secure/files/download/multiple")
     public ResponseEntity<StreamingResponseBody> downloadMixed(@RequestBody Map<String, List<Integer>> request) {
         List<Folder> folders = folderService.getFoldersByIds(request.get("folderIds"));

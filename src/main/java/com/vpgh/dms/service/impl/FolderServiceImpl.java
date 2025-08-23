@@ -326,6 +326,11 @@ public class FolderServiceImpl implements FolderService {
         return rootFolder;
     }
 
+    @Override
+    public boolean isOwnerFolder(Folder folder, User user) {
+        return folder.getCreatedBy().getId().equals(user.getId());
+    }
+
     private String generateUniqueName(String originalName, Folder targetFolder) {
         String baseName = originalName.replaceAll("\\s*\\(\\d+\\)$", "");
         String newName = originalName;

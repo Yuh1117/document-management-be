@@ -16,4 +16,10 @@ public interface FolderShareRepository extends JpaRepository<FolderShare, Intege
     Optional<FolderShare> findByFolderAndUserAndShareType(Folder folder, User user, ShareType shareType);
 
     Optional<FolderShare> findByFolderAndGroupInAndShareType(Folder folder, List<UserGroup> groups, ShareType shareType);
+
+    Optional<FolderShare> findByFolderAndUser(Folder folder, User user);
+
+    List<FolderShare> findByFolder(Folder folder);
+
+    void deleteByFolderAndUserIn(Folder folder, List<User> users);
 }

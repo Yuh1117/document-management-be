@@ -52,7 +52,3 @@ public class UserValidator implements ConstraintValidator<ValidUser, UserDTO> {
         return valid;
     }
 }
-
-
-
-

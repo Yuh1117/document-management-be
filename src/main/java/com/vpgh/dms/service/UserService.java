@@ -4,6 +4,7 @@ import com.vpgh.dms.model.dto.UserDTO;
 import com.vpgh.dms.model.entity.User;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
 import java.util.Map;
 
 public interface UserService {
@@ -16,6 +17,8 @@ public interface UserService {
     Page<User> getAllUsers(Map<String, String> params);
 
     User getUserById(Integer id);
+
+    List<User> getAllByIds(List<Integer> ids);
 
     void deleteUserById(Integer id);
 

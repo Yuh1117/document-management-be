@@ -27,7 +27,7 @@ public interface FileItemRepository extends JpaRepository<Folder, Integer> {
                       f.parent_id = :parentId
                   )
                AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')))
-
+            
             UNION ALL
             
             SELECT d.id AS id, d.name AS name, 'document' AS type,
@@ -174,4 +174,48 @@ public interface FileItemRepository extends JpaRepository<Folder, Integer> {
     Page<FileItemProjection> findFolderFiles(@Param("folderId") Integer folderId,
                                              @Param("deleted") Boolean deleted,
                                              Pageable pageable);
+
+    @Query(value = """
+                SELECT f.id AS id, f.name AS name, 'folder' AS type,
+                   f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
+                   u.id AS createdById, u.email AS createdByEmail,
+                   NULL as description,
+                   0 as sortType
+            FROM folders f
+            JOIN users u ON f.created_by = u.id
+            JOIN folder_shares fs ON f.id = fs.folder_id
+            WHERE fs.user_id = :userId AND f.is_deleted = false
+            
+            UNION ALL
+            
+            SELECT d.id AS id, d.name AS name, 'document' AS type,
+                   d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
+                   u.id AS createdById, u.email AS createdByEmail,
+                   d.description as description,
+                   1 as sortType
+            FROM documents d
+            JOIN users u ON d.created_by = u.id
+            JOIN document_shares ds ON d.id = ds.document_id
+            WHERE ds.user_id = :userId AND d.is_deleted = false
+            
+            ORDER BY sortType ASC, name ASC
+            """,
+            countQuery = """
+                        SELECT COUNT(*) FROM (
+                            SELECT f.id
+                            FROM folders f
+                            JOIN folder_shares fs ON f.id = fs.folder_id
+                            WHERE fs.user_id = :userId AND f.is_deleted = false
+                    
+                            UNION ALL
+                    
+                            SELECT d.id
+                            FROM documents d
+                            JOIN document_shares ds ON d.id = ds.document_id
+                            WHERE ds.user_id = :userId AND d.is_deleted = false
+                        ) AS total
+                    """,
+            nativeQuery = true
+    )
+    Page<FileItemProjection> findSharedFiles(@Param("userId") Integer userId, Pageable pageable);
 }
