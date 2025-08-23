@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -125,6 +126,11 @@ public class UserServiceImpl implements UserService {
     public User getUserById(Integer id) {
         Optional<User> user = this.userRepository.findById(id);
         return user.orElse(null);
+    }
+
+    @Override
+    public List<User> getAllByIds(List<Integer> ids) {
+        return this.userRepository.findByIdIn(ids);
     }
 
     @Override
