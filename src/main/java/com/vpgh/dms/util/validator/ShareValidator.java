@@ -50,7 +50,7 @@ public class ShareValidator implements ConstraintValidator<ValidShare, ShareReq>
         }
 
         if (shareReq.getFolderId() != null) {
-            Folder folder = this.folderService.getFolderById(shareReq.getDocumentId());
+            Folder folder = this.folderService.getFolderById(shareReq.getFolderId());
             if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
                 context.buildConstraintViolationWithTemplate("Thư mục không tồn tại hoặc đã bị xóa")
                         .addPropertyNode("folderId")

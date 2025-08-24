@@ -147,7 +147,8 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             JOIN users u ON f.created_by = u.id
             LEFT JOIN folder_shares fs ON f.id = fs.folder_id AND fs.user_id = :userId
             WHERE f.is_deleted = :deleted AND f.parent_id = :folderId
-            
+                AND (f.created_by = :userId OR fs.user_id IS NOT NULL)
+                        
             UNION ALL
             
             SELECT d.id AS id, d.name AS name, 'document' AS type,
@@ -163,7 +164,8 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             JOIN users u ON d.created_by = u.id
             LEFT JOIN document_shares ds ON d.id = ds.document_id AND ds.user_id = :userId
             WHERE d.is_deleted = :deleted AND d.folder_id = :folderId
-            
+                  AND (d.created_by = :userId OR ds.user_id IS NOT NULL)
+
             ORDER BY sortType ASC, name ASC
             """,
             countQuery = """
