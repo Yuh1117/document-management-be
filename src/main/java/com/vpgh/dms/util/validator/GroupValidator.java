@@ -1,7 +1,6 @@
 package com.vpgh.dms.util.validator;
 
-import com.vpgh.dms.model.UserGroupDTO;
-import com.vpgh.dms.model.dto.MemberDTO;
+import com.vpgh.dms.model.dto.UserGroupDTO;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.model.entity.UserGroup;
 import com.vpgh.dms.service.UserGroupService;
@@ -51,7 +50,7 @@ public class GroupValidator implements ConstraintValidator<ValidGroup, UserGroup
             valid = false;
         }
 
-        List<MemberDTO> members = groupDTO.getMembers();
+        List<UserGroupDTO.MemberDTO> members = groupDTO.getMembers();
         if (members != null) {
             for (int i = 0; i < members.size(); i++) {
                 String email = members.get(i).getEmail();

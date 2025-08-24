@@ -25,15 +25,13 @@ public class DocumentShareServiceImpl implements DocumentShareService {
     private final UserGroupService userGroupService;
     private final UserRepository userRepository;
     private final DocumentService documentService;
-    private final FolderShareService folderShareService;
 
     public DocumentShareServiceImpl(DocumentShareRepository documentShareRepository, UserGroupService userGroupService,
-                                    UserRepository userRepository, DocumentService documentService, FolderShareService folderShareService) {
+                                    UserRepository userRepository, DocumentService documentService) {
         this.documentShareRepository = documentShareRepository;
         this.userGroupService = userGroupService;
         this.userRepository = userRepository;
         this.documentService = documentService;
-        this.folderShareService = folderShareService;
     }
 
     @Override
@@ -48,25 +46,16 @@ public class DocumentShareServiceImpl implements DocumentShareService {
 
     @Override
     public boolean hasDocumentPermission(User user, Document doc, ShareType required) {
-        if (this.documentService.isOwnerDoc(doc, user)) {
+        if (this.documentService.isOwnerDocument(doc, user)) {
             return true;
         }
 
         if (required == ShareType.VIEW) {
-            if (checkUserOrGroupPermission(user, doc, ShareType.VIEW) || checkUserOrGroupPermission(user, doc, ShareType.EDIT)) {
-                return true;
-            }
+            return checkUserOrGroupPermission(user, doc, ShareType.VIEW)
+                    || checkUserOrGroupPermission(user, doc, ShareType.EDIT);
         } else {
-            if (checkUserOrGroupPermission(user, doc, ShareType.EDIT)) {
-                return true;
-            }
+            return checkUserOrGroupPermission(user, doc, ShareType.EDIT);
         }
-
-        if (doc.getFolder() != null) {
-            return this.folderShareService.hasFolderPermission(user, doc.getFolder(), required);
-        }
-
-        return false;
     }
 
     @Override
@@ -75,7 +64,7 @@ public class DocumentShareServiceImpl implements DocumentShareService {
 
         for (ShareReq.UserShareDTO dto : userShareDTOS) {
             User user = this.userRepository.findByEmail(dto.getEmail());
-            if (this.documentService.isOwnerDoc(doc, user)) continue;
+            if (this.documentService.isOwnerDocument(doc, user)) continue;
 
             DocumentShare existing = this.documentShareRepository.findByDocumentAndUser(doc, user).orElse(null);
             if (existing != null) {

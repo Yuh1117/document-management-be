@@ -3,13 +3,10 @@ package com.vpgh.dms.service.impl;
 import com.vpgh.dms.model.dto.*;
 import com.vpgh.dms.model.dto.response.FileItemDTO;
 import com.vpgh.dms.model.dto.response.FileItemProjection;
-import com.vpgh.dms.model.entity.Document;
-import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
-import com.vpgh.dms.repository.FileItemRepository;
+import com.vpgh.dms.repository.FileRepository;
 import com.vpgh.dms.service.*;
 import com.vpgh.dms.util.PageSize;
-import com.vpgh.dms.util.SecurityUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,19 +18,10 @@ import java.util.Map;
 
 @Service
 public class FileServiceImpl implements FileService {
-    private final FileItemRepository fileItemRepository;
-    private final FolderShareService folderShareService;
-    private final DocumentShareService documentShareService;
-    private final FolderService folderService;
-    private final DocumentService documentService;
+    private final FileRepository fileRepository;
 
-    public FileServiceImpl(FileItemRepository fileItemRepository, FolderShareService folderShareService,
-                           DocumentShareService documentShareService, FolderService folderService, DocumentService documentService) {
-        this.fileItemRepository = fileItemRepository;
-        this.folderShareService = folderShareService;
-        this.documentShareService = documentShareService;
-        this.folderService = folderService;
-        this.documentService = documentService;
+    public FileServiceImpl(FileRepository fileRepository) {
+        this.fileRepository = fileRepository;
     }
 
     @Override
@@ -50,7 +38,7 @@ public class FileServiceImpl implements FileService {
             }
         }
 
-        Page<FileItemProjection> pageItem = fileItemRepository.findAllByUserAndParent(user.getId(), parentId, false, keyword, pageable);
+        Page<FileItemProjection> pageItem = fileRepository.findAllByUserAndParent(user.getId(), parentId, false, keyword, pageable);
         Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
         return items;
     }
@@ -62,7 +50,7 @@ public class FileServiceImpl implements FileService {
             int page = Integer.parseInt(params.get("page"));
             pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
         }
-        Page<FileItemProjection> pageItem = fileItemRepository.findTrashFiles(user.getId(), pageable);
+        Page<FileItemProjection> pageItem = fileRepository.findTrashFiles(user.getId(), pageable);
         Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
         return items;
     }
@@ -81,14 +69,14 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public Page<FileItemDTO> getFolderFiles(Integer folderId, Map<String, String> params) {
+    public Page<FileItemDTO> getFolderFiles(User user, Integer folderId, Map<String, String> params) {
         Pageable pageable = Pageable.unpaged();
         if (params != null) {
             int page = Integer.parseInt(params.get("page"));
             pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
         }
 
-        Page<FileItemProjection> pageItem = fileItemRepository.findFolderFiles(folderId, false, pageable);
+        Page<FileItemProjection> pageItem = fileRepository.findFolderFiles(user.getId(), folderId, false, pageable);
         Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
         return items;
     }
@@ -100,7 +88,7 @@ public class FileServiceImpl implements FileService {
             int page = Integer.parseInt(params.get("page"));
             pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
         }
-        Page<FileItemProjection> pageItem = fileItemRepository.findSharedFiles(user.getId(), pageable);
+        Page<FileItemProjection> pageItem = fileRepository.findSharedFiles(user.getId(), pageable);
         Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
         return items;
     }
@@ -113,8 +101,6 @@ public class FileServiceImpl implements FileService {
         FileItemDTO dto = new FileItemDTO();
         dto.setType(p.getType());
 
-        String permission = "";
-        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         if ("folder".equals(p.getType())) {
             FolderDTO f = new FolderDTO();
             f.setId(p.getId());
@@ -124,15 +110,6 @@ public class FileServiceImpl implements FileService {
             f.setCreatedBy(createdBy);
             f.setDeleted(p.getIsDeleted());
             dto.setFolder(f);
-            Folder folder = this.folderService.getFolderById(p.getId());
-            if (this.folderService.isOwnerFolder(folder, currentUser)) {
-                permission = "OWNER";
-            } else if (this.folderShareService.checkCanEdit(currentUser, folder)) {
-                permission = "EDIT";
-            } else if (this.folderShareService.checkCanView(currentUser, folder)) {
-                permission = "VIEW";
-            }
-
         } else {
             DocumentDTO d = new DocumentDTO();
             d.setId(p.getId());
@@ -143,16 +120,9 @@ public class FileServiceImpl implements FileService {
             d.setCreatedBy(createdBy);
             d.setDeleted(p.getIsDeleted());
             dto.setDocument(d);
-            Document doc = this.documentService.getDocumentById(p.getId());
-            if (this.documentService.isOwnerDoc(doc, currentUser)) {
-                permission = "OWNER";
-            } else if (this.documentShareService.checkCanEdit(currentUser, doc)) {
-                permission = "EDIT";
-            } else if (this.documentShareService.checkCanView(currentUser, doc)) {
-                permission = "VIEW";
-            }
         }
-        dto.setPermission(permission);
+
+        dto.setPermission(p.getPermission());
         return dto;
     }
 }

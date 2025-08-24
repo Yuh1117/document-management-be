@@ -109,7 +109,8 @@ public class FileController {
             throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
         }
 
-        if (!this.folderShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+        if (!this.folderShareService.checkCanView(currentUser, folder)) {
             throw new ForbiddenException("Bạn không có quyền xem thư mục này");
         }
 
@@ -118,7 +119,7 @@ public class FileController {
             params.put("page", "1");
         }
 
-        Page<FileItemDTO> items = fileService.getFolderFiles(id, params);
+        Page<FileItemDTO> items = fileService.getFolderFiles(currentUser, id, params);
         List<FileItemDTO> files = items.getContent();
 
         PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
