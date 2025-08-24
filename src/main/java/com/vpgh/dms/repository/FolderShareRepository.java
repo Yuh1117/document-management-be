@@ -21,5 +21,5 @@ public interface FolderShareRepository extends JpaRepository<FolderShare, Intege
 
     List<FolderShare> findByFolder(Folder folder);
 
-    void deleteByFolderAndUserIn(Folder folder, List<User> users);
+    void deleteByFolderInAndUserIn(List<Folder> folders, List<User> users);
 }

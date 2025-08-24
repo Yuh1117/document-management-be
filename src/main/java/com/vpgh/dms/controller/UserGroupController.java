@@ -1,6 +1,6 @@
 package com.vpgh.dms.controller;
 
-import com.vpgh.dms.model.UserGroupDTO;
+import com.vpgh.dms.model.dto.UserGroupDTO;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.model.entity.UserGroup;

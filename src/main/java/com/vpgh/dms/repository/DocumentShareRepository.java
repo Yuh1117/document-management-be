@@ -23,4 +23,6 @@ public interface DocumentShareRepository extends JpaRepository<DocumentShare, In
 
     void deleteByDocumentAndUserIn(Document doc, List<User> users);
 
+    void deleteByDocumentInAndUserIn(List<Document> docs, List<User> users);
+
 }

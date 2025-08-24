@@ -2,12 +2,11 @@ package com.vpgh.dms.service.impl;
 
 import com.vpgh.dms.model.constant.ShareType;
 import com.vpgh.dms.model.dto.request.ShareReq;
-import com.vpgh.dms.model.entity.Folder;
-import com.vpgh.dms.model.entity.FolderShare;
-import com.vpgh.dms.model.entity.User;
-import com.vpgh.dms.model.entity.UserGroup;
+import com.vpgh.dms.model.entity.*;
+import com.vpgh.dms.repository.DocumentShareRepository;
 import com.vpgh.dms.repository.FolderShareRepository;
 import com.vpgh.dms.repository.UserRepository;
+import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.service.FolderShareService;
 import com.vpgh.dms.service.UserGroupService;
@@ -21,17 +20,25 @@ import java.util.Optional;
 @Service
 public class FolderShareServiceImpl implements FolderShareService {
     private final FolderShareRepository folderShareRepository;
+    private final UserRepository userRepository;
+    private final DocumentShareRepository documentShareRepository;
     private final UserGroupService userGroupService;
     private final FolderService folderService;
-    private final UserRepository userRepository;
+    private final DocumentService documentService;
 
 
-    public FolderShareServiceImpl(FolderShareRepository folderShareRepository, UserGroupService userGroupService,
-                                  FolderService folderService, UserRepository userRepository) {
+    public FolderShareServiceImpl(FolderShareRepository folderShareRepository,
+                                  UserRepository userRepository,
+                                  DocumentShareRepository documentShareRepository,
+                                  UserGroupService userGroupService,
+                                  FolderService folderService,
+                                  DocumentService documentService) {
         this.folderShareRepository = folderShareRepository;
+        this.userRepository = userRepository;
+        this.documentShareRepository = documentShareRepository;
         this.userGroupService = userGroupService;
         this.folderService = folderService;
-        this.userRepository = userRepository;
+        this.documentService = documentService;
     }
 
     @Override
@@ -51,44 +58,62 @@ public class FolderShareServiceImpl implements FolderShareService {
         }
 
         if (required == ShareType.VIEW) {
-            if (checkUserOrGroupPermission(user, folder, ShareType.VIEW) || checkUserOrGroupPermission(user, folder, ShareType.EDIT)) {
-                return true;
-            }
+            return checkUserOrGroupPermission(user, folder, ShareType.VIEW)
+                    || checkUserOrGroupPermission(user, folder, ShareType.EDIT);
         } else {
-            if (checkUserOrGroupPermission(user, folder, ShareType.EDIT)) {
-                return true;
-            }
+            return checkUserOrGroupPermission(user, folder, ShareType.EDIT);
         }
-
-        if (Boolean.TRUE.equals(folder.getInheritPermissions()) && folder.getParent() != null) {
-            return hasFolderPermission(user, folder.getParent(), required);
-        }
-
-        return false;
     }
 
     @Override
     public List<FolderShare> shareFolder(Folder folder, List<ShareReq.UserShareDTO> userShareDTOS) {
-        List<FolderShare> shares = new ArrayList<>();
+        List<FolderShare> folderShares = new ArrayList<>();
+        List<DocumentShare> documentShares = new ArrayList<>();
+
+        List<Folder> allFolders = this.folderService.getAllDescendantsIncludingSelf(folder);
+        List<Document> allDocuments = this.documentService.getAllDocumentsInFolders(allFolders);
 
         for (ShareReq.UserShareDTO dto : userShareDTOS) {
             User user = this.userRepository.findByEmail(dto.getEmail());
             if (this.folderService.isOwnerFolder(folder, user)) continue;
 
-            FolderShare existing = this.folderShareRepository.findByFolderAndUser(folder, user).orElse(null);
-            if (existing != null) {
-                existing.setShareType(dto.getShareType());
-                shares.add(existing);
-            } else {
-                FolderShare share = new FolderShare();
-                share.setFolder(folder);
-                share.setUser(user);
-                share.setShareType(dto.getShareType());
-                shares.add(share);
+            for (Folder f : allFolders) {
+                if (this.folderService.isOwnerFolder(f, user)) continue;
+
+                FolderShare existing = this.folderShareRepository.findByFolderAndUser(f, user).orElse(null);
+                if (existing != null) {
+                    existing.setShareType(dto.getShareType());
+                    folderShares.add(existing);
+                } else {
+                    FolderShare share = new FolderShare();
+                    share.setFolder(f);
+                    share.setUser(user);
+                    share.setShareType(dto.getShareType());
+                    folderShares.add(share);
+                }
             }
+
+            for (Document d : allDocuments) {
+                if (this.documentService.isOwnerDocument(d, user)) continue;
+
+                DocumentShare existing = this.documentShareRepository.findByDocumentAndUser(d, user).orElse(null);
+                if (existing != null) {
+                    existing.setShareType(dto.getShareType());
+                    documentShares.add(existing);
+                } else {
+                    DocumentShare share = new DocumentShare();
+                    share.setDocument(d);
+                    share.setUser(user);
+                    share.setShareType(dto.getShareType());
+                    documentShares.add(share);
+                }
+            }
+
         }
 
-        return folderShareRepository.saveAll(shares);
+        this.folderShareRepository.saveAll(folderShares);
+        this.documentShareRepository.saveAll(documentShares);
+        return folderShares;
     }
 
     @Override
@@ -99,7 +124,11 @@ public class FolderShareServiceImpl implements FolderShareService {
     @Override
     @Transactional
     public void removeShares(Folder folder, List<User> users) {
-        folderShareRepository.deleteByFolderAndUserIn(folder, users);
+        List<Folder> allFolders = folderService.getAllDescendantsIncludingSelf(folder);
+        List<Document> allDocuments = documentService.getAllDocumentsInFolders(allFolders);
+
+        this.folderShareRepository.deleteByFolderInAndUserIn(allFolders, users);
+        this.documentShareRepository.deleteByDocumentInAndUserIn(allDocuments, users);
     }
 
     private boolean checkUserOrGroupPermission(User user, Folder folder, ShareType permission) {

@@ -1,6 +1,8 @@
 package com.vpgh.dms.model.entity;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.vpgh.dms.model.FullAuditableEntity;
+import com.vpgh.dms.model.UserDTOSerializer;
 import com.vpgh.dms.model.constant.ShareType;
 import jakarta.persistence.*;
 
@@ -19,6 +21,7 @@ public class FolderShare extends FullAuditableEntity {
     private Folder folder;
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonSerialize(using = UserDTOSerializer.class)
     private User user;
     @ManyToOne
     @JoinColumn(name = "group_id")

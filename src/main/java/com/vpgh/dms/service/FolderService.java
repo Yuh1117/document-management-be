@@ -52,4 +52,6 @@ public interface FolderService {
     Folder uploadNewFolder(Folder parentFolder, List<MultipartFile> files, List<String> relativePaths) throws IOException;
 
     boolean isOwnerFolder(Folder folder, User user);
+
+    List<Folder> getAllDescendantsIncludingSelf(Folder folder);
 }

@@ -160,6 +160,11 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    public List<Document> getAllDocumentsInFolders(List<Folder> folders) {
+        return this.documentRepository.findByFolderIn(folders);
+    }
+
+    @Override
     public boolean existsByNameAndFolderAndIsDeletedFalseAndIdNot(String name, Folder folder, Integer excludeId) {
         return this.documentRepository.existsByNameAndFolderAndIsDeletedFalseAndIdNot(name, folder, excludeId);
     }
@@ -239,7 +244,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .build());
 
         String newName = doc.getName();
-        if (!doc.getFolder().equals(targetFolder)) {
+        if (!Objects.equals(doc.getFolder(), targetFolder)) {
             newName = generateUniqueName(doc.getName(), targetFolder);
         }
         doc.setFilePath(buildS3Uri(newKey));
@@ -270,7 +275,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public boolean isOwnerDoc(Document doc, User user) {
+    public boolean isOwnerDocument(Document doc, User user) {
         return doc.getCreatedBy().getId().equals(user.getId());
     }
 

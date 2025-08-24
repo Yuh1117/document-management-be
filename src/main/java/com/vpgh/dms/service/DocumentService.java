@@ -37,6 +37,8 @@ public interface DocumentService {
 
     List<Document> getDocumentsByIds(List<Integer> ids);
 
+    List<Document> getAllDocumentsInFolders(List<Folder> folders);
+
     boolean existsByNameAndFolderAndIsDeletedFalseAndIdNot(String name, Folder folder, Integer excludeId);
 
     boolean existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, Integer id);
@@ -55,5 +57,5 @@ public interface DocumentService {
 
     String generateSignedUrl(Document doc, int expiryInMinutes);
 
-    boolean isOwnerDoc(Document doc, User user);
+    boolean isOwnerDocument(Document doc, User user);
 }

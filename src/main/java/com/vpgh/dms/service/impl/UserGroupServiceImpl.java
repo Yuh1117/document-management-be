@@ -1,8 +1,7 @@
 package com.vpgh.dms.service.impl;
 
-import com.vpgh.dms.model.UserGroupDTO;
+import com.vpgh.dms.model.dto.UserGroupDTO;
 import com.vpgh.dms.model.constant.MemberEnum;
-import com.vpgh.dms.model.dto.MemberDTO;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.model.entity.UserGroup;
 import com.vpgh.dms.model.entity.UserGroupMember;
@@ -71,17 +70,17 @@ public class UserGroupServiceImpl implements UserGroupService {
             Map<Integer, UserGroupMember> existingMembersMap = group.getMembers().stream()
                     .collect(Collectors.toMap(m -> m.getUser().getId(), m -> m));
 
-            Map<Integer, MemberDTO> requestedMembersMap = dto.getMembers().stream()
+            Map<Integer, UserGroupDTO.MemberDTO> requestedMembersMap = dto.getMembers().stream()
                     .map(m -> {
                         User user = this.userRepository.findByEmail(m.getEmail());
                         m.setId(user.getId());
                         return m;
                     })
-                    .collect(Collectors.toMap(MemberDTO::getId, m -> m, (m1, m2) -> m1));
+                    .collect(Collectors.toMap(UserGroupDTO.MemberDTO::getId, m -> m, (m1, m2) -> m1));
 
-            for (Map.Entry<Integer, MemberDTO> entry : requestedMembersMap.entrySet()) {
+            for (Map.Entry<Integer, UserGroupDTO.MemberDTO> entry : requestedMembersMap.entrySet()) {
                 Integer id = entry.getKey();
-                MemberDTO memberDTO = entry.getValue();
+                UserGroupDTO.MemberDTO memberDTO = entry.getValue();
                 User user = this.userRepository.findById(id).orElse(null);
 
                 if (!existingMembersMap.containsKey(id)) {

@@ -22,6 +22,8 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     List<Document> findByIdIn(List<Integer> ids);
 
+    List<Document> findByFolderIn(List<Folder> folders);
+
     boolean existsByNameAndFolderAndIsDeletedFalseAndIdNot(String name, Folder folder, Integer excludeId);
 
     boolean existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, Integer id);

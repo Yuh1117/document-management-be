@@ -1,6 +1,6 @@
 package com.vpgh.dms.service;
 
-import com.vpgh.dms.model.UserGroupDTO;
+import com.vpgh.dms.model.dto.UserGroupDTO;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.model.entity.UserGroup;
 import com.vpgh.dms.model.entity.UserGroupMember;

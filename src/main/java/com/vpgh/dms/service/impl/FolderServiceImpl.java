@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -330,6 +329,23 @@ public class FolderServiceImpl implements FolderService {
     public boolean isOwnerFolder(Folder folder, User user) {
         return folder.getCreatedBy().getId().equals(user.getId());
     }
+
+    @Override
+    public List<Folder> getAllDescendantsIncludingSelf(Folder folder) {
+        List<Folder> result = new ArrayList<>();
+        Stack<Folder> stack = new Stack<>();
+        stack.push(folder);
+
+        while (!stack.isEmpty()) {
+            Folder current = stack.pop();
+            result.add(current);
+            List<Folder> children = this.folderRepository.findByParentId(current.getId());
+            stack.addAll(children);
+        }
+
+        return result;
+    }
+
 
     private String generateUniqueName(String originalName, Folder targetFolder) {
         String baseName = originalName.replaceAll("\\s*\\(\\d+\\)$", "");

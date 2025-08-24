@@ -21,5 +21,6 @@ public interface FileItemProjection {
 
     Boolean getIsDeleted();
 
+    String getPermission();
 
 }
