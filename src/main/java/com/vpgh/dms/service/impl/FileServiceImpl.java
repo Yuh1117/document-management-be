@@ -115,6 +115,7 @@ public class FileServiceImpl implements FileService {
             d.setId(p.getId());
             d.setName(p.getName());
             d.setDescription(p.getDescription());
+            d.setMimeType(p.getMimeType());
             d.setCreatedAt(p.getCreatedAt());
             d.setUpdatedAt(p.getUpdatedAt());
             d.setCreatedBy(createdBy);

@@ -14,7 +14,7 @@ public class SystemSetting extends FullAuditableEntity {
     @Column(nullable = false, name = "`key`", unique = true)
     @NotBlank(message = "Key không được để trống!")
     private String key;
-    @Column(nullable = false)
+    @Column(columnDefinition = "LONGTEXT", nullable = false)
     @NotBlank(message = "Giá trị không được để trống!")
     private String value;
     private String description;

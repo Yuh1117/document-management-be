@@ -230,7 +230,7 @@ CREATE TABLE public.system_settings (
     description character varying(255),
     key character varying(255) NOT NULL,
     updated_at timestamp(6) with time zone,
-    value character varying(255) NOT NULL,
+    value TEXT NOT NULL,
     created_by integer,
     updated_by integer
 );
