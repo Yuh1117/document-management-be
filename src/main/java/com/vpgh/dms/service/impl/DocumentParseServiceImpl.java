@@ -56,6 +56,7 @@ public class DocumentParseServiceImpl implements DocumentParseService {
             File convFile = convertMultipartToFile(file);
 
             String extracted = extractContent(convFile, doc.getMimeType());
+            if(extracted == null || extracted.isBlank()) return;
             doc.setExtractedText(extracted);
             this.documentRepository.save(doc);
 
@@ -65,8 +66,8 @@ public class DocumentParseServiceImpl implements DocumentParseService {
             DocumentSearchIndex idx = new DocumentSearchIndex();
             idx.setDocument(doc);
             idx.setKeywords(vnTokens);
-
             this.indexRepository.save(idx);
+
             log.info("Parsed and indexed document {}", doc.getId());
             convFile.delete();
         } catch (Exception e) {
