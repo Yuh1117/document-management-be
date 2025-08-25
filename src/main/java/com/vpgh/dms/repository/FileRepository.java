@@ -32,8 +32,8 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail, d.mime_type as mime_type,
-                   d.description as description, 'OWNER' as permission,
+                   u.id AS createdById, u.email AS createdByEmail,
+                   d.description as description, 'OWNER' as permission,  d.mime_type as mime_type,
                    1 as sortType
             FROM documents d
             JOIN users u ON d.created_by = u.id
@@ -148,7 +148,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             LEFT JOIN folder_shares fs ON f.id = fs.folder_id AND fs.user_id = :userId
             WHERE f.is_deleted = :deleted AND f.parent_id = :folderId
                 AND (f.created_by = :userId OR fs.user_id IS NOT NULL)
-                        
+            
             UNION ALL
             
             SELECT d.id AS id, d.name AS name, 'document' AS type,
@@ -165,7 +165,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             LEFT JOIN document_shares ds ON d.id = ds.document_id AND ds.user_id = :userId
             WHERE d.is_deleted = :deleted AND d.folder_id = :folderId
                   AND (d.created_by = :userId OR ds.user_id IS NOT NULL)
-
+            
             ORDER BY sortType ASC, name ASC
             """,
             countQuery = """
@@ -223,7 +223,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                         WHERE fs3.user_id = :userId AND f3.id = d.folder_id AND f3.is_deleted = false
                     )
                 )
-                        
+            
             ORDER BY sortType ASC, name ASC
             
             """,
@@ -240,7 +240,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                                     WHERE fs2.user_id = :userId AND f2.id = f.parent_id AND f2.is_deleted = false
                                    )
                               )
-                                                
+                    
                             UNION ALL
                     
                             SELECT d.id
@@ -259,4 +259,45 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             nativeQuery = true
     )
     Page<FileItemProjection> findSharedFiles(@Param("userId") Integer userId, Pageable pageable);
+
+
+    @Query(value = """
+            SELECT d.id AS id, d.name AS name, 'document' AS type,
+                   d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
+                   u.id AS createdById, u.email AS createdByEmail,
+                   d.description as description, 'OWNER' as permission, d.mime_type as mime_type,
+                   ts_rank_cd(idx.keywords_tsv, query) AS rank
+            FROM documents d
+            JOIN users u ON d.created_by = u.id
+            JOIN document_search_index idx ON idx.document_id = d.id,
+                 to_tsquery('simple', :keyword) query
+            WHERE d.created_by = :userId 
+              AND d.is_deleted = false
+              AND idx.keywords_tsv @@ query
+              AND (:mimeType IS NULL OR d.mime_type = :mimeType)
+              AND (:minSize IS NULL OR d.file_size >= :minSize)
+              AND (:maxSize IS NULL OR d.file_size <= :maxSize)
+            ORDER BY rank DESC, d.name ASC
+            """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM documents d
+                    JOIN document_search_index idx ON idx.document_id = d.id,
+                         to_tsquery('simple', :keyword) query
+                    WHERE d.created_by = :userId 
+                      AND d.is_deleted = false
+                      AND idx.keywords_tsv @@ query
+                      AND (:mimeType IS NULL OR d.mime_type = :mimeType)
+                      AND (:minSize IS NULL OR d.file_size >= :minSize)
+                      AND (:maxSize IS NULL OR d.file_size <= :maxSize)
+                    """,
+            nativeQuery = true
+    )
+    Page<FileItemProjection> findAdvancedSearchFiles(@Param("userId") Integer userId,
+                                                     @Param("keyword") String keyword,
+                                                     @Param("mimeType") String mimeType,
+                                                     @Param("minSize") Double minSize,
+                                                     @Param("maxSize") Double maxSize,
+                                                     Pageable pageable);
+
 }

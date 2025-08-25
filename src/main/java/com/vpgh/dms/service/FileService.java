@@ -17,4 +17,6 @@ public interface FileService {
     Page<FileItemDTO> getFolderFiles(User user, Integer folderId, Map<String, String> params);
 
     Page<FileItemDTO> getSharedFiles(User user, Map<String, String> params);
+
+    Page<FileItemDTO> getAdvancedSearchFiles(User user, Map<String, String> params);
 }

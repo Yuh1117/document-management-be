@@ -101,6 +101,25 @@ public class FileController {
         return ResponseEntity.status(HttpStatus.OK).body(res);
     }
 
+    @GetMapping(path = "/secure/files/advanced-search")
+    @ApiMessage(message = "Tìm kiếm nâng cao")
+    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> advancedSearch(@RequestParam Map<String, String> params) {
+        String page = params.get("page");
+        if (page == null || page.isEmpty()) {
+            params.put("page", "1");
+        }
+
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+        Page<FileItemDTO> items = fileService.getAdvancedSearchFiles(currentUser, params);
+        List<FileItemDTO> files = items.getContent();
+
+        PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
+        res.setResult(files);
+        res.setCurrentPage(items.getNumber() + 1);
+        res.setTotalPages(items.getTotalPages());
+        return ResponseEntity.status(HttpStatus.OK).body(res);
+    }
+
     @GetMapping("/secure/files/folders/{id}")
     @ApiMessage(message = "Lấy files trong folder")
     public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getFolderFiles(@PathVariable("id") Integer id, @RequestParam Map<String, String> params) {

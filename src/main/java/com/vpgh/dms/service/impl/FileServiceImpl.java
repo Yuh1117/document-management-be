@@ -13,8 +13,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class FileServiceImpl implements FileService {
@@ -29,8 +31,10 @@ public class FileServiceImpl implements FileService {
         Pageable pageable = Pageable.unpaged();
         String keyword = null;
         if (params != null) {
-            int page = Integer.parseInt(params.get("page"));
-            pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
+            if (params.containsKey("page")) {
+                int page = Integer.parseInt(params.get("page"));
+                pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
+            }
 
             keyword = params.get("kw");
             if (keyword != null && keyword.trim().isEmpty()) {
@@ -46,7 +50,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public Page<FileItemDTO> getTrashFiles(User user, Map<String, String> params) {
         Pageable pageable = Pageable.unpaged();
-        if (params != null) {
+        if (params != null && params.containsKey("page")) {
             int page = Integer.parseInt(params.get("page"));
             pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
         }
@@ -71,7 +75,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public Page<FileItemDTO> getFolderFiles(User user, Integer folderId, Map<String, String> params) {
         Pageable pageable = Pageable.unpaged();
-        if (params != null) {
+        if (params != null && params.containsKey("page")) {
             int page = Integer.parseInt(params.get("page"));
             pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
         }
@@ -84,11 +88,58 @@ public class FileServiceImpl implements FileService {
     @Override
     public Page<FileItemDTO> getSharedFiles(User user, Map<String, String> params) {
         Pageable pageable = Pageable.unpaged();
-        if (params != null) {
+        if (params != null && params.containsKey("page")) {
             int page = Integer.parseInt(params.get("page"));
             pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
         }
         Page<FileItemProjection> pageItem = fileRepository.findSharedFiles(user.getId(), pageable);
+        Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
+        return items;
+    }
+
+    @Override
+    public Page<FileItemDTO> getAdvancedSearchFiles(User user, Map<String, String> params) {
+        Pageable pageable = Pageable.unpaged();
+        String keyword = null;
+        String mimeType = null;
+        Double minSize = null;
+        Double maxSize = null;
+
+        if (params != null) {
+            if (params.containsKey("page")) {
+                int page = Integer.parseInt(params.get("page"));
+                pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
+            }
+
+            String rawKeyword = params.getOrDefault("kw", null);
+            if (rawKeyword != null && !rawKeyword.isBlank()) {
+                keyword = Arrays.stream(rawKeyword.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .map(s -> s.contains(" ") ? s.replaceAll("\\s+", " & ") : s)
+                        .collect(Collectors.joining(" | "));
+            }
+
+            mimeType = params.get("mimeType");
+
+            String minSizeStr = params.get("minSize");
+            if (minSizeStr != null && !minSizeStr.isBlank()) {
+                try {
+                    minSize = Double.parseDouble(minSizeStr) * 1024 * 1024;
+                } catch (NumberFormatException ignored) {
+                }
+            }
+
+            String maxSizeStr = params.get("maxSize");
+            if (maxSizeStr != null && !maxSizeStr.isBlank()) {
+                try {
+                    maxSize = Double.parseDouble(maxSizeStr) * 1024 * 1024;
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+
+        Page<FileItemProjection> pageItem = fileRepository.findAdvancedSearchFiles(user.getId(), keyword, mimeType, minSize, maxSize, pageable);
         Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
         return items;
     }

@@ -18,6 +18,7 @@ public class Document extends FullAuditableEntity {
     @Column(nullable = false)
     @NotBlank(message = "Tên mới không được để trống.")
     private String name;
+    @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String description;
     @Column(nullable = false)
     private String originalFilename;
@@ -34,6 +35,7 @@ public class Document extends FullAuditableEntity {
     private Boolean isEncrypted = false;
     @Enumerated(EnumType.STRING)
     private StorageType storageType;
+    @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String extractedText;
     private Boolean isDeleted = false;
 
