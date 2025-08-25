@@ -103,8 +103,18 @@ public class DataInitializer implements CommandLineRunner {
 
             SystemSetting s2 = new SystemSetting();
             s2.setKey("allowedFileType");
-            s2.setValue("text/plain;text/html;text/css;image/jpeg;image/png;image/gif;audio/mpeg;audio/wav;video/mp4;video/webm;" +
-                    "application/pdf;application/zip");
+            s2.setValue("text/plain;text/html;text/css;text/markdown;" +
+                    "image/jpeg;image/png;image/gif;" +
+                    "audio/mpeg;audio/wav;" +
+                    "video/mp4;video/webm;" +
+                    "application/pdf;application/zip;" +
+                    "application/x-zip-compressed;application/vnd.rar;application/x-7z-compressed" +
+                    "application/msword;" +
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document;" +
+                    "application/vnd.ms-excel;" +
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;" +
+                    "application/vnd.ms-powerpoint;" +
+                    "application/vnd.openxmlformats-officedocument.presentationml.presentation;");
             s2.setDescription("allowed file type");
             s2.setCreatedBy(user);
 

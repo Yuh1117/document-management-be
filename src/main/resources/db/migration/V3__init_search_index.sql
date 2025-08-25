@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE public.document_search_index (
     id integer NOT NULL,
-    keywords character varying(255),
+    keywords TEXT,
     created_at timestamp with time zone,
     updated_at timestamp with time zone,
     document_id integer

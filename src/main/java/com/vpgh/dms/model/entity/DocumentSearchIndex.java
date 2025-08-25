@@ -9,6 +9,7 @@ public class DocumentSearchIndex extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String keywords;
 
     @Column(columnDefinition = "vector(384)")

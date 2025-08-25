@@ -34,3 +34,6 @@ build/
 .env
 
 .env.docker
+
+/src/main/resources/vncorenlp/
+/src/main/resources/stopwords/

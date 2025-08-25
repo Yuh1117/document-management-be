@@ -11,6 +11,8 @@ public interface FileItemProjection {
 
     String getType();
 
+    String getMimeType();
+
     Instant getCreatedAt();
 
     Instant getUpdatedAt();

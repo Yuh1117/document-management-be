@@ -8,7 +8,7 @@ import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.repository.DocumentVersionRepository;
-import com.vpgh.dms.repository.FolderRepository;
+import com.vpgh.dms.service.DocumentParseService;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.SecurityUtil;
@@ -39,17 +39,20 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentVersionRepository documentVersionRepository;
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
+    private final DocumentParseService documentParseService;
     @Value("${aws.bucket.name}")
     private String bucketName;
     private static final String ROOT_FOLDER_PREFIX = "root";
 
     public DocumentServiceImpl(S3Presigner s3Presigner, S3Client s3Client, DocumentVersionRepository documentVersionRepository,
-                               UserService userService, DocumentRepository documentRepository) {
+                               UserService userService, DocumentRepository documentRepository,
+                               DocumentParseService documentParseService) {
         this.s3Presigner = s3Presigner;
         this.s3Client = s3Client;
         this.documentVersionRepository = documentVersionRepository;
         this.userService = userService;
         this.documentRepository = documentRepository;
+        this.documentParseService = documentParseService;
     }
 
     @Override
@@ -295,7 +298,10 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setFileHash(DigestUtils.md5DigestAsHex(file.getBytes()));
         doc.setStorageType(StorageType.AWS_S3);
         doc.setFolder(folder);
-        return documentRepository.save(doc);
+
+        Document saved = documentRepository.save(doc);
+        documentParseService.parseAndIndexAsync(saved, file);
+        return saved;
     }
 
     private void saveDocumentVersion(Document document) {
