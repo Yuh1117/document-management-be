@@ -266,38 +266,38 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail,
                    d.description as description, 'OWNER' as permission, d.mime_type as mime_type,
-                   ts_rank_cd(idx.keywords_tsv, query) AS rank
+                   COALESCE(ts_rank_cd(idx.keywords_tsv, query), 0) AS rank
             FROM documents d
             JOIN users u ON d.created_by = u.id
-            JOIN document_search_index idx ON idx.document_id = d.id,
+            LEFT JOIN document_search_index idx ON idx.document_id = d.id,
                  to_tsquery('simple', :keyword) query
             WHERE d.created_by = :userId 
               AND d.is_deleted = false
-              AND idx.keywords_tsv @@ query
-              AND (:mimeType IS NULL OR d.mime_type = :mimeType)
-              AND (:minSize IS NULL OR d.file_size >= :minSize)
-              AND (:maxSize IS NULL OR d.file_size <= :maxSize)
+              AND (:keyword IS NULL OR idx.keywords_tsv @@ query)
+              AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
+              AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
+                  OR (:sizeType = 'maxSize' AND d.file_size <= :size))
             ORDER BY rank DESC, d.name ASC
             """,
             countQuery = """
                     SELECT COUNT(*)
                     FROM documents d
-                    JOIN document_search_index idx ON idx.document_id = d.id,
+                    LEFT JOIN document_search_index idx ON idx.document_id = d.id,
                          to_tsquery('simple', :keyword) query
                     WHERE d.created_by = :userId 
                       AND d.is_deleted = false
-                      AND idx.keywords_tsv @@ query
-                      AND (:mimeType IS NULL OR d.mime_type = :mimeType)
-                      AND (:minSize IS NULL OR d.file_size >= :minSize)
-                      AND (:maxSize IS NULL OR d.file_size <= :maxSize)
+                      AND (:keyword IS NULL OR idx.keywords_tsv @@ query)
+                      AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
+                      AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
+                        OR (:sizeType = 'maxSize' AND d.file_size <= :size))
                     """,
             nativeQuery = true
     )
     Page<FileItemProjection> findAdvancedSearchFiles(@Param("userId") Integer userId,
                                                      @Param("keyword") String keyword,
                                                      @Param("mimeType") String mimeType,
-                                                     @Param("minSize") Double minSize,
-                                                     @Param("maxSize") Double maxSize,
+                                                     @Param("size") Double size,
+                                                     @Param("sizeType") String sizeType,
                                                      Pageable pageable);
 
 }
