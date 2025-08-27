@@ -21,9 +21,12 @@ import java.util.stream.Collectors;
 @Service
 public class FileServiceImpl implements FileService {
     private final FileRepository fileRepository;
+    private final EmbeddingService embeddingService;
 
-    public FileServiceImpl(FileRepository fileRepository) {
+
+    public FileServiceImpl(FileRepository fileRepository, EmbeddingService embeddingService) {
         this.fileRepository = fileRepository;
+        this.embeddingService = embeddingService;
     }
 
     @Override
@@ -97,6 +100,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public Page<FileItemDTO> getAdvancedSearchFiles(User user, Map<String, String> params) {
         Pageable pageable = Pageable.unpaged();
+        String rawKeyword = null;
         String keyword = null;
         String kwType = null;
         String mimeType = null;
@@ -112,7 +116,7 @@ public class FileServiceImpl implements FileService {
             String kwTypeStr = params.get("kwType");
             if (kwTypeStr != null && !kwTypeStr.isBlank()) {
                 kwType = kwTypeStr;
-                String rawKeyword = params.getOrDefault("kw", null);
+                rawKeyword = params.getOrDefault("kw", null);
                 if (rawKeyword != null && !rawKeyword.isBlank()) {
                     keyword = Arrays.stream(rawKeyword.split(","))
                             .map(String::trim)
@@ -141,7 +145,17 @@ public class FileServiceImpl implements FileService {
 
         }
 
-        Page<FileItemProjection> pageItem = fileRepository.findAdvancedSearchFiles(user.getId(), keyword, mimeType, size, sizeType, pageable);
+        Page<FileItemProjection> pageItem = null;
+        if (keyword == null || "exact".equals(kwType)) {
+            pageItem = fileRepository.findExactDocs(user.getId(), keyword, mimeType, size, sizeType, pageable);
+        } else {
+            List<Double> embedding = embeddingService.getEmbedding(rawKeyword);
+            float[] embeddingArray = new float[embedding.size()];
+            for (int i = 0; i < embedding.size(); i++) {
+                embeddingArray[i] = embedding.get(i).floatValue();
+            }
+            pageItem = fileRepository.findSimilarDocs(user.getId(), embeddingArray, 0.7, mimeType, size, sizeType, pageable);
+        }
         Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
         return items;
     }

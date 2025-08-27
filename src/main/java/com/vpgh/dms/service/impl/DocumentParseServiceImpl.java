@@ -5,7 +5,8 @@ import com.vpgh.dms.model.entity.DocumentSearchIndex;
 import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.repository.DocumentSearchIndexRepository;
 import com.vpgh.dms.service.DocumentParseService;
-import com.vpgh.dms.service.VietnameseTextProcessor;
+import com.vpgh.dms.service.EmbeddingService;
+import com.vpgh.dms.service.VietnameseTextService;
 import net.sourceforge.tess4j.Tesseract;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -29,7 +30,8 @@ import java.util.List;
 public class DocumentParseServiceImpl implements DocumentParseService {
     private final DocumentRepository documentRepository;
     private final DocumentSearchIndexRepository indexRepository;
-    private final VietnameseTextProcessor vnProcessor;
+    private final VietnameseTextService vnProcessor;
+    private final EmbeddingService embeddingService;
 
     private static final Logger log = LoggerFactory.getLogger(DocumentParseServiceImpl.class);
     private static final List<String> SUPPORTED_TIKA_TYPES = List.of(
@@ -43,10 +45,11 @@ public class DocumentParseServiceImpl implements DocumentParseService {
     private String tesseractPath;
 
     public DocumentParseServiceImpl(DocumentRepository documentRepository, DocumentSearchIndexRepository indexRepository,
-                                    VietnameseTextProcessor vnProcessor) {
+                                    VietnameseTextService vnProcessor, EmbeddingService embeddingService) {
         this.documentRepository = documentRepository;
         this.indexRepository = indexRepository;
         this.vnProcessor = vnProcessor;
+        this.embeddingService = embeddingService;
     }
 
     @Async
@@ -56,16 +59,24 @@ public class DocumentParseServiceImpl implements DocumentParseService {
             File convFile = convertMultipartToFile(file);
 
             String extracted = extractContent(convFile, doc.getMimeType());
-            if(extracted == null || extracted.isBlank()) return;
+            if (extracted == null || extracted.isBlank()) return;
             doc.setExtractedText(extracted);
             this.documentRepository.save(doc);
 
-            String vnTokens = this.vnProcessor.tokenize(extracted);
-//            String enTokens = cleanStopWords(extracted);
-
             DocumentSearchIndex idx = new DocumentSearchIndex();
             idx.setDocument(doc);
+
+            String vnTokens = this.vnProcessor.tokenizeAndClean(extracted);
+//            String enTokens = cleanStopWords(extracted);
             idx.setKeywords(vnTokens);
+
+            List<Double> embedding = embeddingService.getEmbedding(extracted);
+            float[] embeddingArray = new float[embedding.size()];
+            for (int i = 0; i < embedding.size(); i++) {
+                embeddingArray[i] = embedding.get(i).floatValue();
+            }
+            idx.setContentVector(embeddingArray);
+
             this.indexRepository.save(idx);
 
             log.info("Parsed and indexed document {}", doc.getId());

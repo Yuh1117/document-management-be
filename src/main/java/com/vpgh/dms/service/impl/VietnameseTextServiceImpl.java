@@ -1,6 +1,6 @@
 package com.vpgh.dms.service.impl;
 
-import com.vpgh.dms.service.VietnameseTextProcessor;
+import com.vpgh.dms.service.VietnameseTextService;
 import org.springframework.stereotype.Service;
 import vn.pipeline.*;
 
@@ -11,11 +11,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-public class VietnameseTextProcessorImpl implements VietnameseTextProcessor {
+public class VietnameseTextServiceImpl implements VietnameseTextService {
     private final VnCoreNLP pipeline;
     private final Set<String> stopWords;
 
-    public VietnameseTextProcessorImpl() throws IOException {
+    public VietnameseTextServiceImpl() throws IOException {
         String[] annotators = {"wseg"};
         this.pipeline = new VnCoreNLP(annotators);
         this.stopWords = loadStopWords("stopwords/vietnamese-stopwords.txt");
@@ -42,6 +42,7 @@ public class VietnameseTextProcessorImpl implements VietnameseTextProcessor {
         }
     }
 
+    @Override
     public String tokenizeAndClean(String text) {
         String tokenized = tokenize(text);
         if (tokenized.isEmpty()) return "";

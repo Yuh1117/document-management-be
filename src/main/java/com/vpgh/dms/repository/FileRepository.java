@@ -138,7 +138,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, NULL as mime_type,
                    NULL as description,
-                   CASE 
+                   CASE
                        WHEN f.created_by = :userId THEN 'OWNER'
                        ELSE fs.share_type
                    END as permission,
@@ -155,7 +155,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, d.mime_type as mime_type,
                    d.description as description,
-                   CASE 
+                   CASE
                        WHEN d.created_by = :userId THEN 'OWNER'
                        ELSE ds.share_type
                    END as permission,
@@ -198,8 +198,8 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             JOIN folder_shares fs ON f.id = fs.folder_id
             WHERE fs.user_id = :userId AND f.is_deleted = false
                 AND  (f.parent_id IS NULL OR NOT EXISTS (
-                        SELECT 1 
-                        FROM folder_shares fs2 
+                        SELECT 1
+                        FROM folder_shares fs2
                         JOIN folders f2 ON fs2.folder_id = f2.id
                         WHERE fs2.user_id = :userId AND f2.id = f.parent_id AND f2.is_deleted = false
                     )
@@ -217,7 +217,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             JOIN document_shares ds ON d.id = ds.document_id
             WHERE ds.user_id = :userId AND d.is_deleted = false
                 AND  (d.folder_id IS NULL OR NOT EXISTS (
-                        SELECT 1 
+                        SELECT 1
                         FROM folder_shares fs3
                         JOIN folders f3 ON fs3.folder_id = f3.id
                         WHERE fs3.user_id = :userId AND f3.id = d.folder_id AND f3.is_deleted = false
@@ -234,8 +234,8 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                             JOIN folder_shares fs ON f.id = fs.folder_id
                             WHERE fs.user_id = :userId AND f.is_deleted = false
                                 AND  (f.parent_id IS NULL OR NOT EXISTS (
-                                    SELECT 1 
-                                    FROM folder_shares fs2 
+                                    SELECT 1
+                                    FROM folder_shares fs2
                                     JOIN folders f2 ON fs2.folder_id = f2.id
                                     WHERE fs2.user_id = :userId AND f2.id = f.parent_id AND f2.is_deleted = false
                                    )
@@ -248,7 +248,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                             JOIN document_shares ds ON d.id = ds.document_id
                             WHERE ds.user_id = :userId AND d.is_deleted = false
                                 AND  (d.folder_id IS NULL OR NOT EXISTS (
-                                        SELECT 1 
+                                        SELECT 1
                                         FROM folder_shares fs3
                                         JOIN folders f3 ON fs3.folder_id = f3.id
                                         WHERE fs3.user_id = :userId AND f3.id = d.folder_id AND f3.is_deleted = false
@@ -266,14 +266,14 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail,
                    d.description as description, 'OWNER' as permission, d.mime_type as mime_type,
-                   COALESCE(ts_rank_cd(idx.keywords_tsv, query), 0) AS rank
+                   COALESCE(ts_rank_cd(dsi.keywords_tsv, query), 0) AS rank
             FROM documents d
             JOIN users u ON d.created_by = u.id
-            LEFT JOIN document_search_index idx ON idx.document_id = d.id,
+            LEFT JOIN document_search_index dsi ON dsi.document_id = d.id,
                  to_tsquery('simple', :keyword) query
-            WHERE d.created_by = :userId 
+            WHERE d.created_by = :userId
               AND d.is_deleted = false
-              AND (:keyword IS NULL OR idx.keywords_tsv @@ query)
+              AND (:keyword IS NULL OR dsi.keywords_tsv @@ query)
               AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
               AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
                   OR (:sizeType = 'maxSize' AND d.file_size <= :size))
@@ -282,22 +282,61 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             countQuery = """
                     SELECT COUNT(*)
                     FROM documents d
-                    LEFT JOIN document_search_index idx ON idx.document_id = d.id,
+                    LEFT JOIN document_search_index dsi ON dsi.document_id = d.id,
                          to_tsquery('simple', :keyword) query
-                    WHERE d.created_by = :userId 
+                    WHERE d.created_by = :userId
                       AND d.is_deleted = false
-                      AND (:keyword IS NULL OR idx.keywords_tsv @@ query)
+                      AND (:keyword IS NULL OR dsi.keywords_tsv @@ query)
                       AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
                       AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
                         OR (:sizeType = 'maxSize' AND d.file_size <= :size))
                     """,
             nativeQuery = true
     )
-    Page<FileItemProjection> findAdvancedSearchFiles(@Param("userId") Integer userId,
-                                                     @Param("keyword") String keyword,
-                                                     @Param("mimeType") String mimeType,
-                                                     @Param("size") Double size,
-                                                     @Param("sizeType") String sizeType,
-                                                     Pageable pageable);
+    Page<FileItemProjection> findExactDocs(@Param("userId") Integer userId,
+                                           @Param("keyword") String keyword,
+                                           @Param("mimeType") String mimeType,
+                                           @Param("size") Double size,
+                                           @Param("sizeType") String sizeType,
+                                           Pageable pageable);
+
+
+    @Query(value = """
+            SELECT d.id AS id, d.name AS name, 'document' AS type,
+                   d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
+                   u.id AS createdById, u.email AS createdByEmail,
+                   d.description as description, 'OWNER' as permission, d.mime_type as mime_type,
+                   1 - (dsi.content_vector <=> CAST(:embedding AS vector)) AS similarity
+            FROM documents d
+            JOIN users u ON d.created_by = u.id
+            JOIN document_search_index dsi ON dsi.document_id = d.id
+            WHERE d.created_by = :userId
+              AND d.is_deleted = false
+              AND (1 - (dsi.content_vector <=> CAST(:embedding AS vector))) >= :minSimilarity
+              AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
+              AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
+                  OR (:sizeType = 'maxSize' AND d.file_size <= :size))
+            ORDER BY similarity DESC, d.name ASC
+            """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM documents d
+                    JOIN document_search_index dsi ON dsi.document_id = d.id
+                    WHERE d.created_by = :userId
+                      AND d.is_deleted = false
+                      AND (1 - (dsi.content_vector <=> CAST(:embedding AS vector))) >= :minSimilarity
+                      AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
+                      AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
+                        OR (:sizeType = 'maxSize' AND d.file_size <= :size))
+                    """,
+            nativeQuery = true
+    )
+    Page<FileItemProjection> findSimilarDocs(@Param("userId") Integer userId,
+                                             @Param("embedding") float[] embedding,
+                                             @Param("minSimilarity") Double minSimilarity,
+                                             @Param("mimeType") String mimeType,
+                                             @Param("size") Double size,
+                                             @Param("sizeType") String sizeType,
+                                             Pageable pageable);
 
 }
