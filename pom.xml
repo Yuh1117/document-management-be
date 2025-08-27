@@ -153,6 +153,11 @@
             <systemPath>${project.basedir}/src/main/resources/vncorenlp/VnCoreNLP-1.2.jar</systemPath>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
 
     </dependencies>
 

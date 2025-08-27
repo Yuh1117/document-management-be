@@ -21,9 +21,12 @@ import java.util.stream.Collectors;
 @Service
 public class FileServiceImpl implements FileService {
     private final FileRepository fileRepository;
+    private final EmbeddingService embeddingService;
 
-    public FileServiceImpl(FileRepository fileRepository) {
+
+    public FileServiceImpl(FileRepository fileRepository, EmbeddingService embeddingService) {
         this.fileRepository = fileRepository;
+        this.embeddingService = embeddingService;
     }
 
     @Override
@@ -37,9 +40,6 @@ public class FileServiceImpl implements FileService {
             }
 
             keyword = params.get("kw");
-            if (keyword != null && keyword.trim().isEmpty()) {
-                keyword = null;
-            }
         }
 
         Page<FileItemProjection> pageItem = fileRepository.findAllByUserAndParent(user.getId(), parentId, false, keyword, pageable);
@@ -100,10 +100,12 @@ public class FileServiceImpl implements FileService {
     @Override
     public Page<FileItemDTO> getAdvancedSearchFiles(User user, Map<String, String> params) {
         Pageable pageable = Pageable.unpaged();
+        String rawKeyword = null;
         String keyword = null;
+        String kwType = null;
         String mimeType = null;
-        Double minSize = null;
-        Double maxSize = null;
+        Double size = null;
+        String sizeType = null;
 
         if (params != null) {
             if (params.containsKey("page")) {
@@ -111,35 +113,49 @@ public class FileServiceImpl implements FileService {
                 pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
             }
 
-            String rawKeyword = params.getOrDefault("kw", null);
-            if (rawKeyword != null && !rawKeyword.isBlank()) {
-                keyword = Arrays.stream(rawKeyword.split(","))
-                        .map(String::trim)
-                        .filter(s -> !s.isEmpty())
-                        .map(s -> s.contains(" ") ? s.replaceAll("\\s+", " & ") : s)
-                        .collect(Collectors.joining(" | "));
-            }
-
-            mimeType = params.get("mimeType");
-
-            String minSizeStr = params.get("minSize");
-            if (minSizeStr != null && !minSizeStr.isBlank()) {
-                try {
-                    minSize = Double.parseDouble(minSizeStr) * 1024 * 1024;
-                } catch (NumberFormatException ignored) {
+            String kwTypeStr = params.get("kwType");
+            if (kwTypeStr != null && !kwTypeStr.isBlank()) {
+                kwType = kwTypeStr;
+                rawKeyword = params.getOrDefault("kw", null);
+                if (rawKeyword != null && !rawKeyword.isBlank()) {
+                    keyword = Arrays.stream(rawKeyword.split(","))
+                            .map(String::trim)
+                            .filter(s -> !s.isEmpty())
+                            .map(s -> s.contains(" ") ? s.replaceAll("\\s+", " & ") : s)
+                            .collect(Collectors.joining(" | "));
                 }
             }
 
-            String maxSizeStr = params.get("maxSize");
-            if (maxSizeStr != null && !maxSizeStr.isBlank()) {
-                try {
-                    maxSize = Double.parseDouble(maxSizeStr) * 1024 * 1024;
-                } catch (NumberFormatException ignored) {
+            String mimeTypeStr = params.get("type");
+            if (mimeTypeStr != null && !mimeTypeStr.isBlank()) {
+                mimeType = mapMimeType(mimeTypeStr);
+            }
+
+            String sizeTypeStr = params.get("sizeType");
+            if (sizeTypeStr != null && !sizeTypeStr.isBlank()) {
+                sizeType = sizeTypeStr;
+                String sizeStr = params.get("size");
+                if (sizeStr != null && !sizeStr.isBlank()) {
+                    try {
+                        size = Double.parseDouble(sizeStr) * 1024 * 1024;
+                    } catch (NumberFormatException ignored) {
+                    }
                 }
             }
+
         }
 
-        Page<FileItemProjection> pageItem = fileRepository.findAdvancedSearchFiles(user.getId(), keyword, mimeType, minSize, maxSize, pageable);
+        Page<FileItemProjection> pageItem = null;
+        if (keyword == null || "exact".equals(kwType)) {
+            pageItem = fileRepository.findExactDocs(user.getId(), keyword, mimeType, size, sizeType, pageable);
+        } else {
+            List<Double> embedding = embeddingService.getEmbedding(rawKeyword);
+            float[] embeddingArray = new float[embedding.size()];
+            for (int i = 0; i < embedding.size(); i++) {
+                embeddingArray[i] = embedding.get(i).floatValue();
+            }
+            pageItem = fileRepository.findSimilarDocs(user.getId(), embeddingArray, 0.7, mimeType, size, sizeType, pageable);
+        }
         Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
         return items;
     }
@@ -176,5 +192,17 @@ public class FileServiceImpl implements FileService {
 
         dto.setPermission(p.getPermission());
         return dto;
+    }
+
+    private String mapMimeType(String type) {
+        if (type == null || type.equals("any")) {
+            return null;
+        }
+        return switch (type) {
+            case "pdf" -> "application/pdf";
+            case "word" -> "%word%";
+            case "image" -> "image/%";
+            default -> null;
+        };
     }
 }
