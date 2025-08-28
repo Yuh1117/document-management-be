@@ -322,7 +322,7 @@ public class DocumentServiceImpl implements DocumentService {
                         .bucket(bucketName)
                         .key(key)
                         .build(),
-                RequestBody.fromBytes(file.getBytes()));
+                RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
     }
 
     private String generateUniqueName(String originalName, Folder folder) {

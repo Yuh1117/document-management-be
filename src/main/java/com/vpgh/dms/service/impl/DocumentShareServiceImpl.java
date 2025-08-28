@@ -10,7 +10,6 @@ import com.vpgh.dms.repository.DocumentShareRepository;
 import com.vpgh.dms.repository.UserRepository;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.DocumentShareService;
-import com.vpgh.dms.service.FolderShareService;
 import com.vpgh.dms.service.UserGroupService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
