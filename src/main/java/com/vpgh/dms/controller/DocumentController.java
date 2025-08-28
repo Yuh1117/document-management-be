@@ -391,7 +391,7 @@ public class DocumentController {
 
         String content = stegoService.extractData(request.getFile().getInputStream(), request.getPassword());
         if (content == null) {
-            return ResponseEntity.badRequest().body(new DataResponse<>("Không tìm thấy dữ liệu ẩn"));
+            throw new FileException("Không tìm thấy dữ liệu ẩn");
         }
 
         return ResponseEntity.ok(new DataResponse<>(content));

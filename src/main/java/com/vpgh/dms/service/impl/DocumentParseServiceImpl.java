@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,11 +53,9 @@ public class DocumentParseServiceImpl implements DocumentParseService {
 
     @Async
     @Override
-    public void parseAndIndexAsync(Document doc, MultipartFile file) {
+    public void parseAndIndexAsync(Document doc, File file) {
         try {
-            File convFile = convertMultipartToFile(file);
-
-            String extracted = extractContent(convFile, doc.getMimeType());
+            String extracted = extractContent(file, doc.getMimeType());
             if (extracted == null || extracted.isBlank()) return;
             doc.setExtractedText(extracted);
             this.documentRepository.save(doc);
@@ -80,7 +77,7 @@ public class DocumentParseServiceImpl implements DocumentParseService {
             this.indexRepository.save(idx);
 
             log.info("Parsed and indexed document {}", doc.getId());
-            convFile.delete();
+            file.delete();
         } catch (Exception e) {
             log.error("Parse failed for document {}: {}", doc.getId(), e.getMessage(), e);
             doc.setExtractedText(null);
@@ -98,7 +95,15 @@ public class DocumentParseServiceImpl implements DocumentParseService {
             Tesseract tesseract = new Tesseract();
             tesseract.setDatapath(tesseractPath);
             tesseract.setLanguage("vie+eng");
-            return tesseract.doOCR(file);
+            tesseract.setVariable("tessedit_char_whitelist", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+
+            String rawOcrResult = tesseract.doOCR(file);
+
+            String cleanedResult = rawOcrResult.trim().replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "");
+            if (cleanedResult.isEmpty() || cleanedResult.matches("^\\W*$")) {
+                cleanedResult = "";
+            }
+            return cleanedResult;
         }
         log.warn("Unsupported mime type {} for file {}", mimeType, file.getName());
         return "";
@@ -124,11 +129,5 @@ public class DocumentParseServiceImpl implements DocumentParseService {
             log.error("Error while cleaning stop words: {}", e.getMessage(), e);
             return text;
         }
-    }
-
-    private File convertMultipartToFile(MultipartFile file) throws IOException {
-        File convFile = File.createTempFile("upload-", file.getOriginalFilename());
-        file.transferTo(convFile);
-        return convFile;
     }
 }
