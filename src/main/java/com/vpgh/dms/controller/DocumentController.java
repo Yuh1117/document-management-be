@@ -1,17 +1,17 @@
 package com.vpgh.dms.controller;
 
 import com.vpgh.dms.model.dto.DocumentDTO;
-import com.vpgh.dms.model.dto.request.CopyCutReq;
-import com.vpgh.dms.model.dto.request.FileUploadReq;
-import com.vpgh.dms.model.dto.request.SignedUrlRequest;
+import com.vpgh.dms.model.dto.request.*;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.service.DocumentShareService;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FolderService;
+import com.vpgh.dms.service.StegoService;
 import com.vpgh.dms.util.DataResponse;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
+import com.vpgh.dms.util.exception.FileException;
 import com.vpgh.dms.util.exception.ForbiddenException;
 import com.vpgh.dms.util.exception.NotFoundException;
 import com.vpgh.dms.util.exception.UniqueConstraintException;
@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -40,11 +42,14 @@ public class DocumentController {
     private final DocumentService documentService;
     private final FolderService folderService;
     private final DocumentShareService documentShareService;
+    private final StegoService stegoService;
 
-    public DocumentController(DocumentService documentService, FolderService folderService, DocumentShareService documentShareService) {
+    public DocumentController(DocumentService documentService, FolderService folderService, DocumentShareService documentShareService,
+                              StegoService stegoService) {
         this.documentService = documentService;
         this.folderService = folderService;
         this.documentShareService = documentShareService;
+        this.stegoService = stegoService;
     }
 
     @PostMapping(path = "/secure/documents/upload")
@@ -359,5 +364,36 @@ public class DocumentController {
                 .header(HttpHeaders.PRAGMA, "no-cache")
                 .header(HttpHeaders.EXPIRES, "0")
                 .body(res);
+    }
+
+    @PostMapping(path = "/secure/documents/hide-data")
+    @ApiMessage(message = "Ẩn dữ liệu")
+    public ResponseEntity<InputStreamResource> hideData(@Valid @ModelAttribute HideDataReq request) throws Exception {
+        if (!"application/pdf".equals(request.getFile().getContentType())) {
+            throw new FileException("Loại file không hợp lệ.");
+        }
+
+        ByteArrayOutputStream out = stegoService.hideData(request.getFile().getInputStream(), request.getContent(), request.getPassword());
+        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + request.getFile().getOriginalFilename() + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(new InputStreamResource(in));
+    }
+
+    @PostMapping(path = "/secure/documents/extract-data")
+    @ApiMessage(message = "Giả mã dữ liệu")
+    public ResponseEntity<DataResponse<String>> extractData(@Valid @ModelAttribute ExtractDataReq request) throws Exception {
+        if (!"application/pdf".equals(request.getFile().getContentType())) {
+            throw new FileException("Loại file không hợp lệ.");
+        }
+
+        String content = stegoService.extractData(request.getFile().getInputStream(), request.getPassword());
+        if (content == null) {
+            return ResponseEntity.badRequest().body(new DataResponse<>("Không tìm thấy dữ liệu ẩn"));
+        }
+
+        return ResponseEntity.ok(new DataResponse<>(content));
     }
 }

@@ -158,6 +158,12 @@
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itext-core</artifactId>
+            <version>9.2.0</version>
+            <type>pom</type>
+        </dependency>
 
     </dependencies>
 
