@@ -73,6 +73,18 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
+    public Page<FileItemDTO> getRecentFiles(User user, Map<String, String> params) {
+        Pageable pageable = Pageable.unpaged();
+        if (params != null && params.containsKey("page")) {
+            int page = Integer.parseInt(params.get("page"));
+            pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
+        }
+        Page<FileItemProjection> pageItem = fileRepository.findRecentFiles(user.getId(), false, pageable);
+        Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
+        return items;
+    }
+
+    @Override
     public Page<FileItemDTO> getFolderFiles(User user, Integer folderId, Map<String, String> params) {
         Pageable pageable = Pageable.unpaged();
         if (params != null && params.containsKey("page")) {

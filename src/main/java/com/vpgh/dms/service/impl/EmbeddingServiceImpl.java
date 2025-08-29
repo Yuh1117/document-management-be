@@ -11,10 +11,8 @@ import java.util.Map;
 @Service
 public class EmbeddingServiceImpl implements EmbeddingService {
     private final WebClient webClient;
-    @Value("${embedding.url}")
-    private String url;
 
-    public EmbeddingServiceImpl(WebClient.Builder builder) {
+    public EmbeddingServiceImpl(WebClient.Builder builder, @Value("${embedding.url}") String url) {
         this.webClient = builder.baseUrl(url).build();
     }
 

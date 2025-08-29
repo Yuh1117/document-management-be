@@ -14,6 +14,8 @@ public interface FileService {
 
     List<FileItemDTO> getAllTrashFiles(User user);
 
+    Page<FileItemDTO> getRecentFiles(User user, Map<String, String> params);
+
     Page<FileItemDTO> getFolderFiles(User user, Integer folderId, Map<String, String> params);
 
     Page<FileItemDTO> getSharedFiles(User user, Map<String, String> params);

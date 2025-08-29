@@ -23,9 +23,9 @@ import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.*;
@@ -73,13 +73,21 @@ public class DocumentServiceImpl implements DocumentService {
         String folderPath = buildS3FolderPath(folder);
         String storedFilename = generateStoredFilename(file.getOriginalFilename());
         String key = buildS3Key(folderPath, storedFilename);
-        uploadToS3(key, file);
+        File tempFile = convertMultipartToFile(file);
+        try {
+            try (InputStream inputStream = new FileInputStream(tempFile)) {
+                uploadToS3(key, inputStream, tempFile.length());
+            }
 
-        existingDoc.setStoredFilename(storedFilename);
-        existingDoc.setFilePath(buildS3Uri(key));
-        existingDoc.setFileSize((double) file.getSize());
-        existingDoc.setMimeType(file.getContentType());
-        existingDoc.setFileHash(DigestUtils.md5DigestAsHex(file.getBytes()));
+            existingDoc.setStoredFilename(storedFilename);
+            existingDoc.setFilePath(buildS3Uri(key));
+            existingDoc.setFileSize((double) tempFile.length());
+            existingDoc.setMimeType(file.getContentType());
+            byte[] fileBytes = Files.readAllBytes(tempFile.toPath());
+            existingDoc.setFileHash(DigestUtils.md5DigestAsHex(fileBytes));
+        } finally {
+            tempFile.delete();
+        }
         return this.documentRepository.save(existingDoc);
     }
 
@@ -286,22 +294,34 @@ public class DocumentServiceImpl implements DocumentService {
         String folderPath = buildS3FolderPath(folder);
         String storedFilename = generateStoredFilename(fileName);
         String key = buildS3Key(folderPath, storedFilename);
-        uploadToS3(key, file);
+
+        File tempFile = convertMultipartToFile(file);
+        try (InputStream inputStream = new FileInputStream(tempFile)) {
+            uploadToS3(key, inputStream, tempFile.length());
+        }
 
         Document doc = new Document();
         doc.setName(fileName);
         doc.setOriginalFilename(fileName);
         doc.setStoredFilename(storedFilename);
         doc.setFilePath(buildS3Uri(key));
-        doc.setFileSize((double) file.getSize());
+        doc.setFileSize((double) tempFile.length());
         doc.setMimeType(file.getContentType());
-        doc.setFileHash(DigestUtils.md5DigestAsHex(file.getBytes()));
+        byte[] fileBytes = Files.readAllBytes(tempFile.toPath());
+        doc.setFileHash(DigestUtils.md5DigestAsHex(fileBytes));
         doc.setStorageType(StorageType.AWS_S3);
         doc.setFolder(folder);
 
         Document saved = documentRepository.save(doc);
-        documentParseService.parseAndIndexAsync(saved, file);
+        this.documentParseService.parseAndIndexAsync(saved, tempFile);
+
         return saved;
+    }
+
+    private File convertMultipartToFile(MultipartFile file) throws IOException {
+        File convFile = File.createTempFile("upload-", file.getOriginalFilename());
+        file.transferTo(convFile);
+        return convFile;
     }
 
     private void saveDocumentVersion(Document document) {
@@ -317,12 +337,12 @@ public class DocumentServiceImpl implements DocumentService {
         this.documentVersionRepository.save(version);
     }
 
-    private void uploadToS3(String key, MultipartFile file) throws IOException {
+    private void uploadToS3(String key, InputStream inputStream, long size) throws IOException {
         s3Client.putObject(PutObjectRequest.builder()
                         .bucket(bucketName)
                         .key(key)
                         .build(),
-                RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+                RequestBody.fromInputStream(inputStream, size));
     }
 
     private String generateUniqueName(String originalName, Folder folder) {

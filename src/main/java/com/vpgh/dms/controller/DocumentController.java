@@ -383,7 +383,7 @@ public class DocumentController {
     }
 
     @PostMapping(path = "/secure/documents/extract-data")
-    @ApiMessage(message = "Giả mã dữ liệu")
+    @ApiMessage(message = "Trích xuất dữ liệu")
     public ResponseEntity<DataResponse<String>> extractData(@Valid @ModelAttribute ExtractDataReq request) throws Exception {
         if (!"application/pdf".equals(request.getFile().getContentType())) {
             throw new FileException("Loại file không hợp lệ.");
@@ -391,7 +391,7 @@ public class DocumentController {
 
         String content = stegoService.extractData(request.getFile().getInputStream(), request.getPassword());
         if (content == null) {
-            return ResponseEntity.badRequest().body(new DataResponse<>("Không tìm thấy dữ liệu ẩn"));
+            throw new FileException("Không tìm thấy dữ liệu ẩn");
         }
 
         return ResponseEntity.ok(new DataResponse<>(content));
