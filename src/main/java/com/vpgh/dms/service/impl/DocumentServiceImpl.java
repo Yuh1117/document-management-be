@@ -74,15 +74,20 @@ public class DocumentServiceImpl implements DocumentService {
         String storedFilename = generateStoredFilename(file.getOriginalFilename());
         String key = buildS3Key(folderPath, storedFilename);
         File tempFile = convertMultipartToFile(file);
-        try (InputStream inputStream = new FileInputStream(tempFile)) {
-            uploadToS3(key, inputStream, tempFile.length());
-        }
+        try {
+            try (InputStream inputStream = new FileInputStream(tempFile)) {
+                uploadToS3(key, inputStream, tempFile.length());
+            }
 
-        existingDoc.setStoredFilename(storedFilename);
-        existingDoc.setFilePath(buildS3Uri(key));
-        existingDoc.setFileSize((double) file.getSize());
-        existingDoc.setMimeType(file.getContentType());
-        existingDoc.setFileHash(DigestUtils.md5DigestAsHex(file.getBytes()));
+            existingDoc.setStoredFilename(storedFilename);
+            existingDoc.setFilePath(buildS3Uri(key));
+            existingDoc.setFileSize((double) tempFile.length());
+            existingDoc.setMimeType(file.getContentType());
+            byte[] fileBytes = Files.readAllBytes(tempFile.toPath());
+            existingDoc.setFileHash(DigestUtils.md5DigestAsHex(fileBytes));
+        } finally {
+            tempFile.delete();
+        }
         return this.documentRepository.save(existingDoc);
     }
 
@@ -302,7 +307,6 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setFilePath(buildS3Uri(key));
         doc.setFileSize((double) tempFile.length());
         doc.setMimeType(file.getContentType());
-
         byte[] fileBytes = Files.readAllBytes(tempFile.toPath());
         doc.setFileHash(DigestUtils.md5DigestAsHex(fileBytes));
         doc.setStorageType(StorageType.AWS_S3);

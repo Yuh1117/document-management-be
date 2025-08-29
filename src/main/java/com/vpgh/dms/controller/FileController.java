@@ -46,7 +46,7 @@ public class FileController {
 
     @GetMapping(path = "/secure/files/my-files")
     @ApiMessage(message = "Lấy files của tôi")
-    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getMyDrive(@RequestParam Map<String, String> params) {
+    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getMyFiles(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
             params.put("page", "1");
@@ -122,7 +122,8 @@ public class FileController {
 
     @GetMapping("/secure/files/folders/{id}")
     @ApiMessage(message = "Lấy files trong folder")
-    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getFolderFiles(@PathVariable("id") Integer id, @RequestParam Map<String, String> params) {
+    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getFolderFiles(@PathVariable("id") Integer id,
+                                                                              @RequestParam Map<String, String> params) {
         Folder folder = this.folderService.getFolderById(id);
         if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
             throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
@@ -159,6 +160,25 @@ public class FileController {
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         Page<FileItemDTO> items = fileService.getSharedFiles(currentUser, params);
+        List<FileItemDTO> files = items.getContent();
+
+        PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
+        res.setResult(files);
+        res.setCurrentPage(items.getNumber() + 1);
+        res.setTotalPages(items.getTotalPages());
+        return ResponseEntity.status(HttpStatus.OK).body(res);
+    }
+
+    @GetMapping(path = "/secure/files/recent")
+    @ApiMessage(message = "Lấy files gần đây")
+    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getRecentFiles(@RequestParam Map<String, String> params) {
+        String page = params.get("page");
+        if (page == null || page.isEmpty()) {
+            params.put("page", "1");
+        }
+
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+        Page<FileItemDTO> items = fileService.getRecentFiles(currentUser, params);
         List<FileItemDTO> files = items.getContent();
 
         PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();

@@ -132,6 +132,45 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
     )
     Page<FileItemProjection> findTrashFiles(@Param("userId") Integer userId, Pageable pageable);
 
+    @Query(value = """
+            SELECT f.id AS id, f.name AS name, 'folder' AS type,
+                   f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
+                   u.id AS createdById, u.email AS createdByEmail,
+                   NULL as description, 'OWNER' as permission, NULL as mime_type
+            FROM folders f
+            JOIN users u ON f.created_by = u.id
+            WHERE f.created_by = :userId AND f.is_deleted = :deleted
+            
+            UNION ALL
+            
+            SELECT d.id AS id, d.name AS name, 'document' AS type,
+                   d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
+                   u.id AS createdById, u.email AS createdByEmail,
+                   d.description as description, 'OWNER' as permission,  d.mime_type as mime_type
+            FROM documents d
+            JOIN users u ON d.created_by = u.id
+            WHERE d.created_by = :userId AND d.is_deleted = :deleted
+            
+            ORDER BY updatedAt DESC NULLS LAST, createdAt DESC
+            """,
+            countQuery = """    
+                    SELECT COUNT(*) FROM (
+                        SELECT f.id
+                        FROM folders f
+                        WHERE f.created_by = :userId AND f.is_deleted = :deleted
+                    
+                        UNION ALL
+                    
+                        SELECT d.id
+                        FROM documents d
+                        WHERE d.created_by = :userId AND d.is_deleted = :deleted
+                    ) AS total
+                    """,
+            nativeQuery = true
+    )
+    Page<FileItemProjection> findRecentFiles(@Param("userId") Integer userId,
+                                             @Param("deleted") Boolean deleted,
+                                             Pageable pageable);
 
     @Query(value = """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
@@ -172,11 +211,17 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                     SELECT COUNT(*) FROM (
                         SELECT f.id
                         FROM folders f
+                        LEFT JOIN folder_shares fs ON f.id = fs.folder_id AND fs.user_id = :userId
                         WHERE f.is_deleted = :deleted AND f.parent_id = :folderId
+                              AND (f.created_by = :userId OR fs.user_id IS NOT NULL)
+                    
                         UNION ALL
+                    
                         SELECT d.id
                         FROM documents d
+                        LEFT JOIN document_shares ds ON d.id = ds.document_id AND ds.user_id = :userId
                         WHERE d.is_deleted = :deleted AND d.folder_id = :folderId
+                              AND (d.created_by = :userId OR ds.user_id IS NOT NULL)
                     ) AS total
                     """,
             nativeQuery = true
@@ -185,7 +230,6 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                                              @Param("folderId") Integer folderId,
                                              @Param("deleted") Boolean deleted,
                                              Pageable pageable);
-
 
     @Query(value = """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
@@ -260,7 +304,6 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
     )
     Page<FileItemProjection> findSharedFiles(@Param("userId") Integer userId, Pageable pageable);
 
-
     @Query(value = """
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
@@ -299,7 +342,6 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                                            @Param("size") Double size,
                                            @Param("sizeType") String sizeType,
                                            Pageable pageable);
-
 
     @Query(value = """
             SELECT d.id AS id, d.name AS name, 'document' AS type,

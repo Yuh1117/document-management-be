@@ -383,7 +383,7 @@ public class DocumentController {
     }
 
     @PostMapping(path = "/secure/documents/extract-data")
-    @ApiMessage(message = "Giả mã dữ liệu")
+    @ApiMessage(message = "Trích xuất dữ liệu")
     public ResponseEntity<DataResponse<String>> extractData(@Valid @ModelAttribute ExtractDataReq request) throws Exception {
         if (!"application/pdf".equals(request.getFile().getContentType())) {
             throw new FileException("Loại file không hợp lệ.");
