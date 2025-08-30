@@ -132,8 +132,11 @@ public class FileServiceImpl implements FileService {
                 if (rawKeyword != null && !rawKeyword.isBlank()) {
                     keyword = Arrays.stream(rawKeyword.split(","))
                             .map(String::trim)
-                            .filter(s -> !s.isEmpty())
-                            .map(s -> s.contains(" ") ? s.replaceAll("\\s+", " & ") : s)
+                            .filter(k -> !k.isEmpty())
+                            .map(k -> Arrays.stream(k.split("\\+"))
+                                    .map(String::trim)
+                                    .map(x -> x.contains(" ") ? "'" + x + "'" : x)
+                                    .collect(Collectors.joining(" & ")))
                             .collect(Collectors.joining(" | "));
                 }
             }
