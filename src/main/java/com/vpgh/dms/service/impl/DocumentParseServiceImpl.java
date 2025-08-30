@@ -96,7 +96,6 @@ public class DocumentParseServiceImpl implements DocumentParseService {
             Tesseract tesseract = new Tesseract();
             tesseract.setDatapath(tesseractPath);
             tesseract.setLanguage("vie+eng");
-            tesseract.setVariable("tessedit_char_whitelist", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
 
             String rawOcrResult = tesseract.doOCR(file);
 
