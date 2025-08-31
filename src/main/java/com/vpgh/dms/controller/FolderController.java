@@ -89,6 +89,7 @@ public class FolderController {
                     throw new UniqueConstraintException("Không thể tạo thư mục này trong thư mục gốc.");
                 }
             }
+            break;
         }
 
         Folder uploadedFolder = folderService.uploadNewFolder(parentFolder, folderUploadReq.getFiles(), folderUploadReq.getRelativePaths());

@@ -60,8 +60,11 @@ public class DocumentParseServiceImpl implements DocumentParseService {
             doc.setExtractedText(extracted);
             this.documentRepository.save(doc);
 
-            DocumentSearchIndex idx = new DocumentSearchIndex();
-            idx.setDocument(doc);
+            DocumentSearchIndex idx = this.indexRepository.findByDocument(doc);
+            if (idx == null) {
+                idx = new DocumentSearchIndex();
+                idx.setDocument(doc);
+            }
 
             String vnTokens = this.vnProcessor.tokenizeAndClean(extracted);
 //            String enTokens = cleanStopWords(extracted);
@@ -73,7 +76,6 @@ public class DocumentParseServiceImpl implements DocumentParseService {
                 embeddingArray[i] = embedding.get(i).floatValue();
             }
             idx.setContentVector(embeddingArray);
-
             this.indexRepository.save(idx);
 
             log.info("Parsed and indexed document {}", doc.getId());

@@ -73,22 +73,22 @@ public class DocumentServiceImpl implements DocumentService {
         String folderPath = buildS3FolderPath(folder);
         String storedFilename = generateStoredFilename(file.getOriginalFilename());
         String key = buildS3Key(folderPath, storedFilename);
-        File tempFile = convertMultipartToFile(file);
-        try {
-            try (InputStream inputStream = new FileInputStream(tempFile)) {
-                uploadToS3(key, inputStream, tempFile.length());
-            }
 
-            existingDoc.setStoredFilename(storedFilename);
-            existingDoc.setFilePath(buildS3Uri(key));
-            existingDoc.setFileSize((double) tempFile.length());
-            existingDoc.setMimeType(file.getContentType());
-            byte[] fileBytes = Files.readAllBytes(tempFile.toPath());
-            existingDoc.setFileHash(DigestUtils.md5DigestAsHex(fileBytes));
-        } finally {
-            tempFile.delete();
+        File tempFile = convertMultipartToFile(file);
+        try (InputStream inputStream = new FileInputStream(tempFile)) {
+            uploadToS3(key, inputStream, tempFile.length());
         }
-        return this.documentRepository.save(existingDoc);
+
+        existingDoc.setStoredFilename(storedFilename);
+        existingDoc.setFilePath(buildS3Uri(key));
+        existingDoc.setFileSize((double) tempFile.length());
+        existingDoc.setMimeType(file.getContentType());
+        byte[] fileBytes = Files.readAllBytes(tempFile.toPath());
+        existingDoc.setFileHash(DigestUtils.md5DigestAsHex(fileBytes));
+
+        Document saved = this.documentRepository.save(existingDoc);
+        this.documentParseService.parseAndIndexAsync(saved, tempFile);
+        return saved;
     }
 
     @Override

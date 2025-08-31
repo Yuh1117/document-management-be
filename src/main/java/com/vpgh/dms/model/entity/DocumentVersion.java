@@ -1,5 +1,6 @@
 package com.vpgh.dms.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
 
@@ -23,10 +24,12 @@ public class DocumentVersion extends TimestampedEntity {
     @Column(nullable = false)
     private String mimeType;
     @Column(nullable = false)
+    @JsonIgnore
     private String fileHash;
 
     @ManyToOne
     @JoinColumn(name = "document_id")
+    @JsonIgnore
     private Document document;
 
     public Integer getId() {
