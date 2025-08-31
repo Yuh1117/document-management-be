@@ -30,6 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -54,7 +55,7 @@ public class DocumentController {
 
     @PostMapping(path = "/secure/documents/upload")
     @ApiMessage(message = "Upload tài liệu")
-    public ResponseEntity<List<Document>> upload(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
+    public ResponseEntity<Map<String, Object>> upload(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
         Folder folder = null;
         if (fileUploadReq.getFolderId() != null) {
             folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
@@ -64,24 +65,35 @@ public class DocumentController {
         }
 
         List<Document> uploadedDocs = new ArrayList<>();
+        List<String> conflictFiles = new ArrayList<>();
         for (MultipartFile file : fileUploadReq.getFiles()) {
             String filename = file.getOriginalFilename();
+
+            boolean conflict;
             if (folder != null) {
-                if (documentService.existsByNameAndFolderAndIsDeletedFalseAndIdNot(filename, folder, null)) {
-                    throw new UniqueConstraintException("Tài liệu trùng tên trong cùng thư mục: " + filename);
-                }
+                conflict = documentService.existsByNameAndFolderAndIsDeletedFalseAndIdNot(filename, folder, null);
             } else {
-                if (documentService.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(filename,
-                        SecurityUtil.getCurrentUserFromThreadLocal(), null)) {
-                    throw new UniqueConstraintException("Tài liệu trùng tên trong thư mục gốc: " + filename);
-                }
+                conflict = documentService.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(
+                        filename, SecurityUtil.getCurrentUserFromThreadLocal(), null
+                );
             }
+
+            if (conflict) {
+                conflictFiles.add(filename);
+                continue;
+            }
+
             Document doc = this.documentService.uploadNewFile(file, folder);
             uploadedDocs.add(doc);
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(uploadedDocs);
+        Map<String, Object> response = new HashMap<>();
+        response.put("uploaded", uploadedDocs);
+        response.put("conflicts", conflictFiles);
+
+        return ResponseEntity.status(HttpStatus.MULTI_STATUS).body(response);
     }
+
 
     @PostMapping(path = "/secure/documents/upload-replace")
     @ApiMessage(message = "Upload và thay thế")
