@@ -33,7 +33,7 @@ public class DocumentVersionController {
     }
 
 
-    @GetMapping(path = "/secure/document/{id}/versions")
+    @GetMapping(path = "/secure/documents/{id}/versions")
     @ApiMessage(message = "Xem lịch sử phiên bản tài liệu")
     public ResponseEntity<PaginationResDTO<List<DocumentVersion>>> detail(@PathVariable Integer id, @RequestParam Map<String, String> params) {
         Document doc = this.documentService.getDocumentById(id);

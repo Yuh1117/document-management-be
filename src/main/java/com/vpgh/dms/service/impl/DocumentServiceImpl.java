@@ -61,6 +61,17 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    public Document handleUpdateDocument(Document doc, String name, String description) {
+        String originalExt = FilenameUtils.getExtension(doc.getName());
+        String baseName = FilenameUtils.getBaseName(name);
+        String newName = baseName + "." + originalExt;
+
+        doc.setName(newName);
+        doc.setDescription(description);
+        return this.documentRepository.save(doc);
+    }
+
+    @Override
     public Document uploadNewFile(MultipartFile file, Folder folder) throws IOException {
         String fileName = Paths.get(file.getOriginalFilename()).getFileName().toString();
         return saveNewDocument(file, folder, fileName);
