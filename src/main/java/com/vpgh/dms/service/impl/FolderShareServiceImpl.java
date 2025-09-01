@@ -70,49 +70,51 @@ public class FolderShareServiceImpl implements FolderShareService {
         List<FolderShare> folderShares = new ArrayList<>();
         List<DocumentShare> documentShares = new ArrayList<>();
 
-        List<Folder> allFolders = this.folderService.getAllDescendantsIncludingSelf(folder);
-        List<Document> allDocuments = this.documentService.getAllDocumentsInFolders(allFolders);
+        if (folder.getInheritPermissions()) {
+            List<Folder> allFolders = this.folderService.getAllDescendantsIncludingSelf(folder);
+            List<Document> allDocuments = this.documentService.getAllDocumentsInFolders(allFolders);
 
-        for (ShareReq.UserShareDTO dto : userShareDTOS) {
-            User user = this.userRepository.findByEmail(dto.getEmail());
-            if (this.folderService.isOwnerFolder(folder, user)) continue;
+            for (ShareReq.UserShareDTO dto : userShareDTOS) {
+                User user = this.userRepository.findByEmail(dto.getEmail());
+                if (this.folderService.isOwnerFolder(folder, user)) continue;
 
-            for (Folder f : allFolders) {
-                if (this.folderService.isOwnerFolder(f, user)) continue;
+                for (Folder f : allFolders) {
+                    if (this.folderService.isOwnerFolder(f, user)) continue;
 
-                FolderShare existing = this.folderShareRepository.findByFolderAndUser(f, user).orElse(null);
-                if (existing != null) {
-                    existing.setShareType(dto.getShareType());
-                    folderShares.add(existing);
-                } else {
-                    FolderShare share = new FolderShare();
-                    share.setFolder(f);
-                    share.setUser(user);
-                    share.setShareType(dto.getShareType());
-                    folderShares.add(share);
+                    FolderShare existing = this.folderShareRepository.findByFolderAndUser(f, user).orElse(null);
+                    if (existing != null) {
+                        existing.setShareType(dto.getShareType());
+                        folderShares.add(existing);
+                    } else {
+                        FolderShare share = new FolderShare();
+                        share.setFolder(f);
+                        share.setUser(user);
+                        share.setShareType(dto.getShareType());
+                        folderShares.add(share);
+                    }
                 }
-            }
 
-            for (Document d : allDocuments) {
-                if (this.documentService.isOwnerDocument(d, user)) continue;
+                for (Document d : allDocuments) {
+                    if (this.documentService.isOwnerDocument(d, user)) continue;
 
-                DocumentShare existing = this.documentShareRepository.findByDocumentAndUser(d, user).orElse(null);
-                if (existing != null) {
-                    existing.setShareType(dto.getShareType());
-                    documentShares.add(existing);
-                } else {
-                    DocumentShare share = new DocumentShare();
-                    share.setDocument(d);
-                    share.setUser(user);
-                    share.setShareType(dto.getShareType());
-                    documentShares.add(share);
+                    DocumentShare existing = this.documentShareRepository.findByDocumentAndUser(d, user).orElse(null);
+                    if (existing != null) {
+                        existing.setShareType(dto.getShareType());
+                        documentShares.add(existing);
+                    } else {
+                        DocumentShare share = new DocumentShare();
+                        share.setDocument(d);
+                        share.setUser(user);
+                        share.setShareType(dto.getShareType());
+                        documentShares.add(share);
+                    }
                 }
-            }
 
+            }
+            this.folderShareRepository.saveAll(folderShares);
+            this.documentShareRepository.saveAll(documentShares);
         }
 
-        this.folderShareRepository.saveAll(folderShares);
-        this.documentShareRepository.saveAll(documentShares);
         return folderShares;
     }
 

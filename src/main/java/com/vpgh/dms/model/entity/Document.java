@@ -16,7 +16,7 @@ public class Document extends FullAuditableEntity {
     private Integer id;
 
     @Column(nullable = false)
-    @NotBlank(message = "Tên mới không được để trống.")
+    @NotBlank(message = "Tên không được để trống.")
     private String name;
     @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String description;

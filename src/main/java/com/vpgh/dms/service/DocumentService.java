@@ -25,6 +25,8 @@ public interface DocumentService {
 
     Document save(Document document);
 
+    Document handleUpdateDocument(Document doc, String name, String description);
+
     DocumentDTO convertDocumentToDocumentDTO(Document doc);
 
     List<DocumentDTO> convertDocumentsToDocumentDTOs(List<Document> docs);

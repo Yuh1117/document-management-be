@@ -292,7 +292,7 @@ public class FolderController {
     }
 
     @GetMapping(path = "/secure/folders/{id}")
-    @ApiMessage(message = "Xem thư mục")
+    @ApiMessage(message = "Xem chi tiết thư mục")
     public ResponseEntity<FolderDTO> detail(@PathVariable Integer id) {
         Folder folder = this.folderService.getFolderById(id);
         if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {

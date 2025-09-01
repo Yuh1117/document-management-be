@@ -153,7 +153,7 @@ public class DocumentController {
 
     @PatchMapping("/secure/documents/{id}")
     @ApiMessage(message = "Cập nhật tài liệu")
-    public ResponseEntity<Document> update(@PathVariable Integer id, @Valid @RequestBody Document request) {
+    public ResponseEntity<DocumentDTO> update(@PathVariable Integer id, @Valid @RequestBody Document request) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xoá.");
@@ -174,9 +174,8 @@ public class DocumentController {
             }
         }
 
-        doc.setName(request.getName());
-        doc.setDescription(request.getDescription());
-        return ResponseEntity.ok(this.documentService.save(doc));
+        Document updated = this.documentService.handleUpdateDocument(doc, request.getName(), request.getDescription());
+        return ResponseEntity.ok(this.documentService.convertDocumentToDocumentDTO(updated));
     }
 
     @GetMapping(path = "/secure/documents/download/{id}")
@@ -345,7 +344,7 @@ public class DocumentController {
     }
 
     @GetMapping(path = "/secure/documents/{id}")
-    @ApiMessage(message = "Xem tài liệu")
+    @ApiMessage(message = "Xem chi tiết tài liệu")
     public ResponseEntity<DocumentDTO> detail(@PathVariable Integer id) {
         Document doc = this.documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
@@ -357,6 +356,26 @@ public class DocumentController {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(this.documentService.convertDocumentToDocumentDTO(doc));
+    }
+
+    @GetMapping(path = "/secure/documents/{id}/preview")
+    @ApiMessage(message = "Xem tài liệu")
+    public ResponseEntity<InputStreamResource> preview(@PathVariable Integer id) {
+        Document doc = this.documentService.getDocumentById(id);
+        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
+            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
+        }
+
+        if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
+            throw new ForbiddenException("Bạn không có quyền xem tài liệu này");
+        }
+
+        InputStream inputStream = documentService.downloadFileStream(doc.getFilePath());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + doc.getName() + "\"")
+                .contentType(MediaType.parseMediaType(doc.getMimeType()))
+                .body(new InputStreamResource(inputStream));
     }
 
     @PostMapping(path = "/secure/documents/share-url")
