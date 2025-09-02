@@ -6,16 +6,13 @@ import com.vpgh.dms.model.entity.*;
 import com.vpgh.dms.repository.DocumentShareRepository;
 import com.vpgh.dms.repository.FolderShareRepository;
 import com.vpgh.dms.repository.UserRepository;
-import com.vpgh.dms.service.DocumentService;
-import com.vpgh.dms.service.FolderService;
-import com.vpgh.dms.service.FolderShareService;
-import com.vpgh.dms.service.UserGroupService;
+import com.vpgh.dms.service.*;
+import com.vpgh.dms.util.SecurityUtil;
+import jakarta.mail.MessagingException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class FolderShareServiceImpl implements FolderShareService {
@@ -25,6 +22,7 @@ public class FolderShareServiceImpl implements FolderShareService {
     private final UserGroupService userGroupService;
     private final FolderService folderService;
     private final DocumentService documentService;
+    private final EmailService emailService;
 
 
     public FolderShareServiceImpl(FolderShareRepository folderShareRepository,
@@ -32,13 +30,15 @@ public class FolderShareServiceImpl implements FolderShareService {
                                   DocumentShareRepository documentShareRepository,
                                   UserGroupService userGroupService,
                                   FolderService folderService,
-                                  DocumentService documentService) {
+                                  DocumentService documentService,
+                                  EmailService emailService) {
         this.folderShareRepository = folderShareRepository;
         this.userRepository = userRepository;
         this.documentShareRepository = documentShareRepository;
         this.userGroupService = userGroupService;
         this.folderService = folderService;
         this.documentService = documentService;
+        this.emailService = emailService;
     }
 
     @Override
@@ -66,31 +66,37 @@ public class FolderShareServiceImpl implements FolderShareService {
     }
 
     @Override
-    public List<FolderShare> shareFolder(Folder folder, List<ShareReq.UserShareDTO> userShareDTOS) {
+    public List<FolderShare> shareFolder(Folder folder, List<ShareReq.UserShareDTO> userShareDTOS) throws MessagingException {
         List<FolderShare> folderShares = new ArrayList<>();
         List<DocumentShare> documentShares = new ArrayList<>();
 
         if (folder.getInheritPermissions()) {
             List<Folder> allFolders = this.folderService.getAllDescendantsIncludingSelf(folder);
             List<Document> allDocuments = this.documentService.getAllDocumentsInFolders(allFolders);
+            boolean isNew = false;
+            User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
             for (ShareReq.UserShareDTO dto : userShareDTOS) {
+                isNew = false;
                 User user = this.userRepository.findByEmail(dto.getEmail());
                 if (this.folderService.isOwnerFolder(folder, user)) continue;
 
-                for (Folder f : allFolders) {
-                    if (this.folderService.isOwnerFolder(f, user)) continue;
+                for (int i = 0; i < allFolders.size(); i++) {
+                    if (this.folderService.isOwnerFolder(allFolders.get(i), user)) continue;
 
-                    FolderShare existing = this.folderShareRepository.findByFolderAndUser(f, user).orElse(null);
+                    FolderShare existing = this.folderShareRepository.findByFolderAndUser(allFolders.get(i), user).orElse(null);
                     if (existing != null) {
                         existing.setShareType(dto.getShareType());
                         folderShares.add(existing);
                     } else {
                         FolderShare share = new FolderShare();
-                        share.setFolder(f);
+                        share.setFolder(allFolders.get(i));
                         share.setUser(user);
                         share.setShareType(dto.getShareType());
                         folderShares.add(share);
+                        if (i == 0) {
+                            isNew = true;
+                        }
                     }
                 }
 
@@ -108,6 +114,15 @@ public class FolderShareServiceImpl implements FolderShareService {
                         share.setShareType(dto.getShareType());
                         documentShares.add(share);
                     }
+                }
+
+                if (isNew) {
+                    Map<String, Object> variables = new HashMap<>();
+                    variables.put("owner", currentUser.getEmail());
+                    variables.put("fileName", allFolders.getFirst().getName());
+                    variables.put("type", "folder");
+
+                    this.emailService.sendHtmlEmail(user.getEmail(), "Bạn được chia sẻ một thư mục", variables);
                 }
 
             }

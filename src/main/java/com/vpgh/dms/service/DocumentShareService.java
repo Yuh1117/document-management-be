@@ -5,6 +5,7 @@ import com.vpgh.dms.model.dto.request.ShareReq;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.DocumentShare;
 import com.vpgh.dms.model.entity.User;
+import jakarta.mail.MessagingException;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ public interface DocumentShareService {
 
     boolean hasDocumentPermission(User user, Document doc, ShareType required);
 
-    List<DocumentShare> shareDocument(Document doc, List<ShareReq.UserShareDTO> userShareDTOS);
+    List<DocumentShare> shareDocument(Document doc, List<ShareReq.UserShareDTO> userShareDTOS) throws MessagingException;
 
     List<DocumentShare> getShares(Document doc);
 

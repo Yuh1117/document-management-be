@@ -82,7 +82,7 @@ public class AuthController {
         nuser.setPassword(user.getPassword());
         nuser.setFile(user.getFile());
 
-        Role role = this.roleService.getRoleByName("USER");
+        Role role = this.roleService.getRoleByName("ROLE_USER");
         nuser.setRole(role);
         return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertUserToUserDTO(this.userService.save(nuser)));
     }

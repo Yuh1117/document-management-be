@@ -11,6 +11,7 @@ import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.ForbiddenException;
 import com.vpgh.dms.util.exception.NotFoundException;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +34,7 @@ public class FolderShareController {
 
     @PostMapping("/secure/folders/share")
     @ApiMessage(message = "Tạo mới chia sẻ folder")
-    public ResponseEntity<List<FolderShare>> share(@Valid @RequestBody ShareReq shareReq) {
+    public ResponseEntity<List<FolderShare>> share(@Valid @RequestBody ShareReq shareReq) throws MessagingException {
         Folder folder = folderService.getFolderById(shareReq.getFolderId());
 
         if (!folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {

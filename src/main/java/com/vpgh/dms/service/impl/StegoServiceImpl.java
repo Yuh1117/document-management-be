@@ -33,7 +33,7 @@ public class StegoServiceImpl implements StegoService {
     @Override
     public ByteArrayOutputStream hideData(InputStream input, String content, String password) throws Exception {
         byte[] inputBytes = input.readAllBytes();
-        PdfDocument pdf = new PdfDocument(new PdfReader(new ByteArrayInputStream(inputBytes)));
+        PdfDocument pdf = new PdfDocument(new PdfReader(new ByteArrayInputStream(inputBytes)).setUnethicalReading(true));
 
         boolean containsImage = hasImage(pdf);
         pdf.close();
@@ -48,7 +48,7 @@ public class StegoServiceImpl implements StegoService {
     @Override
     public String extractData(InputStream input, String password) throws Exception {
         byte[] inputBytes = input.readAllBytes();
-        PdfDocument pdf = new PdfDocument(new PdfReader(new ByteArrayInputStream(inputBytes)));
+        PdfDocument pdf = new PdfDocument(new PdfReader(new ByteArrayInputStream(inputBytes)).setUnethicalReading(true));
 
         boolean containsImage = hasImage(pdf);
         pdf.close();
@@ -65,7 +65,7 @@ public class StegoServiceImpl implements StegoService {
 
         String encrypted = encrypt(content, password);
 
-        PdfDocument pdf = new PdfDocument(new PdfReader(input), new PdfWriter(out));
+        PdfDocument pdf = new PdfDocument(new PdfReader(input).setUnethicalReading(true), new PdfWriter(out));
         PdfPage page = pdf.getFirstPage();
 
         Rectangle rect = new Rectangle(0, 0, 1, 1);
@@ -84,7 +84,7 @@ public class StegoServiceImpl implements StegoService {
     }
 
     private String extractDataText(InputStream input, String password) throws Exception {
-        try (PdfDocument pdf = new PdfDocument(new PdfReader(input))) {
+        try (PdfDocument pdf = new PdfDocument(new PdfReader(input).setUnethicalReading(true))) {
             PdfPage page = pdf.getFirstPage();
             PdfDictionary resources = page.getResources().getPdfObject();
 
@@ -107,7 +107,7 @@ public class StegoServiceImpl implements StegoService {
 
     private ByteArrayOutputStream hideDataImage(InputStream input, String content, String password) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        PdfDocument pdf = new PdfDocument(new PdfReader(input), new PdfWriter(out));
+        PdfDocument pdf = new PdfDocument(new PdfReader(input).setUnethicalReading(true), new PdfWriter(out));
 
         String encrypted = encrypt(content, password);
         boolean foundImage = false;
@@ -159,7 +159,7 @@ public class StegoServiceImpl implements StegoService {
     }
 
     private String extractDataImage(InputStream input, String password) throws Exception {
-        try (PdfDocument pdf = new PdfDocument(new PdfReader(input))) {
+        try (PdfDocument pdf = new PdfDocument(new PdfReader(input).setUnethicalReading(true))) {
             for (int i = 1; i <= pdf.getNumberOfPages(); i++) {
                 PdfPage page = pdf.getPage(i);
                 PdfDictionary res = page.getResources().getPdfObject();
