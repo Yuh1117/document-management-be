@@ -52,10 +52,6 @@ public class User extends TimestampedEntity {
     @JsonIgnore
     private Set<SystemSetting> updatedSettings;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Set<OTPCode> otpCodes;
-
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<UserGroup> createdGroups;
@@ -214,14 +210,6 @@ public class User extends TimestampedEntity {
 
     public void setUpdatedSettings(Set<SystemSetting> updatedSettings) {
         this.updatedSettings = updatedSettings;
-    }
-
-    public Set<OTPCode> getOtpCodes() {
-        return otpCodes;
-    }
-
-    public void setOtpCodes(Set<OTPCode> otpCodes) {
-        this.otpCodes = otpCodes;
     }
 
     public Set<UserGroup> getCreatedGroups() {

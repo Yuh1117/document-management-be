@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thông báo chia sẻ</title>
+</head>
+<body style="font-family:Arial, sans-serif; background-color:#f5f5f5; padding:20px;">
+<table style="background:#ffffff; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); padding:20px;">
+    <tr>
+        <td style="padding-bottom:20px;">
+            <img th:src="@{https://res.cloudinary.com/dviu05rf0/image/upload/v1756799913/React-icon_sl3w1z.png}"
+                 alt="Logo" height="48"/>
+            <h2 style="margin:10px 0;"
+                th:text="${type == 'folder' ? 'Thư mục đã được chia sẻ với bạn' : 'Tệp đã được chia sẻ với bạn'}">
+                Nội dung chia sẻ
+            </h2>
+        </td>
+    </tr>
+
+    <tr>
+        <td style="padding:10px 20px; font-size:15px; color:#333;">
+            <strong th:text="${owner}"></strong> đã chia sẻ với bạn
+            <span th:text="${type == 'folder' ? 'một thư mục' : 'một tệp'}"></span> có tên:
+            <span style="margin:10px 0; font-weight:bold; font-size:16px;" th:text="${fileName}"></span>
+        </td>
+    </tr>
+
+    <tr>
+        <td style="padding:10px 20px; font-size:13px; color:#555; border-top:1px solid #eee;">
+            Email này được gửi thay mặt cho <span th:text="${owner}"></span>.
+        </td>
+    </tr>
+</table>
+</body>
+</html>

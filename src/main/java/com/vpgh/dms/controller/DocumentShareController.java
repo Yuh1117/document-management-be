@@ -11,6 +11,7 @@ import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.ForbiddenException;
 import com.vpgh.dms.util.exception.NotFoundException;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,7 @@ public class DocumentShareController {
 
     @PostMapping(path = "/secure/documents/share")
     @ApiMessage(message = "Tạo mới chia sẻ")
-    public ResponseEntity<List<DocumentShare>> share(@Valid @RequestBody ShareReq shareReq) {
+    public ResponseEntity<List<DocumentShare>> share(@Valid @RequestBody ShareReq shareReq) throws MessagingException {
         Document doc = this.documentService.getDocumentById(shareReq.getDocumentId());
 
         if (!this.documentShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
