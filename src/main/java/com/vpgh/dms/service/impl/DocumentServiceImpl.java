@@ -330,7 +330,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private File convertMultipartToFile(MultipartFile file) throws IOException {
-        File convFile = File.createTempFile("upload-", file.getOriginalFilename());
+        File convFile = File.createTempFile("upload-", Paths.get(file.getOriginalFilename()).getFileName().toString());
         file.transferTo(convFile);
         return convFile;
     }

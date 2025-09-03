@@ -81,7 +81,6 @@ public class DocumentParseServiceImpl implements DocumentParseService {
             log.info("Parsed and indexed document {}", doc.getId());
         } catch (Exception e) {
             log.error("Parse failed for document {}: {}", doc.getId(), e.getMessage(), e);
-            doc.setExtractedText(null);
             this.documentRepository.save(doc);
         } finally {
             file.delete();
