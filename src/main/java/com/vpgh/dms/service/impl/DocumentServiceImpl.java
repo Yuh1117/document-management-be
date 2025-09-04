@@ -357,9 +357,8 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private String generateUniqueName(String originalName, Folder folder) {
-        String baseName = FilenameUtils.getBaseName(originalName);
+        String baseName = FilenameUtils.getBaseName(originalName).replaceAll("\\s*\\(\\d+\\)$", "");
         String extension = FilenameUtils.getExtension(originalName);
-        baseName = baseName.replaceAll("\\s*\\(\\d+\\)$", "");
 
         String newName = originalName;
         int counter = 1;

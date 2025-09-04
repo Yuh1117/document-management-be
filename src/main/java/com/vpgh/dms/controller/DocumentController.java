@@ -2,12 +2,8 @@ package com.vpgh.dms.controller;
 
 import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.dto.request.*;
-import com.vpgh.dms.model.entity.Document;
-import com.vpgh.dms.model.entity.Folder;
-import com.vpgh.dms.service.DocumentShareService;
-import com.vpgh.dms.service.DocumentService;
-import com.vpgh.dms.service.FolderService;
-import com.vpgh.dms.service.StegoService;
+import com.vpgh.dms.model.entity.*;
+import com.vpgh.dms.service.*;
 import com.vpgh.dms.util.DataResponse;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
@@ -44,23 +40,30 @@ public class DocumentController {
     private final FolderService folderService;
     private final DocumentShareService documentShareService;
     private final StegoService stegoService;
+    private final FolderShareService folderShareService;
 
     public DocumentController(DocumentService documentService, FolderService folderService, DocumentShareService documentShareService,
-                              StegoService stegoService) {
+                              StegoService stegoService, FolderShareService folderShareService) {
         this.documentService = documentService;
         this.folderService = folderService;
         this.documentShareService = documentShareService;
         this.stegoService = stegoService;
+        this.folderShareService = folderShareService;
     }
 
     @PostMapping(path = "/secure/documents/upload")
     @ApiMessage(message = "Upload tài liệu")
     public ResponseEntity<Map<String, Object>> upload(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
         Folder folder = null;
         if (fileUploadReq.getFolderId() != null) {
             folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
             if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
                 throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+            }
+            if (!this.folderShareService.checkCanEdit(currentUser, folder)) {
+                throw new ForbiddenException("Bạn không có quyền upload tài liệu tại vị trí này");
             }
         }
 
@@ -74,7 +77,7 @@ public class DocumentController {
                 conflict = documentService.existsByNameAndFolderAndIsDeletedFalseAndIdNot(filename, folder, null);
             } else {
                 conflict = documentService.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(
-                        filename, SecurityUtil.getCurrentUserFromThreadLocal(), null
+                        filename, currentUser, null
                 );
             }
 
@@ -85,6 +88,7 @@ public class DocumentController {
 
             Document doc = this.documentService.uploadNewFile(file, folder);
             uploadedDocs.add(doc);
+            this.documentShareService.handleShareAfterUpload(folder, doc);
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -103,6 +107,9 @@ public class DocumentController {
             folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
             if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
                 throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+            }
+            if (!this.folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
+                throw new ForbiddenException("Bạn không có quyền upload tài liệu tại vị trí này");
             }
         }
 
@@ -139,6 +146,9 @@ public class DocumentController {
             folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
             if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
                 throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+            }
+            if (!this.folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
+                throw new ForbiddenException("Bạn không có quyền upload tài liệu tại vị trí này");
             }
         }
 
@@ -185,6 +195,10 @@ public class DocumentController {
             throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xoá");
         }
 
+        if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
+            throw new ForbiddenException("Bạn không có quyền tải tài liệu này");
+        }
+
         InputStream inputStream = documentService.downloadFileStream(doc.getFilePath());
 
         return ResponseEntity.ok()
@@ -195,9 +209,11 @@ public class DocumentController {
 
     @PostMapping("/secure/documents/download/multiple")
     public ResponseEntity<StreamingResponseBody> downloadMultiple(@RequestBody List<Integer> ids) throws IOException {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
         List<Document> docs = this.documentService.getDocumentsByIds(ids);
         Map<Integer, Document> docsMap = docs.stream()
-                .filter(doc -> !doc.getDeleted())
+                .filter(doc -> !doc.getDeleted() && this.documentShareService.checkCanView(currentUser, doc))
                 .collect(Collectors.toMap(doc -> doc.getId(), doc -> doc));
         List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
 
@@ -227,9 +243,11 @@ public class DocumentController {
     @PatchMapping("/secure/documents")
     @ApiMessage(message = "Chuyển tài liệu vào thùng rác")
     public ResponseEntity<Void> softDelete(@RequestBody List<Integer> ids) {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
         List<Document> docs = this.documentService.getDocumentsByIds(ids);
         Map<Integer, Document> docsMap = docs.stream()
-                .filter(doc -> !doc.getDeleted())
+                .filter(doc -> !doc.getDeleted() && this.documentService.isOwnerDocument(doc, currentUser))
                 .collect(Collectors.toMap(doc -> doc.getId(), doc -> doc));
         List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
 
@@ -248,9 +266,11 @@ public class DocumentController {
     @PatchMapping(path = "/secure/documents/restore")
     @ApiMessage(message = "Khôi phục tài liệu")
     public ResponseEntity<List<Document>> restore(@RequestBody List<Integer> ids) {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
         List<Document> docs = this.documentService.getDocumentsByIds(ids);
         Map<Integer, Document> docsMap = docs.stream()
-                .filter(doc -> doc.getDeleted())
+                .filter(doc -> doc.getDeleted() && this.documentService.isOwnerDocument(doc, currentUser))
                 .collect(Collectors.toMap(doc -> doc.getId(), doc -> doc));
         List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
 
@@ -268,9 +288,11 @@ public class DocumentController {
     @DeleteMapping("/secure/documents/permanent")
     @ApiMessage(message = "Xoá vĩnh viễn tài liệu")
     public ResponseEntity<Void> hardDelete(@RequestBody List<Integer> ids) {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
         List<Document> docs = this.documentService.getDocumentsByIds(ids);
         Map<Integer, Document> docsMap = docs.stream()
-                .filter(doc -> doc.getDeleted())
+                .filter(doc -> doc.getDeleted() && this.documentService.isOwnerDocument(doc, currentUser))
                 .collect(Collectors.toMap(doc -> doc.getId(), doc -> doc));
         List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
 
@@ -287,9 +309,11 @@ public class DocumentController {
     @PostMapping("/secure/documents/copy")
     @ApiMessage(message = "Sao chép tài liệu")
     public ResponseEntity<Void> copyDocuments(@RequestBody CopyCutReq request) {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
         List<Document> docs = this.documentService.getDocumentsByIds(request.getIds());
         Map<Integer, Document> docsMap = docs.stream()
-                .filter(doc -> !doc.getDeleted())
+                .filter(doc -> !doc.getDeleted() && this.documentShareService.checkCanView(currentUser, doc))
                 .collect(Collectors.toMap(doc -> doc.getId(), doc -> doc));
         List<Integer> notFoundIds = request.getIds().stream().filter(id -> !docsMap.containsKey(id)).toList();
 
@@ -314,9 +338,11 @@ public class DocumentController {
     @PostMapping("/secure/documents/move")
     @ApiMessage(message = "Di chuyển tài liệu")
     public ResponseEntity<Void> moveDocuments(@RequestBody CopyCutReq request) {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
         List<Document> docs = this.documentService.getDocumentsByIds(request.getIds());
         Map<Integer, Document> docsMap = docs.stream()
-                .filter(doc -> !doc.getDeleted())
+                .filter(doc -> !doc.getDeleted() && this.documentService.isOwnerDocument(doc, currentUser))
                 .collect(Collectors.toMap(doc -> doc.getId(), doc -> doc));
         List<Integer> notFoundIds = request.getIds().stream().filter(id -> !docsMap.containsKey(id)).toList();
 
@@ -384,6 +410,10 @@ public class DocumentController {
         Document doc = this.documentService.getDocumentById(request.getDocumentId());
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
+        }
+
+        if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
+            throw new ForbiddenException("Bạn không có quyền upload tài liệu tại vị trí này");
         }
 
         String url = this.documentService.generateSignedUrl(doc, Integer.parseInt(request.getExpiredTime()));
