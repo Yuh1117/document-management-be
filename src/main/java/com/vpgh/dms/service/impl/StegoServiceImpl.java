@@ -65,7 +65,8 @@ public class StegoServiceImpl implements StegoService {
 
         String encrypted = encrypt(content, password);
 
-        PdfDocument pdf = new PdfDocument(new PdfReader(input).setUnethicalReading(true), new PdfWriter(out));
+        PdfDocument pdf = new PdfDocument(new PdfReader(input).setUnethicalReading(true),
+                new PdfWriter(out, new WriterProperties().setFullCompressionMode(true).setCompressionLevel(3)));
         PdfPage page = pdf.getFirstPage();
 
         Rectangle rect = new Rectangle(0, 0, 1, 1);
@@ -107,7 +108,8 @@ public class StegoServiceImpl implements StegoService {
 
     private ByteArrayOutputStream hideDataImage(InputStream input, String content, String password) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        PdfDocument pdf = new PdfDocument(new PdfReader(input).setUnethicalReading(true), new PdfWriter(out));
+        PdfDocument pdf = new PdfDocument(new PdfReader(input).setUnethicalReading(true),
+                new PdfWriter(out, new WriterProperties().setFullCompressionMode(true).setCompressionLevel(3)));
 
         String encrypted = encrypt(content, password);
         boolean foundImage = false;

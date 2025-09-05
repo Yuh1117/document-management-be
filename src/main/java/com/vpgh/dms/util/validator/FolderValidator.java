@@ -40,7 +40,7 @@ public class FolderValidator implements ConstraintValidator<ValidFolder, FolderU
                 }
 
                 if (file.getSize() > maxSize) {
-                    context.buildConstraintViolationWithTemplate("Dung lượng vượt quá giới hạn: " + file.getOriginalFilename())
+                    context.buildConstraintViolationWithTemplate("Kích thước vượt quá giới hạn: " + file.getOriginalFilename())
                             .addPropertyNode("file " + (i + 1))
                             .addConstraintViolation();
                     valid = false;

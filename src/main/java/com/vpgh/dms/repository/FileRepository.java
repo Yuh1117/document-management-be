@@ -15,7 +15,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
     @Query(value = """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail,
+                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
                    NULL as description, 'OWNER' as permission, NULL as mime_type,
                    0 as sortType
             FROM folders f
@@ -32,7 +32,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail,
+                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
                    d.description as description, 'OWNER' as permission,  d.mime_type as mime_type,
                    1 as sortType
             FROM documents d
@@ -83,7 +83,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
     @Query(value = """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail,
+                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
                    NULL as description, 'OWNER' as permission, NULL as mime_type,
                    0 as sortType
             FROM folders f
@@ -97,7 +97,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail,
+                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
                    d.description as description, 'OWNER' as permission, d.mime_type as mime_type,
                    1 as sortType
             FROM documents d
@@ -135,7 +135,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
     @Query(value = """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail,
+                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
                    NULL as description, 'OWNER' as permission, NULL as mime_type
             FROM folders f
             JOIN users u ON f.created_by = u.id
@@ -145,7 +145,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail,
+                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
                    d.description as description, 'OWNER' as permission,  d.mime_type as mime_type
             FROM documents d
             JOIN users u ON d.created_by = u.id
@@ -175,7 +175,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
     @Query(value = """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail, NULL as mime_type,
+                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,  NULL as mime_type,
                    NULL as description,
                    CASE
                        WHEN f.created_by = :userId THEN 'OWNER'
@@ -192,7 +192,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail, d.mime_type as mime_type,
+                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,  d.mime_type as mime_type,
                    d.description as description,
                    CASE
                        WHEN d.created_by = :userId THEN 'OWNER'
@@ -234,7 +234,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
     @Query(value = """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail,
+                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
                    NULL as description, fs.share_type as permission, NULL as mime_type,
                    0 as sortType
             FROM folders f
@@ -253,7 +253,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail,
+                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
                    d.description as description, ds.share_type as permission, d.mime_type as mime_type,
                    1 as sortType
             FROM documents d
@@ -307,7 +307,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
     @Query(value = """
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail,
+                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
                    d.description as description, 'OWNER' as permission, d.mime_type as mime_type,
                    COALESCE(ts_rank_cd(dsi.keywords_tsv, query), 0) AS rank
             FROM documents d
@@ -346,7 +346,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
     @Query(value = """
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail,
+                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
                    d.description as description, 'OWNER' as permission, d.mime_type as mime_type,
                    1 - (dsi.content_vector <=> CAST(:embedding AS vector)) AS similarity
             FROM documents d

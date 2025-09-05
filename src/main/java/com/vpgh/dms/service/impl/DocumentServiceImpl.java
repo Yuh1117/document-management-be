@@ -25,6 +25,8 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 
 import java.io.*;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -286,7 +288,8 @@ public class DocumentServiceImpl implements DocumentService {
                         .bucket(bucketName)
                         .key(key)
                         .responseCacheControl("no-store")
-                        .responseContentDisposition("inline; filename=\"" + doc.getName() + "\"")
+                        .responseContentDisposition("inline; filename=\""
+                                + URLEncoder.encode(doc.getName(), StandardCharsets.UTF_8) + "\"")
                         .responseContentType(doc.getMimeType())
                         .build())
                 .build();
@@ -330,7 +333,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private File convertMultipartToFile(MultipartFile file) throws IOException {
-        File convFile = File.createTempFile("upload-", file.getOriginalFilename());
+        File convFile = File.createTempFile("upload-", Paths.get(file.getOriginalFilename()).getFileName().toString());
         file.transferTo(convFile);
         return convFile;
     }
@@ -357,9 +360,8 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private String generateUniqueName(String originalName, Folder folder) {
-        String baseName = FilenameUtils.getBaseName(originalName);
+        String baseName = FilenameUtils.getBaseName(originalName).replaceAll("\\s*\\(\\d+\\)$", "");
         String extension = FilenameUtils.getExtension(originalName);
-        baseName = baseName.replaceAll("\\s*\\(\\d+\\)$", "");
 
         String newName = originalName;
         int counter = 1;

@@ -4,6 +4,7 @@ import com.vpgh.dms.model.dto.FolderDTO;
 import com.vpgh.dms.model.dto.request.CopyCutReq;
 import com.vpgh.dms.model.dto.request.FolderUploadReq;
 import com.vpgh.dms.model.entity.Folder;
+import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.FolderShareService;
 import com.vpgh.dms.service.FolderService;
@@ -46,6 +47,9 @@ public class FolderController {
             if (f == null || Boolean.TRUE.equals(folder.getDeleted())) {
                 throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
             }
+            if (!this.folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), f)) {
+                throw new ForbiddenException("Bạn không có quyền tạo thư mục tại vị trí này");
+            }
             folder.setParent(f);
         }
 
@@ -60,7 +64,11 @@ public class FolderController {
             }
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.folderService.save(folder));
+        Folder currentFolder = this.folderService.save(folder);
+        if (currentFolder.getParent() != null) {
+            this.folderShareService.handleShareAfterCreate(currentFolder.getParent(), currentFolder);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(currentFolder);
     }
 
     @PostMapping(path = "/secure/folders/upload")
@@ -71,6 +79,9 @@ public class FolderController {
             parentFolder = this.folderService.getFolderById(folderUploadReq.getParentId());
             if (parentFolder == null || Boolean.TRUE.equals(parentFolder.getDeleted())) {
                 throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+            }
+            if (!this.folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), parentFolder)) {
+                throw new ForbiddenException("Bạn không có quyền upload thư mục tại vị trí này");
             }
         }
 
@@ -93,6 +104,9 @@ public class FolderController {
         }
 
         Folder uploadedFolder = folderService.uploadNewFolder(parentFolder, folderUploadReq.getFiles(), folderUploadReq.getRelativePaths());
+        if (uploadedFolder.getParent() != null) {
+            this.folderShareService.handleShareAfterCreate(uploadedFolder.getParent(), uploadedFolder);
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(uploadedFolder);
     }
 
@@ -101,6 +115,11 @@ public class FolderController {
         Folder rootFolder = folderService.getFolderById(id);
         if (rootFolder == null || Boolean.TRUE.equals(rootFolder.getDeleted())) {
             throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+        }
+
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+        if (!this.folderShareService.checkCanView(currentUser, rootFolder)) {
+            throw new ForbiddenException("Bạn không có quyền tải thư mục này");
         }
 
         StreamingResponseBody stream = outputStream -> {
@@ -117,9 +136,11 @@ public class FolderController {
 
     @PostMapping("/secure/folders/download/multiple")
     public ResponseEntity<StreamingResponseBody> downloadMultiple(@RequestBody List<Integer> folderIds) {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
         List<Folder> folders = folderService.getFoldersByIds(folderIds);
         Map<Integer, Folder> folderMap = folders.stream()
-                .filter(f -> !f.getDeleted())
+                .filter(f -> !f.getDeleted() && this.folderShareService.checkCanView(currentUser, f))
                 .collect(Collectors.toMap(Folder::getId, f -> f));
         List<Integer> notFoundIds = folderIds.stream().filter(id -> !folderMap.containsKey(id)).toList();
 
@@ -149,6 +170,11 @@ public class FolderController {
             throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
         }
 
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+        if (!this.folderShareService.checkCanEdit(currentUser, folder)) {
+            throw new ForbiddenException("Bạn không có quyền chỉnh sửa thư mục này");
+        }
+
         if (folder.getParent() != null) {
             if (folderService.existsByNameAndParentAndIsDeletedFalseAndIdNot(request.getName(), folder.getParent(), folder.getId())) {
                 throw new UniqueConstraintException("Không thể đổi tên này trong cùng thư mục cha.");
@@ -167,9 +193,11 @@ public class FolderController {
     @PatchMapping(path = "/secure/folders")
     @ApiMessage(message = "Chuyển thư mục vào thùng rác")
     public ResponseEntity<Void> softDelete(@RequestBody List<Integer> ids) {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
         List<Folder> folders = this.folderService.getFoldersByIds(ids);
         Map<Integer, Folder> folderMap = folders.stream()
-                .filter(f -> !f.getDeleted())
+                .filter(f -> !f.getDeleted() && this.folderService.isOwnerFolder(f, currentUser))
                 .collect(Collectors.toMap(f -> f.getId(), f -> f));
         List<Integer> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
 
@@ -186,9 +214,11 @@ public class FolderController {
     @PatchMapping(path = "/secure/folders/restore")
     @ApiMessage(message = "Khôi phục thư mục")
     public ResponseEntity<List<FolderDTO>> restore(@RequestBody List<Integer> ids) {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
         List<Folder> folders = this.folderService.getFoldersByIds(ids);
         Map<Integer, Folder> folderMap = folders.stream()
-                .filter(f -> f.getDeleted())
+                .filter(f -> f.getDeleted() && this.folderService.isOwnerFolder(f, currentUser))
                 .collect(Collectors.toMap(f -> f.getId(), f -> f));
         List<Integer> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
 
@@ -207,9 +237,11 @@ public class FolderController {
     @DeleteMapping(path = "/secure/folders/permanent")
     @ApiMessage(message = "Xoá vĩnh viễn thư mục")
     public ResponseEntity<Void> hardDelete(@RequestBody List<Integer> ids) {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
         List<Folder> folders = this.folderService.getFoldersByIds(ids);
         Map<Integer, Folder> folderMap = folders.stream()
-                .filter(f -> f.getDeleted())
+                .filter(f -> f.getDeleted() && this.folderService.isOwnerFolder(f, currentUser))
                 .collect(Collectors.toMap(f -> f.getId(), f -> f));
         List<Integer> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
 
@@ -226,9 +258,11 @@ public class FolderController {
     @PostMapping("/secure/folders/copy")
     @ApiMessage(message = "Sao chép thư mục")
     public ResponseEntity<Void> copyFolders(@RequestBody CopyCutReq request) {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
         List<Folder> folders = this.folderService.getFoldersByIds(request.getIds());
         Map<Integer, Folder> folderMap = folders.stream()
-                .filter(f -> !f.getDeleted())
+                .filter(f -> !f.getDeleted() && this.folderShareService.checkCanView(currentUser, f))
                 .collect(Collectors.toMap(f -> f.getId(), f -> f));
         List<Integer> notFoundIds = request.getIds().stream().filter(id -> !folderMap.containsKey(id)).toList();
 
@@ -257,9 +291,11 @@ public class FolderController {
     @PostMapping("/secure/folders/move")
     @ApiMessage(message = "Di chuyển thư mục")
     public ResponseEntity<Void> moveFolders(@RequestBody CopyCutReq request) {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
         List<Folder> folders = this.folderService.getFoldersByIds(request.getIds());
         Map<Integer, Folder> folderMap = folders.stream()
-                .filter(f -> !f.getDeleted())
+                .filter(f -> !f.getDeleted() && this.folderService.isOwnerFolder(f, currentUser))
                 .collect(Collectors.toMap(f -> f.getId(), f -> f));
         List<Integer> notFoundIds = request.getIds().stream().filter(id -> !folderMap.containsKey(id)).toList();
 

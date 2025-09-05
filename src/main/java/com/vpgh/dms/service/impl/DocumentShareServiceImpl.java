@@ -2,11 +2,9 @@ package com.vpgh.dms.service.impl;
 
 import com.vpgh.dms.model.constant.ShareType;
 import com.vpgh.dms.model.dto.request.ShareReq;
-import com.vpgh.dms.model.entity.Document;
-import com.vpgh.dms.model.entity.DocumentShare;
-import com.vpgh.dms.model.entity.User;
-import com.vpgh.dms.model.entity.UserGroup;
+import com.vpgh.dms.model.entity.*;
 import com.vpgh.dms.repository.DocumentShareRepository;
+import com.vpgh.dms.repository.FolderShareRepository;
 import com.vpgh.dms.repository.UserRepository;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.DocumentShareService;
@@ -26,14 +24,22 @@ public class DocumentShareServiceImpl implements DocumentShareService {
     private final UserRepository userRepository;
     private final DocumentService documentService;
     private final EmailService emailService;
+    private final FolderShareRepository folderShareRepository;
 
     public DocumentShareServiceImpl(DocumentShareRepository documentShareRepository, UserGroupService userGroupService,
-                                    UserRepository userRepository, DocumentService documentService, EmailService emailService) {
+                                    UserRepository userRepository, DocumentService documentService, EmailService emailService,
+                                    FolderShareRepository folderShareRepository) {
         this.documentShareRepository = documentShareRepository;
         this.userGroupService = userGroupService;
         this.userRepository = userRepository;
         this.documentService = documentService;
         this.emailService = emailService;
+        this.folderShareRepository = folderShareRepository;
+    }
+
+    @Override
+    public List<DocumentShare> saveAll(List<DocumentShare> documentShare) {
+        return this.documentShareRepository.saveAll(documentShare);
     }
 
     @Override
@@ -107,6 +113,34 @@ public class DocumentShareServiceImpl implements DocumentShareService {
     @Transactional
     public void removeShares(Document doc, List<User> users) {
         this.documentShareRepository.deleteByDocumentAndUserIn(doc, users);
+    }
+
+    @Override
+    public List<DocumentShare> handleShareAfterUpload(Folder folder, Document document) {
+        List<FolderShare> folderShares = this.folderShareRepository.findByFolder(folder);
+        if (!folderShares.isEmpty()) {
+            User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
+            List<DocumentShare> ds = new ArrayList<>();
+            for (FolderShare fs : folderShares) {
+                if (!fs.getUser().getId().equals(currentUser.getId())) {
+                    DocumentShare share = new DocumentShare();
+                    share.setDocument(document);
+                    share.setUser(fs.getUser());
+                    share.setShareType(ShareType.VIEW);
+                    ds.add(share);
+                }
+            }
+            if (!folder.getCreatedBy().getId().equals(currentUser.getId())) {
+                DocumentShare share = new DocumentShare();
+                share.setDocument(document);
+                share.setUser(folder.getCreatedBy());
+                share.setShareType(ShareType.VIEW);
+                ds.add(share);
+            }
+            return this.documentShareRepository.saveAll(ds);
+        }
+        return null;
     }
 
     private boolean checkUserOrGroupPermission(User user, Document doc, ShareType permission) {
