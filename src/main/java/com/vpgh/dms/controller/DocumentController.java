@@ -25,6 +25,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,7 +90,9 @@ public class DocumentController {
 
             Document doc = this.documentService.uploadNewFile(file, folder);
             uploadedDocs.add(doc);
-            this.documentShareService.handleShareAfterUpload(folder, doc);
+            if (doc.getFolder() != null) {
+                this.documentShareService.handleShareAfterUpload(folder, doc);
+            }
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -202,7 +206,8 @@ public class DocumentController {
         InputStream inputStream = documentService.downloadFileStream(doc.getFilePath());
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + doc.getName() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + URLEncoder.encode(doc.getName(), StandardCharsets.UTF_8) + "\"")
                 .contentType(MediaType.parseMediaType(doc.getMimeType()))
                 .body(new InputStreamResource(inputStream));
     }
@@ -399,7 +404,8 @@ public class DocumentController {
         InputStream inputStream = documentService.downloadFileStream(doc.getFilePath());
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + doc.getName() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + URLEncoder.encode(doc.getName(), StandardCharsets.UTF_8) + "\"")
                 .contentType(MediaType.parseMediaType(doc.getMimeType()))
                 .body(new InputStreamResource(inputStream));
     }
@@ -438,7 +444,8 @@ public class DocumentController {
         ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + request.getFile().getOriginalFilename() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + URLEncoder.encode(request.getFile().getOriginalFilename(), StandardCharsets.UTF_8) + "\"")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(new InputStreamResource(in));
     }

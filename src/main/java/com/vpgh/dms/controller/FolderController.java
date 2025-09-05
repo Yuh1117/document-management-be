@@ -64,7 +64,11 @@ public class FolderController {
             }
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.folderService.save(folder));
+        Folder currentFolder = this.folderService.save(folder);
+        if (currentFolder.getParent() != null) {
+            this.folderShareService.handleShareAfterCreate(currentFolder.getParent(), currentFolder);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(currentFolder);
     }
 
     @PostMapping(path = "/secure/folders/upload")
@@ -100,6 +104,9 @@ public class FolderController {
         }
 
         Folder uploadedFolder = folderService.uploadNewFolder(parentFolder, folderUploadReq.getFiles(), folderUploadReq.getRelativePaths());
+        if (uploadedFolder.getParent() != null) {
+            this.folderShareService.handleShareAfterCreate(uploadedFolder.getParent(), uploadedFolder);
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(uploadedFolder);
     }
 

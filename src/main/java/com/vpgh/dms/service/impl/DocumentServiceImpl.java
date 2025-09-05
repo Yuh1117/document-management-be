@@ -25,6 +25,8 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 
 import java.io.*;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -286,7 +288,8 @@ public class DocumentServiceImpl implements DocumentService {
                         .bucket(bucketName)
                         .key(key)
                         .responseCacheControl("no-store")
-                        .responseContentDisposition("inline; filename=\"" + doc.getName() + "\"")
+                        .responseContentDisposition("inline; filename=\""
+                                + URLEncoder.encode(doc.getName(), StandardCharsets.UTF_8) + "\"")
                         .responseContentType(doc.getMimeType())
                         .build())
                 .build();

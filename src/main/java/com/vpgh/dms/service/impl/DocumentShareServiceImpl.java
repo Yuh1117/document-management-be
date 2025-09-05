@@ -117,13 +117,13 @@ public class DocumentShareServiceImpl implements DocumentShareService {
 
     @Override
     public List<DocumentShare> handleShareAfterUpload(Folder folder, Document document) {
-        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
-
         List<FolderShare> folderShares = this.folderShareRepository.findByFolder(folder);
         if (!folderShares.isEmpty()) {
+            User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
             List<DocumentShare> ds = new ArrayList<>();
             for (FolderShare fs : folderShares) {
-                if (!fs.getUser().equals(currentUser)) {
+                if (!fs.getUser().getId().equals(currentUser.getId())) {
                     DocumentShare share = new DocumentShare();
                     share.setDocument(document);
                     share.setUser(fs.getUser());
@@ -131,14 +131,14 @@ public class DocumentShareServiceImpl implements DocumentShareService {
                     ds.add(share);
                 }
             }
-            if (!folder.getCreatedBy().equals(currentUser)) {
+            if (!folder.getCreatedBy().getId().equals(currentUser.getId())) {
                 DocumentShare share = new DocumentShare();
                 share.setDocument(document);
                 share.setUser(folder.getCreatedBy());
                 share.setShareType(ShareType.VIEW);
                 ds.add(share);
             }
-            return this.saveAll(ds);
+            return this.documentShareRepository.saveAll(ds);
         }
         return null;
     }

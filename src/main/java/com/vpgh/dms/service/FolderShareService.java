@@ -21,4 +21,6 @@ public interface FolderShareService {
     List<FolderShare> getShares(Folder folder);
 
     void removeShares(Folder folder, List<User> users);
+
+    List<FolderShare> handleShareAfterCreate(Folder parent, Folder folder);
 }

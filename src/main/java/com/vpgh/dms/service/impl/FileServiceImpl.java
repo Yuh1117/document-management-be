@@ -179,6 +179,8 @@ public class FileServiceImpl implements FileService {
         UserDTO createdBy = new UserDTO();
         createdBy.setId(p.getCreatedById());
         createdBy.setEmail(p.getCreatedByEmail());
+        createdBy.setFirstName(p.getCreatedByFirstName());
+        createdBy.setLastName(p.getCreatedByLastName());
 
         FileItemDTO dto = new FileItemDTO();
         dto.setType(p.getType());

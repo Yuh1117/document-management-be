@@ -148,6 +148,66 @@ public class FolderShareServiceImpl implements FolderShareService {
         this.documentShareRepository.deleteByDocumentInAndUserIn(allDocuments, users);
     }
 
+    @Override
+    public List<FolderShare> handleShareAfterCreate(Folder parent, Folder folder) {
+        List<FolderShare> folderShares = this.getShares(parent);
+
+        if (!folderShares.isEmpty()) {
+            List<FolderShare> fShares = new ArrayList<>();
+            List<DocumentShare> dShares = new ArrayList<>();
+
+            if (folder.getInheritPermissions()) {
+                List<Folder> allFolders = this.folderService.getAllDescendantsIncludingSelf(folder);
+                List<Document> allDocuments = this.documentService.getAllDocumentsInFolders(allFolders);
+                User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+
+                for (FolderShare fs : folderShares) {
+                    if (!fs.getUser().getId().equals(currentUser.getId())) {
+                        for (Folder f : allFolders) {
+                            FolderShare share = new FolderShare();
+                            share.setFolder(f);
+                            share.setUser(fs.getUser());
+                            share.setShareType(ShareType.VIEW);
+                            fShares.add(share);
+                        }
+
+                        for (Document d : allDocuments) {
+                            DocumentShare share = new DocumentShare();
+                            share.setDocument(d);
+                            share.setUser(fs.getUser());
+                            share.setShareType(ShareType.VIEW);
+                            dShares.add(share);
+                        }
+                    }
+                }
+                if (!parent.getCreatedBy().getId().equals(currentUser.getId())) {
+                    for (Folder f : allFolders) {
+                        FolderShare share = new FolderShare();
+                        share.setFolder(f);
+                        share.setUser(parent.getCreatedBy());
+                        share.setShareType(ShareType.VIEW);
+                        fShares.add(share);
+                    }
+
+                    for (Document d : allDocuments) {
+                        DocumentShare share = new DocumentShare();
+                        share.setDocument(d);
+                        share.setUser(parent.getCreatedBy());
+                        share.setShareType(ShareType.VIEW);
+                        dShares.add(share);
+                    }
+                }
+
+                this.folderShareRepository.saveAll(fShares);
+                this.documentShareRepository.saveAll(dShares);
+            }
+
+            return fShares;
+        }
+
+        return null;
+    }
+
     private boolean checkUserOrGroupPermission(User user, Folder folder, ShareType permission) {
         Optional<FolderShare> userPermission = this.folderShareRepository
                 .findByFolderAndUserAndShareType(folder, user, permission);

@@ -21,6 +21,11 @@ public interface FileItemProjection {
 
     String getCreatedByEmail();
 
+    String getCreatedByFirstName();
+
+    String getCreatedByLastName();
+
+
     Boolean getIsDeleted();
 
     String getPermission();
