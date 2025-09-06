@@ -36,4 +36,9 @@ public class DocumentVersionServiceImpl implements DocumentVersionService {
         combinedSpec = combinedSpec.and(DocumentVersionSpecification.hasDocument(doc));
         return this.documentVersionRepository.findAll(combinedSpec, pageable);
     }
+
+    @Override
+    public DocumentVersion getVersionById(Integer id) {
+        return this.documentVersionRepository.findById(id).orElse(null);
+    }
 }
