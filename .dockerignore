@@ -1,0 +1,17 @@
+# Maven/Gradle build
+target/
+build/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Git
+.git
+.gitignore
+
+# Cache
+*.log
+*.DS_Store
