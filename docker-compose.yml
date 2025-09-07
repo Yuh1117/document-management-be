@@ -31,6 +31,16 @@ services:
     networks:
       - dms_network
 
+  python_app:
+    build:
+      context: ../dms-semantic-service
+      dockerfile: Dockerfile
+    container_name: dms_python_app
+    ports:
+      - "8001:8000"
+    networks:
+      - dms_network
+
 volumes:
   postgres_data:
 

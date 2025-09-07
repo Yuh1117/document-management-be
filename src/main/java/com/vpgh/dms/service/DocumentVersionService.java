@@ -8,4 +8,6 @@ import java.util.Map;
 
 public interface DocumentVersionService {
     Page<DocumentVersion> getVersionsByDocument(Map<String, String> params, Document doc);
+
+    DocumentVersion getVersionById(Integer id);
 }

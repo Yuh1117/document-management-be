@@ -10,11 +10,17 @@ import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.exception.ForbiddenException;
 import com.vpgh.dms.util.exception.NotFoundException;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -59,4 +65,32 @@ public class DocumentVersionController {
 
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
+
+    @GetMapping(path = "/secure/documents/{documentId}/versions/{versionId}/download")
+    public ResponseEntity<InputStreamResource> downloadVersion(@PathVariable Integer documentId,
+                                                               @PathVariable Integer versionId) {
+
+        Document doc = this.documentService.getDocumentById(documentId);
+        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
+            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
+        }
+
+        if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
+            throw new ForbiddenException("Bạn không có quyền tải tài liệu này");
+        }
+
+        DocumentVersion version = this.documentVersionService.getVersionById(versionId);
+        if (version == null) {
+            throw new NotFoundException("Phiên bản tài liệu không tồn tại");
+        }
+
+        InputStream inputStream = documentService.downloadFileStream(version.getFilePath());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + URLEncoder.encode(version.getName(), StandardCharsets.UTF_8) + "\"")
+                .contentType(MediaType.parseMediaType(version.getMimeType()))
+                .body(new InputStreamResource(inputStream));
+    }
+
 }
