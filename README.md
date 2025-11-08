@@ -1,4 +1,4 @@
-# Document Management Service (Backend)
+# Document Management System (Backend)
 
 A Spring Boot-based backend for a Document Management System (DMS). This project provides document ingestion, extraction (OCR/Tika), Vietnamese NLP (VnCoreNLP), full-text search indexing (Lucene), user authentication/authorization, file storage (Cloudinary / AWS S3), and REST APIs with OpenAPI documentation.
 
