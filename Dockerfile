@@ -1,15 +1,13 @@
-FROM maven:3.9-eclipse-temurin-21 AS builder
+FROM maven:3.9-eclipse-temurin-21 AS build
 
 WORKDIR /app
 
-COPY . .
+COPY pom.xml ./
 
-RUN mvn clean package -DskipTests
-#
-FROM eclipse-temurin:21-jdk-jammy
+COPY src/main/resources/vncorenlp /app/src/main/resources/vncorenlp
 
-WORKDIR /app
+RUN mvn dependency:resolve
 
-COPY --from=builder /app/target/dms-0.0.1-SNAPSHOT.jar app.jar
+COPY src ./src
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["mvn", "spring-boot:run"]
