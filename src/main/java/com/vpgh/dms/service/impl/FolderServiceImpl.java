@@ -31,7 +31,6 @@ public class FolderServiceImpl implements FolderService {
     private final DocumentRepository documentRepository;
     private final DocumentService documentService;
     private final UserService userService;
-    private final S3Client s3Client;
     @Value("${aws.bucket.name}")
     private String bucketName;
 
@@ -41,7 +40,6 @@ public class FolderServiceImpl implements FolderService {
         this.documentRepository = documentRepository;
         this.documentService = documentService;
         this.userService = userService;
-        this.s3Client = s3Client;
     }
 
     @Override
