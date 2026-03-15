@@ -1,6 +1,7 @@
 package com.vpgh.dms.service.impl;
 
 import com.vpgh.dms.model.dto.DocumentDTO;
+import com.vpgh.dms.model.constant.ProcessingStatus;
 import com.vpgh.dms.model.constant.StorageType;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.DocumentVersion;
@@ -8,9 +9,9 @@ import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.repository.DocumentVersionRepository;
-import com.vpgh.dms.service.DocumentParseService;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.UserService;
+import com.vpgh.dms.service.impl.queue.DocumentQueuePublisher;
 import com.vpgh.dms.util.SecurityUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,20 +42,20 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentVersionRepository documentVersionRepository;
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
-    private final DocumentParseService documentParseService;
+    private final DocumentQueuePublisher documentQueuePublisher;
     @Value("${aws.bucket.name}")
     private String bucketName;
     private static final String ROOT_FOLDER_PREFIX = "root";
 
     public DocumentServiceImpl(S3Presigner s3Presigner, S3Client s3Client, DocumentVersionRepository documentVersionRepository,
                                UserService userService, DocumentRepository documentRepository,
-                               DocumentParseService documentParseService) {
+                               DocumentQueuePublisher documentQueuePublisher) {
         this.s3Presigner = s3Presigner;
         this.s3Client = s3Client;
         this.documentVersionRepository = documentVersionRepository;
         this.userService = userService;
         this.documentRepository = documentRepository;
-        this.documentParseService = documentParseService;
+        this.documentQueuePublisher = documentQueuePublisher;
     }
 
     @Override
@@ -100,8 +101,15 @@ public class DocumentServiceImpl implements DocumentService {
         existingDoc.setFileHash(DigestUtils.md5DigestAsHex(fileBytes));
 
         Document saved = this.documentRepository.save(existingDoc);
-        this.documentParseService.parseAndIndexAsync(saved, tempFile);
-        return saved;
+
+        saved.setProcessingStatus(ProcessingStatus.PENDING);
+        saved.setProcessingError(null);
+        saved.setOcrQualityScore(null);
+        Document updated = this.documentRepository.save(saved);
+
+        documentQueuePublisher.publishDocument(updated);
+        tempFile.delete();
+        return updated;
     }
 
     @Override
@@ -326,8 +334,14 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setStorageType(StorageType.AWS_S3);
         doc.setFolder(folder);
 
+        doc.setProcessingStatus(ProcessingStatus.PENDING);
+        doc.setProcessingError(null);
+        doc.setOcrQualityScore(null);
+
         Document saved = documentRepository.save(doc);
-        this.documentParseService.parseAndIndexAsync(saved, tempFile);
+        documentQueuePublisher.publishDocument(saved);
+
+        tempFile.delete();
 
         return saved;
     }

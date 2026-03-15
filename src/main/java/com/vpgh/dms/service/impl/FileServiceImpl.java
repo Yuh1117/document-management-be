@@ -13,20 +13,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class FileServiceImpl implements FileService {
     private final FileRepository fileRepository;
-    private final EmbeddingService embeddingService;
 
-
-    public FileServiceImpl(FileRepository fileRepository, EmbeddingService embeddingService) {
+    public FileServiceImpl(FileRepository fileRepository) {
         this.fileRepository = fileRepository;
-        this.embeddingService = embeddingService;
     }
 
     @Override
@@ -113,8 +108,6 @@ public class FileServiceImpl implements FileService {
     public Page<FileItemDTO> getAdvancedSearchFiles(User user, Map<String, String> params) {
         Pageable pageable = Pageable.unpaged();
         String rawKeyword = null;
-        String keyword = null;
-        String kwType = null;
         String mimeType = null;
         Double size = null;
         String sizeType = null;
@@ -124,22 +117,7 @@ public class FileServiceImpl implements FileService {
                 int page = Integer.parseInt(params.get("page"));
                 pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
             }
-
-            String kwTypeStr = params.get("kwType");
-            if (kwTypeStr != null && !kwTypeStr.isBlank()) {
-                kwType = kwTypeStr;
-                rawKeyword = params.getOrDefault("kw", null);
-                if (rawKeyword != null && !rawKeyword.isBlank()) {
-                    keyword = Arrays.stream(rawKeyword.split(","))
-                            .map(String::trim)
-                            .filter(k -> !k.isEmpty())
-                            .map(k -> Arrays.stream(k.split("\\+"))
-                                    .map(String::trim)
-                                    .map(x -> x.contains(" ") ? "'" + x + "'" : x)
-                                    .collect(Collectors.joining(" & ")))
-                            .collect(Collectors.joining(" | "));
-                }
-            }
+            rawKeyword = params.get("kw");
 
             String mimeTypeStr = params.get("type");
             if (mimeTypeStr != null && !mimeTypeStr.isBlank()) {
@@ -160,17 +138,8 @@ public class FileServiceImpl implements FileService {
 
         }
 
-        Page<FileItemProjection> pageItem = null;
-        if (keyword == null || "exact".equals(kwType)) {
-            pageItem = fileRepository.findExactDocs(user.getId(), keyword, mimeType, size, sizeType, pageable);
-        } else {
-            List<Double> embedding = embeddingService.getEmbedding(rawKeyword);
-            float[] embeddingArray = new float[embedding.size()];
-            for (int i = 0; i < embedding.size(); i++) {
-                embeddingArray[i] = embedding.get(i).floatValue();
-            }
-            pageItem = fileRepository.findSimilarDocs(user.getId(), embeddingArray, 0.7, mimeType, size, sizeType, pageable);
-        }
+        String searchKeyword = (rawKeyword != null && !rawKeyword.isBlank()) ? rawKeyword.trim() : null;
+        Page<FileItemProjection> pageItem = fileRepository.findExactDocs(user.getId(), searchKeyword, mimeType, size, sizeType, pageable);
         Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
         return items;
     }

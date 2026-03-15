@@ -308,28 +308,23 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description as description, 'OWNER' as permission, d.mime_type as mime_type,
-                   COALESCE(ts_rank_cd(dsi.keywords_tsv, query), 0) AS rank
+                   d.description as description, 'OWNER' as permission, d.mime_type as mime_type
             FROM documents d
             JOIN users u ON d.created_by = u.id
-            LEFT JOIN document_search_index dsi ON dsi.document_id = d.id,
-                 to_tsquery('simple', :keyword) query
             WHERE d.created_by = :userId
               AND d.is_deleted = false
-              AND (:keyword IS NULL OR dsi.keywords_tsv @@ query)
+              AND (:keyword IS NULL OR :keyword = '' OR (d.name ILIKE '%' || :keyword || '%' OR (d.description IS NOT NULL AND d.description ILIKE '%' || :keyword || '%')))
               AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
               AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
                   OR (:sizeType = 'maxSize' AND d.file_size <= :size))
-            ORDER BY rank DESC, d.name ASC
+            ORDER BY d.name ASC
             """,
             countQuery = """
                     SELECT COUNT(*)
                     FROM documents d
-                    LEFT JOIN document_search_index dsi ON dsi.document_id = d.id,
-                         to_tsquery('simple', :keyword) query
                     WHERE d.created_by = :userId
                       AND d.is_deleted = false
-                      AND (:keyword IS NULL OR dsi.keywords_tsv @@ query)
+                      AND (:keyword IS NULL OR :keyword = '' OR (d.name ILIKE '%' || :keyword || '%' OR (d.description IS NOT NULL AND d.description ILIKE '%' || :keyword || '%')))
                       AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
                       AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
                         OR (:sizeType = 'maxSize' AND d.file_size <= :size))
@@ -342,43 +337,5 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                                            @Param("size") Double size,
                                            @Param("sizeType") String sizeType,
                                            Pageable pageable);
-
-    @Query(value = """
-            SELECT d.id AS id, d.name AS name, 'document' AS type,
-                   d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
-                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description as description, 'OWNER' as permission, d.mime_type as mime_type,
-                   1 - (dsi.content_vector <=> CAST(:embedding AS vector)) AS similarity
-            FROM documents d
-            JOIN users u ON d.created_by = u.id
-            JOIN document_search_index dsi ON dsi.document_id = d.id
-            WHERE d.created_by = :userId
-              AND d.is_deleted = false
-              AND (1 - (dsi.content_vector <=> CAST(:embedding AS vector))) >= :minSimilarity
-              AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
-              AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
-                  OR (:sizeType = 'maxSize' AND d.file_size <= :size))
-            ORDER BY similarity DESC, d.name ASC
-            """,
-            countQuery = """
-                    SELECT COUNT(*)
-                    FROM documents d
-                    JOIN document_search_index dsi ON dsi.document_id = d.id
-                    WHERE d.created_by = :userId
-                      AND d.is_deleted = false
-                      AND (1 - (dsi.content_vector <=> CAST(:embedding AS vector))) >= :minSimilarity
-                      AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
-                      AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
-                        OR (:sizeType = 'maxSize' AND d.file_size <= :size))
-                    """,
-            nativeQuery = true
-    )
-    Page<FileItemProjection> findSimilarDocs(@Param("userId") Integer userId,
-                                             @Param("embedding") float[] embedding,
-                                             @Param("minSimilarity") Double minSimilarity,
-                                             @Param("mimeType") String mimeType,
-                                             @Param("size") Double size,
-                                             @Param("sizeType") String sizeType,
-                                             Pageable pageable);
 
 }

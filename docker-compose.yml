@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: pgvector/pgvector:pg17
+    image: postgres:17
     container_name: dms-postgres
     env_file:
       - .env
@@ -8,6 +8,31 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    networks:
+      - dms-network
+
+  rabbitmq:
+    image: rabbitmq:4.2-management
+    container_name: dms-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - dms-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+    container_name: dms-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
     networks:
       - dms-network
 
@@ -23,6 +48,8 @@ services:
     depends_on:
       - postgres
       - python-app
+      - rabbitmq
+      - elasticsearch
     env_file:
       - .env
     networks:
@@ -35,11 +62,29 @@ services:
     container_name: dms-python-app
     ports:
       - "8000:8000"
+    env_file:
+      - .env
+    networks:
+      - dms-network
+
+  python-worker:
+    build:
+      context: ../dms-semantic-service
+      dockerfile: Dockerfile
+    container_name: dms-python-worker
+    depends_on:
+      - rabbitmq
+      - elasticsearch
+    command: ["python", "-m", "app.worker"]
+    env_file:
+      - .env
     networks:
       - dms-network
 
 volumes:
   postgres-data:
+  rabbitmq-data:
+  elasticsearch-data:
 
 networks:
   dms-network:

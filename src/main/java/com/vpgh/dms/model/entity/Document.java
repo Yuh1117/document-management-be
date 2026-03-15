@@ -2,6 +2,7 @@ package com.vpgh.dms.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.FullAuditableEntity;
+import com.vpgh.dms.model.constant.ProcessingStatus;
 import com.vpgh.dms.model.constant.StorageType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -35,9 +36,13 @@ public class Document extends FullAuditableEntity {
     private Boolean isEncrypted = false;
     @Enumerated(EnumType.STRING)
     private StorageType storageType;
-    @Column(columnDefinition = "LONGTEXT", nullable = false)
-    private String extractedText;
     private Boolean isDeleted = false;
+
+    @Enumerated(EnumType.STRING)
+    private ProcessingStatus processingStatus;
+    private Integer ocrQualityScore;
+    @Column(columnDefinition = "TEXT")
+    private String processingError;
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
@@ -48,14 +53,9 @@ public class Document extends FullAuditableEntity {
     private Set<DocumentShare> documentShares;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "document_tag_assignments", joinColumns = @JoinColumn(name = "document_id"),
-            inverseJoinColumns = @JoinColumn(name = "document_tag_id"))
+    @JoinTable(name = "document_tag_assignments", joinColumns = @JoinColumn(name = "document_id"), inverseJoinColumns = @JoinColumn(name = "document_tag_id"))
     @JsonIgnore
     private Set<DocumentTag> tags;
-
-    @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Set<DocumentSearchIndex> documentSearchIndices;
 
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
     @JsonIgnore
@@ -153,20 +153,36 @@ public class Document extends FullAuditableEntity {
         this.storageType = storageType;
     }
 
-    public String getExtractedText() {
-        return extractedText;
-    }
-
-    public void setExtractedText(String extractedText) {
-        this.extractedText = extractedText;
-    }
-
     public Boolean getDeleted() {
         return isDeleted;
     }
 
     public void setDeleted(Boolean deleted) {
         isDeleted = deleted;
+    }
+
+    public ProcessingStatus getProcessingStatus() {
+        return processingStatus;
+    }
+
+    public void setProcessingStatus(ProcessingStatus processingStatus) {
+        this.processingStatus = processingStatus;
+    }
+
+    public Integer getOcrQualityScore() {
+        return ocrQualityScore;
+    }
+
+    public void setOcrQualityScore(Integer ocrQualityScore) {
+        this.ocrQualityScore = ocrQualityScore;
+    }
+
+    public String getProcessingError() {
+        return processingError;
+    }
+
+    public void setProcessingError(String processingError) {
+        this.processingError = processingError;
     }
 
     public Folder getFolder() {
@@ -191,14 +207,6 @@ public class Document extends FullAuditableEntity {
 
     public void setTags(Set<DocumentTag> tags) {
         this.tags = tags;
-    }
-
-    public Set<DocumentSearchIndex> getDocumentSearchIndices() {
-        return documentSearchIndices;
-    }
-
-    public void setDocumentSearchIndices(Set<DocumentSearchIndex> documentSearchIndices) {
-        this.documentSearchIndices = documentSearchIndices;
     }
 
     public Set<DocumentVersion> getVersions() {
