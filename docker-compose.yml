@@ -14,6 +14,11 @@ services:
   rabbitmq:
     image: rabbitmq:4.2-management
     container_name: dms-rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -23,12 +28,21 @@ services:
       - dms-network
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
     container_name: dms-elasticsearch
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'curl -s http://localhost:9200/_cluster/health | grep -vq ''"status":"red"''',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     ports:
       - "9200:9200"
     volumes:
@@ -43,6 +57,7 @@ services:
     container_name: dms-app
     volumes:
       - .:/app
+      - m2-cache:/root/.m2
     ports:
       - "8080:8080"
     depends_on:
@@ -59,23 +74,35 @@ services:
     build:
       context: ../dms-semantic-service
       dockerfile: Dockerfile
+    image: dms-python-service
     container_name: dms-python-app
     ports:
       - "8000:8000"
+    volumes:
+      - ../dms-semantic-service:/app
+      - hf-cache:/cache/huggingface
+      - pip-cache:/root/.cache/pip
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
     env_file:
       - .env
     networks:
       - dms-network
 
   python-worker:
-    build:
-      context: ../dms-semantic-service
-      dockerfile: Dockerfile
+    image: dms-python-service
     container_name: dms-python-worker
-    depends_on:
-      - rabbitmq
-      - elasticsearch
     command: ["python", "-m", "app.worker"]
+    volumes:
+      - ../dms-semantic-service:/app
+      - hf-cache:/cache/huggingface
+      - pip-cache:/root/.cache/pip
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
     env_file:
       - .env
     networks:
@@ -85,6 +112,9 @@ volumes:
   postgres-data:
   rabbitmq-data:
   elasticsearch-data:
+  m2-cache:
+  hf-cache:
+  pip-cache:
 
 networks:
   dms-network:
