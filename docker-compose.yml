@@ -63,11 +63,11 @@ services:
     networks:
       - dms-network
 
-  springboot:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: dms-springboot
+    container_name: dms-backend
     volumes:
       - .:/app
       - m2-cache:/root/.m2
@@ -75,7 +75,7 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
-      - fastapi-processor
+      - processor
       - rabbitmq
       - elasticsearch
     env_file:
@@ -83,11 +83,11 @@ services:
     networks:
       - dms-network
 
-  fastapi-processor:
+  processor:
     build:
       context: ../document-management-processor
       dockerfile: Dockerfile
-    image: document-management-fastapi
+    image: document-management-processor
     container_name: dms-processor
     ports:
       - "8000:8000"
@@ -103,8 +103,8 @@ services:
     networks:
       - dms-network
 
-  fastapi-worker:
-    image: document-management-fastapi
+  worker:
+    image: document-management-processor
     container_name: dms-worker
     command: ["python", "-m", "app.worker"]
     volumes:
