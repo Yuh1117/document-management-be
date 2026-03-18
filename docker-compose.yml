@@ -54,7 +54,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: dms-app
+    container_name: dms-springboot
     volumes:
       - .:/app
       - m2-cache:/root/.m2
@@ -62,7 +62,7 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
-      - python-app
+      - fastapi-processor
       - rabbitmq
       - elasticsearch
     env_file:
@@ -70,16 +70,16 @@ services:
     networks:
       - dms-network
 
-  python-app:
+  fastapi-processor:
     build:
-      context: ../dms-semantic-service
+      context: ../document-management-processor
       dockerfile: Dockerfile
-    image: dms-python-service
-    container_name: dms-python-app
+    image: document-management-fastapi
+    container_name: dms-processor
     ports:
       - "8000:8000"
     volumes:
-      - ../dms-semantic-service:/app
+      - ../document-management-processor:/app
       - hf-cache:/cache/huggingface
       - pip-cache:/root/.cache/pip
     depends_on:
@@ -90,12 +90,12 @@ services:
     networks:
       - dms-network
 
-  python-worker:
-    image: dms-python-service
-    container_name: dms-python-worker
+  fastapi-worker:
+    image: document-management-fastapi
+    container_name: dms-worker
     command: ["python", "-m", "app.worker"]
     volumes:
-      - ../dms-semantic-service:/app
+      - ../document-management-processor:/app
       - hf-cache:/cache/huggingface
       - pip-cache:/root/.cache/pip
     depends_on:
