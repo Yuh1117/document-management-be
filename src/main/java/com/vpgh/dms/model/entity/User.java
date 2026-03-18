@@ -97,10 +97,6 @@ public class User extends TimestampedEntity {
     @JsonIgnore
     private Set<DocumentShare> updatedDocumentShares;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Set<AccessLog> accessLogs;
-
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<DocumentTag> createdTags;
@@ -314,14 +310,6 @@ public class User extends TimestampedEntity {
 
     public void setUpdatedDocumentShares(Set<DocumentShare> updatedDocumentShares) {
         this.updatedDocumentShares = updatedDocumentShares;
-    }
-
-    public Set<AccessLog> getAccessLogs() {
-        return accessLogs;
-    }
-
-    public void setAccessLogs(Set<AccessLog> accessLogs) {
-        this.accessLogs = accessLogs;
     }
 
     public Set<DocumentTag> getCreatedTags() {

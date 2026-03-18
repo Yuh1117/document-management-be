@@ -102,7 +102,7 @@ public class DocumentServiceImpl implements DocumentService {
 
         Document saved = this.documentRepository.save(existingDoc);
 
-        saved.setProcessingStatus(ProcessingStatus.PENDING);
+        saved.setProcessingStatus(ProcessingStatus.PROCESSING);
         saved.setProcessingError(null);
         saved.setOcrQualityScore(null);
         Document updated = this.documentRepository.save(saved);
@@ -334,7 +334,7 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setStorageType(StorageType.AWS_S3);
         doc.setFolder(folder);
 
-        doc.setProcessingStatus(ProcessingStatus.PENDING);
+        doc.setProcessingStatus(ProcessingStatus.PROCESSING);
         doc.setProcessingError(null);
         doc.setOcrQualityScore(null);
 

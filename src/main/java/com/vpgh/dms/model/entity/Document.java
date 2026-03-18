@@ -61,10 +61,6 @@ public class Document extends FullAuditableEntity {
     @JsonIgnore
     private Set<DocumentVersion> versions;
 
-    @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Set<AccessLog> accessLogs;
-
     public Integer getId() {
         return id;
     }
