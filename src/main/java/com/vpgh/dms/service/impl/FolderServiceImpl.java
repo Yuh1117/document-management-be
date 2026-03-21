@@ -15,7 +15,6 @@ import com.vpgh.dms.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,8 +33,8 @@ public class FolderServiceImpl implements FolderService {
     @Value("${aws.bucket.name}")
     private String bucketName;
 
-    public FolderServiceImpl(FolderRepository folderRepository, DocumentRepository documentRepository, DocumentService documentService,
-                             UserService userService, S3Client s3Client) {
+    public FolderServiceImpl(FolderRepository folderRepository, DocumentRepository documentRepository,
+            DocumentService documentService, UserService userService) {
         this.folderRepository = folderRepository;
         this.documentRepository = documentRepository;
         this.documentService = documentService;
@@ -59,10 +58,11 @@ public class FolderServiceImpl implements FolderService {
     }
 
     @Override
-    public boolean existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, Integer id) {
-        return this.folderRepository.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(name, createdBy, id);
+    public boolean existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy,
+            Integer id) {
+        return this.folderRepository.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(name, createdBy,
+                id);
     }
-
 
     @Override
     public Folder save(Folder folder) {
@@ -221,12 +221,14 @@ public class FolderServiceImpl implements FolderService {
         dto.setName(folder.getName());
         dto.setDeleted(folder.getDeleted());
         dto.setInheritPermissions(folder.getInheritPermissions());
-        dto.setDocuments(new HashSet<>(this.documentService.convertDocumentsToDocumentDTOs(new ArrayList<>(folder.getDocuments()))));
+        dto.setDocuments(new HashSet<>(
+                this.documentService.convertDocumentsToDocumentDTOs(new ArrayList<>(folder.getDocuments()))));
         dto.setFolders(new HashSet<>(convertFoldersToSubFolderDTOs(new ArrayList<>(folder.getFolders()))));
         dto.setCreatedAt(folder.getCreatedAt());
         dto.setUpdatedAt(folder.getUpdatedAt());
         dto.setCreatedBy(this.userService.convertUserToUserDTO(folder.getCreatedBy()));
-        dto.setUpdatedBy(folder.getUpdatedBy() != null ? this.userService.convertUserToUserDTO(folder.getUpdatedBy()) : null);
+        dto.setUpdatedBy(
+                folder.getUpdatedBy() != null ? this.userService.convertUserToUserDTO(folder.getUpdatedBy()) : null);
 
         return dto;
     }
@@ -246,7 +248,8 @@ public class FolderServiceImpl implements FolderService {
         dto.setCreatedAt(folder.getCreatedAt());
         dto.setUpdatedAt(folder.getUpdatedAt());
         dto.setCreatedBy(this.userService.convertUserToUserDTO(folder.getCreatedBy()));
-        dto.setUpdatedBy(folder.getUpdatedBy() != null ? this.userService.convertUserToUserDTO(folder.getUpdatedBy()) : null);
+        dto.setUpdatedBy(
+                folder.getUpdatedBy() != null ? this.userService.convertUserToUserDTO(folder.getUpdatedBy()) : null);
         return dto;
     }
 
@@ -288,7 +291,8 @@ public class FolderServiceImpl implements FolderService {
     }
 
     @Override
-    public Folder uploadNewFolder(Folder parentFolder, List<MultipartFile> files, List<String> relativePaths) throws IOException {
+    public Folder uploadNewFolder(Folder parentFolder, List<MultipartFile> files, List<String> relativePaths)
+            throws IOException {
         Folder rootFolder = null;
 
         for (int i = 0; i < files.size(); i++) {
@@ -343,7 +347,6 @@ public class FolderServiceImpl implements FolderService {
 
         return result;
     }
-
 
     private String generateUniqueName(String originalName, Folder targetFolder) {
         String baseName = originalName.replaceAll("\\s*\\(\\d+\\)$", "");

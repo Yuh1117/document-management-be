@@ -276,28 +276,10 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public void moveDocument(Document doc, Folder targetFolder) {
-        String oldKey = extractKeyFromPath(doc.getFilePath());
-        String folderPath = buildS3FolderPath(targetFolder);
-        String storedFilename = doc.getStoredFilename();
-        String newKey = buildS3Key(folderPath, storedFilename);
-
-        s3Client.copyObject(CopyObjectRequest.builder()
-                .sourceBucket(bucketName)
-                .sourceKey(oldKey)
-                .destinationBucket(bucketName)
-                .destinationKey(newKey)
-                .build());
-
-        s3Client.deleteObject(DeleteObjectRequest.builder()
-                .bucket(bucketName)
-                .key(oldKey)
-                .build());
-
         String newName = doc.getName();
         if (!Objects.equals(doc.getFolder(), targetFolder)) {
             newName = generateUniqueName(doc.getName(), targetFolder);
         }
-        doc.setFilePath(buildS3Uri(newKey));
         doc.setFolder(targetFolder);
         doc.setName(newName);
 
@@ -424,16 +406,8 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private String buildS3FolderPath(Folder folder) {
-        List<String> parts = new ArrayList<>();
-        parts.add(folder != null ? folder.getCreatedBy().getEmail()
-                : SecurityUtil.getCurrentUserFromThreadLocal().getEmail());
-
-        while (folder != null) {
-            parts.add(folder.getName());
-            folder = folder.getParent();
-        }
-        Collections.reverse(parts.subList(1, parts.size()));
-        return String.join("/", parts);
+        return folder != null ? folder.getCreatedBy().getEmail()
+                : SecurityUtil.getCurrentUserFromThreadLocal().getEmail();
     }
 
     private String extractKeyFromPath(String s3Path) {
