@@ -19,6 +19,12 @@ import java.lang.reflect.Type;
 @RestControllerAdvice
 public class FormatCustomResponse implements ResponseBodyAdvice<Object> {
 
+    private final LocalizedApiMessageResolver apiMessageResolver;
+
+    public FormatCustomResponse(LocalizedApiMessageResolver apiMessageResolver) {
+        this.apiMessageResolver = apiMessageResolver;
+    }
+
     @Override
     public boolean supports(MethodParameter returnType, Class converterType) {
         Class<?> paramType = returnType.getParameterType();
@@ -58,7 +64,7 @@ public class FormatCustomResponse implements ResponseBodyAdvice<Object> {
         }
 
         if (status < 400) {
-            res.setMessage(ApiMessageUtil.getSuccessMessage(apiMessage));
+            res.setMessage(apiMessageResolver.getSuccessMessage(apiMessage));
             if (body instanceof DataResponse<?> data) {
                 res.setData(data.getContent());
             } else {
@@ -66,9 +72,9 @@ public class FormatCustomResponse implements ResponseBodyAdvice<Object> {
             }
         } else {
             if (status == 500) {
-                res.setMessage("Internal server error");
+                res.setMessage(apiMessageResolver.getInternalServerErrorMessage());
             } else {
-                res.setMessage(ApiMessageUtil.getFailedMessage(apiMessage));
+                res.setMessage(apiMessageResolver.getFailedMessage(apiMessage));
             }
             if (body instanceof DataResponse<?> err) {
                 res.setError(err.getContent());
