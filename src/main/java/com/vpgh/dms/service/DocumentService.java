@@ -1,5 +1,6 @@
 package com.vpgh.dms.service;
 
+import com.vpgh.dms.model.constant.ProcessingStatus;
 import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.Folder;
@@ -17,7 +18,7 @@ public interface DocumentService {
 
     Document uploadKeepBothFiles(MultipartFile file, Folder folder) throws IOException;
 
-//    byte[] downloadFile(String key);
+    // byte[] downloadFile(String key);
 
     InputStream downloadFileStream(String filePath);
 
@@ -58,4 +59,7 @@ public interface DocumentService {
     String generateSignedUrl(Document doc, int expiryInMinutes);
 
     boolean isOwnerDocument(Document doc, User user);
+
+    void updateProcessingStatus(Integer documentId, ProcessingStatus status, Integer ocrQualityScore,
+            String processingError);
 }

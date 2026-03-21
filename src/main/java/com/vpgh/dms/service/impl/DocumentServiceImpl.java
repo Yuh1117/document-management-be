@@ -16,6 +16,7 @@ import com.vpgh.dms.util.SecurityUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -47,9 +48,10 @@ public class DocumentServiceImpl implements DocumentService {
     private String bucketName;
     private static final String ROOT_FOLDER_PREFIX = "root";
 
-    public DocumentServiceImpl(S3Presigner s3Presigner, S3Client s3Client, DocumentVersionRepository documentVersionRepository,
-                               UserService userService, DocumentRepository documentRepository,
-                               DocumentQueuePublisher documentQueuePublisher) {
+    public DocumentServiceImpl(S3Presigner s3Presigner, S3Client s3Client,
+            DocumentVersionRepository documentVersionRepository,
+            UserService userService, DocumentRepository documentRepository,
+            DocumentQueuePublisher documentQueuePublisher) {
         this.s3Presigner = s3Presigner;
         this.s3Client = s3Client;
         this.documentVersionRepository = documentVersionRepository;
@@ -61,6 +63,20 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public Document save(Document document) {
         return this.documentRepository.save(document);
+    }
+
+    @Override
+    @Transactional
+    public void updateProcessingStatus(Integer documentId, ProcessingStatus status, Integer ocrQualityScore,
+            String processingError) {
+        Document doc = this.documentRepository.findById(documentId).orElse(null);
+        if (doc == null) {
+            return;
+        }
+        doc.setProcessingStatus(status);
+        doc.setOcrQualityScore(ocrQualityScore);
+        doc.setProcessingError(processingError);
+        this.documentRepository.save(doc);
     }
 
     @Override
@@ -118,16 +134,16 @@ public class DocumentServiceImpl implements DocumentService {
         return saveNewDocument(file, folder, uniqueName);
     }
 
-
-//    @Override
-//    public byte[] downloadFile(String filePath) {
-//        String key = extractKeyFromPath(filePath);
-//        ResponseBytes<GetObjectResponse> objectAsBytes = s3Client.getObjectAsBytes(GetObjectRequest.builder()
-//                .bucket(bucketName)
-//                .key(key)
-//                .build());
-//        return objectAsBytes.asByteArray();
-//    }
+    // @Override
+    // public byte[] downloadFile(String filePath) {
+    // String key = extractKeyFromPath(filePath);
+    // ResponseBytes<GetObjectResponse> objectAsBytes =
+    // s3Client.getObjectAsBytes(GetObjectRequest.builder()
+    // .bucket(bucketName)
+    // .key(key)
+    // .build());
+    // return objectAsBytes.asByteArray();
+    // }
 
     @Override
     public InputStream downloadFileStream(String filePath) {
@@ -137,7 +153,6 @@ public class DocumentServiceImpl implements DocumentService {
                 .key(key)
                 .build());
     }
-
 
     @Override
     public void hardDelete(Document doc) {
@@ -202,8 +217,10 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public boolean existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, Integer id) {
-        return this.documentRepository.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(name, createdBy, id);
+    public boolean existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy,
+            Integer id) {
+        return this.documentRepository.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(name, createdBy,
+                id);
     }
 
     @Override
@@ -213,7 +230,8 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public Document findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(String name, User createdBy) {
-        return this.documentRepository.findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(name, createdBy).orElse(null);
+        return this.documentRepository.findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(name, createdBy)
+                .orElse(null);
     }
 
     @Override
@@ -367,9 +385,9 @@ public class DocumentServiceImpl implements DocumentService {
 
     private void uploadToS3(String key, InputStream inputStream, long size) throws IOException {
         s3Client.putObject(PutObjectRequest.builder()
-                        .bucket(bucketName)
-                        .key(key)
-                        .build(),
+                .bucket(bucketName)
+                .key(key)
+                .build(),
                 RequestBody.fromInputStream(inputStream, size));
     }
 
@@ -407,7 +425,8 @@ public class DocumentServiceImpl implements DocumentService {
 
     private String buildS3FolderPath(Folder folder) {
         List<String> parts = new ArrayList<>();
-        parts.add(folder != null ? folder.getCreatedBy().getEmail() : SecurityUtil.getCurrentUserFromThreadLocal().getEmail());
+        parts.add(folder != null ? folder.getCreatedBy().getEmail()
+                : SecurityUtil.getCurrentUserFromThreadLocal().getEmail());
 
         while (folder != null) {
             parts.add(folder.getName());

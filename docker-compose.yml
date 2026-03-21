@@ -106,6 +106,7 @@ services:
   worker:
     image: document-management-processor
     container_name: dms-worker
+    restart: unless-stopped
     command: ["python", "-m", "app.worker"]
     volumes:
       - ../document-management-processor:/app
