@@ -1,8 +1,23 @@
 package com.vpgh.dms.util.exception;
 
-public class ForbiddenException extends RuntimeException {
-    public ForbiddenException(String message) {
-        super(message);
+public class ForbiddenException extends RuntimeException implements LocalizableException {
+
+    private final String messageCode;
+    private final Object[] messageArgs;
+
+    public ForbiddenException(String messageCode, Object... messageArgs) {
+        super(messageCode);
+        this.messageCode = messageCode;
+        this.messageArgs = messageArgs != null ? messageArgs : new Object[0];
+    }
+
+    @Override
+    public String getMessageCode() {
+        return messageCode;
+    }
+
+    @Override
+    public Object[] getMessageArgs() {
+        return messageArgs;
     }
 }
-

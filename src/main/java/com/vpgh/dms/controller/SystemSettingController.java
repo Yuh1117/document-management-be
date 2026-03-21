@@ -33,14 +33,14 @@ public class SystemSettingController {
     }
 
     @PostMapping(path = "/admin/settings")
-    @ApiMessage(message = "Tạo mới cài đặt")
+    @ApiMessage(key = "api.setting.create", message = "Create setting")
     public ResponseEntity<SystemSetting> create(@RequestBody @Valid SystemSettingDTO reqSetting) {
         SystemSetting setting = this.systemSettingService.handleCreateSetting(reqSetting);
         return ResponseEntity.status(HttpStatus.CREATED).body(this.systemSettingService.save(setting));
     }
 
     @GetMapping(path = "/admin/settings")
-    @ApiMessage(message = "Lấy danh sách cài đặt")
+    @ApiMessage(key = "api.setting.list", message = "List settings")
     public ResponseEntity<PaginationResDTO<List<SystemSetting>>> list(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
@@ -59,11 +59,11 @@ public class SystemSettingController {
     }
 
     @GetMapping(path = "/admin/settings/{id}")
-    @ApiMessage(message = "Lấy chi tiết cài đặt")
+    @ApiMessage(key = "api.setting.detail", message = "Get setting details")
     public ResponseEntity<SystemSetting> detail(@PathVariable(value = "id") Integer id) {
         SystemSetting setting = this.systemSettingService.getSettingById(id);
         if (setting == null) {
-            throw new NotFoundException("Không tìm thấy cài đặt");
+            throw new NotFoundException("error.setting.notFound");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(setting);
@@ -71,13 +71,13 @@ public class SystemSettingController {
 
 
     @PatchMapping(path = "/admin/settings/{id}")
-    @ApiMessage(message = "Cập nhật cài đặt")
+    @ApiMessage(key = "api.setting.update", message = "Update setting")
     public ResponseEntity<SystemSetting> update(@PathVariable("id") Integer id,
                                                 @RequestBody SystemSettingDTO reqSetting) {
 
         SystemSetting setting = this.systemSettingService.getSettingById(id);
         if (setting == null) {
-            throw new NotFoundException("Không tìm thấy cài đặt");
+            throw new NotFoundException("error.setting.notFound");
         }
 
         reqSetting.setId(setting.getId());
@@ -97,11 +97,11 @@ public class SystemSettingController {
     }
 
     @DeleteMapping(path = "/admin/settings/{id}")
-    @ApiMessage(message = "Xóa cài đặt")
+    @ApiMessage(key = "api.setting.delete", message = "Delete setting")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
         SystemSetting setting = this.systemSettingService.getSettingById(id);
         if (setting == null) {
-            throw new NotFoundException("Không tìm thấy cài đặt");
+            throw new NotFoundException("error.setting.notFound");
         }
 
         this.systemSettingService.deleteSettingById(setting.getId());

@@ -34,14 +34,14 @@ public class PermissionController {
     }
 
     @PostMapping(path = "/admin/permissions")
-    @ApiMessage(message = "Tạo mới quyền")
+    @ApiMessage(key = "api.permission.create", message = "Create permission")
     public ResponseEntity<Permission> create(@RequestBody @Valid PermissionDTO reqPermission) {
         Permission permission = this.permissionService.handleCreatePermission(reqPermission);
         return ResponseEntity.status(HttpStatus.CREATED).body(permission);
     }
 
     @GetMapping(path = "/admin/permissions")
-    @ApiMessage(message = "Lấy danh sách quyền")
+    @ApiMessage(key = "api.permission.list", message = "List permissions")
     public ResponseEntity<PaginationResDTO<List<Permission>>> list(@RequestParam Map<String, String> params) {
         if (params.get("all") != null && "true".equalsIgnoreCase(params.get("all"))) {
             params = null;
@@ -64,24 +64,24 @@ public class PermissionController {
     }
 
     @GetMapping(path = "/admin/permissions/{id}")
-    @ApiMessage(message = "Lấy chi tiết quyền")
+    @ApiMessage(key = "api.permission.detail", message = "Get permission details")
     public ResponseEntity<Permission> detail(@PathVariable(value = "id") Integer id) {
         Permission permission = this.permissionService.getPermissionById(id);
         if (permission == null) {
-            throw new NotFoundException("Không tìm thấy quyền");
+            throw new NotFoundException("error.permission.notFound");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(permission);
     }
 
     @PatchMapping(path = "/admin/permissions/{id}")
-    @ApiMessage(message = "Cập nhật quyền")
+    @ApiMessage(key = "api.permission.update", message = "Update permission")
     public ResponseEntity<Permission> update(@PathVariable("id") Integer id,
                                              @RequestBody PermissionDTO reqPermission) {
 
         Permission permission = this.permissionService.getPermissionById(id);
         if (permission == null) {
-            throw new NotFoundException("Không tìm thấy quyền");
+            throw new NotFoundException("error.permission.notFound");
         }
 
         reqPermission.setId(permission.getId());
@@ -101,17 +101,17 @@ public class PermissionController {
     }
 
     @DeleteMapping(path = "/admin/permissions/{id}")
-    @ApiMessage(message = "Xóa quyền")
+    @ApiMessage(key = "api.permission.delete", message = "Delete permission")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
         Permission permission = this.permissionService.getPermissionById(id);
         if (permission == null) {
-            throw new NotFoundException("Không tìm thấy quyền");
+            throw new NotFoundException("error.permission.notFound");
         }
 
         try {
             this.permissionService.deletePermissionById(permission.getId());
         } catch (DataIntegrityViolationException ex) {
-            throw new DataConflictException("Không thể xóa quyền này!");
+            throw new DataConflictException("error.permission.cannotDelete");
         }
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.web.multipart.MultipartFile;
 
 public class ExtractDataReq {
-    @NotNull(message = "Tệp không được để trống")
+    @NotNull(message = "{validation.file.notNull}")
     private MultipartFile file;
     private String password;
 

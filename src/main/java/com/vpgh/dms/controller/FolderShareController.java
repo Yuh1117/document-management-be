@@ -33,12 +33,12 @@ public class FolderShareController {
     }
 
     @PostMapping("/secure/folders/share")
-    @ApiMessage(message = "Tạo mới chia sẻ folder")
+    @ApiMessage(key = "api.folderShare.create", message = "Create folder share")
     public ResponseEntity<List<FolderShare>> share(@Valid @RequestBody ShareReq shareReq) throws MessagingException {
         Folder folder = folderService.getFolderById(shareReq.getFolderId());
 
         if (!folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
-            throw new ForbiddenException("Bạn không có quyền chia sẻ thư mục này");
+            throw new ForbiddenException("error.forbidden.noFolderSharePermission");
         }
 
         List<FolderShare> res = folderShareService.shareFolder(folder, shareReq.getShares());
@@ -46,35 +46,35 @@ public class FolderShareController {
     }
 
     @GetMapping("/secure/folders/share/{id}")
-    @ApiMessage(message = "Xem chi tiết chia sẻ folder")
+    @ApiMessage(key = "api.folderShare.detail", message = "View folder share details")
     public ResponseEntity<List<FolderShare>> getShare(@PathVariable Integer id) {
         Folder folder = folderService.getFolderById(id);
         if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
-            throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa.");
+            throw new NotFoundException("error.folder.notFoundOrDeleted");
         }
 
         if (!folderShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
-            throw new ForbiddenException("Bạn không có quyền xem.");
+            throw new ForbiddenException("error.forbidden.view");
         }
 
         return ResponseEntity.ok(folderShareService.getShares(folder));
     }
 
     @DeleteMapping("/secure/folders/share/{id}")
-    @ApiMessage(message = "Xóa quyền chia sẻ folder")
+    @ApiMessage(key = "api.folderShare.delete", message = "Remove folder share permission")
     public ResponseEntity<Void> unshare(@PathVariable Integer id, @RequestBody List<Integer> request) {
         Folder folder = folderService.getFolderById(id);
         if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
-            throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa.");
+            throw new NotFoundException("error.folder.notFoundOrDeleted");
         }
 
         if (!folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
-            throw new ForbiddenException("Bạn không có quyền chỉnh sửa chia sẻ.");
+            throw new ForbiddenException("error.forbidden.shareEdit");
         }
 
         List<User> users = userService.getAllByIds(request);
         if (users.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy người dùng.");
+            throw new NotFoundException("error.user.notFoundWithDot");
         }
 
         folderShareService.removeShares(folder, users);

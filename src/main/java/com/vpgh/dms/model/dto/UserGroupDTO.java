@@ -12,7 +12,7 @@ import java.util.List;
 public class UserGroupDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Integer id;
-    @NotBlank(message = "Tên không được để trống")
+    @NotBlank(message = "{validation.userGroup.name.notBlank}")
     private String name;
     private String description;
     List<MemberDTO> members;

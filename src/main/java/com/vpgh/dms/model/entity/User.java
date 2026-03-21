@@ -18,18 +18,18 @@ public class User extends TimestampedEntity {
     private Integer id;
 
     @Column(unique = true, nullable = false)
-    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Email không hợp lệ!")
-    @NotBlank(message = "Email không được để trống")
+    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "{validation.user.email.invalid}")
+    @NotBlank(message = "{validation.user.email.notBlank}")
     private String email;
     @Column(nullable = false)
-    @NotBlank(message = "Mật khẩu không được để trống")
+    @NotBlank(message = "{validation.user.password.notBlank}")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     @Column(nullable = false)
-    @NotBlank(message = "Tên không được để trống")
+    @NotBlank(message = "{validation.user.firstName.notBlank}")
     private String firstName;
     @Column(nullable = false)
-    @NotBlank(message = "Họ không được để trống")
+    @NotBlank(message = "{validation.user.lastName.notBlank}")
     private String lastName;
     private String avatar;
 

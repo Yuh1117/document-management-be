@@ -7,15 +7,15 @@ import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.multipart.MultipartFile;
 
 public class UserSignupReqDTO {
-    @NotBlank(message = "Tên không được để trống")
+    @NotBlank(message = "{validation.user.firstName.notBlank}")
     private String firstName;
-    @NotBlank(message = "Họ không được để trống")
+    @NotBlank(message = "{validation.user.lastName.notBlank}")
     private String lastName;
-    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Email không hợp lệ!")
-    @NotBlank(message = "Email không được để trống")
-    @Unique(entity = User.class, field = "email", message = "Email đã tồn tại")
+    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "{validation.user.email.invalid}")
+    @NotBlank(message = "{validation.user.email.notBlank}")
+    @Unique(entity = User.class, field = "email", message = "{validation.user.email.unique}")
     private String email;
-    @NotBlank(message = "Mật khẩu không được để trống")
+    @NotBlank(message = "{validation.user.password.notBlank}")
     private String password;
     private MultipartFile file;
 

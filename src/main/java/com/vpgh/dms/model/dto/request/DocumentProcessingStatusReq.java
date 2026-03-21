@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 public class DocumentProcessingStatusReq {
 
-    @NotNull(message = "Processing status không được để trống")
+    @NotNull(message = "{validation.document.processingStatus.notNull}")
     private ProcessingStatus processingStatus;
     private Integer ocrQualityScore;
     private String processingError;

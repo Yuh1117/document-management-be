@@ -45,7 +45,7 @@ public class FileController {
     }
 
     @GetMapping(path = "/secure/files/my-files")
-    @ApiMessage(message = "Lấy files của tôi")
+    @ApiMessage(key = "api.file.myFiles", message = "Get my files")
     public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getMyFiles(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
@@ -64,7 +64,7 @@ public class FileController {
     }
 
     @GetMapping(path = "/secure/files/trash")
-    @ApiMessage(message = "Lấy files trong thùng rác")
+    @ApiMessage(key = "api.file.trash", message = "Get files in trash")
     public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getTrashFiles(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
@@ -83,7 +83,7 @@ public class FileController {
     }
 
     @GetMapping(path = "/secure/files/search")
-    @ApiMessage(message = "Tìm kiếm")
+    @ApiMessage(key = "api.file.search", message = "Search")
     public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> search(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
@@ -102,7 +102,7 @@ public class FileController {
     }
 
     @GetMapping(path = "/secure/files/advanced-search")
-    @ApiMessage(message = "Tìm kiếm nâng cao")
+    @ApiMessage(key = "api.file.advancedSearch", message = "Advanced search")
     public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> advancedSearch(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
@@ -121,17 +121,17 @@ public class FileController {
     }
 
     @GetMapping("/secure/files/folders/{id}")
-    @ApiMessage(message = "Lấy files trong folder")
+    @ApiMessage(key = "api.file.inFolder", message = "Get files in folder")
     public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getFolderFiles(@PathVariable("id") Integer id,
                                                                               @RequestParam Map<String, String> params) {
         Folder folder = this.folderService.getFolderById(id);
         if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
-            throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+            throw new NotFoundException("error.folder.notFoundOrDeleted");
         }
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         if (!this.folderShareService.checkCanView(currentUser, folder)) {
-            throw new ForbiddenException("Bạn không có quyền xem thư mục này");
+            throw new ForbiddenException("error.forbidden.viewFolder");
         }
 
         String page = params.get("page");
@@ -151,7 +151,7 @@ public class FileController {
     }
 
     @GetMapping(path = "/secure/files/shared")
-    @ApiMessage(message = "Lấy files được chia sẻ")
+    @ApiMessage(key = "api.file.shared", message = "Get shared files")
     public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getSharedFiles(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
@@ -170,7 +170,7 @@ public class FileController {
     }
 
     @GetMapping(path = "/secure/files/recent")
-    @ApiMessage(message = "Lấy files gần đây")
+    @ApiMessage(key = "api.file.recent", message = "Get recent files")
     public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getRecentFiles(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
@@ -208,7 +208,7 @@ public class FileController {
                 .toList();
 
         if (!notFoundFolders.isEmpty() || !notFoundDocs.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy: folderIds=" + notFoundFolders + ", docIds=" + notFoundDocs);
+            throw new NotFoundException("error.file.notFoundMixed", notFoundFolders, notFoundDocs);
         }
 
         StreamingResponseBody stream = outputStream -> {
@@ -234,13 +234,13 @@ public class FileController {
     }
 
     @DeleteMapping("/secure/files/permanent")
-    @ApiMessage(message = "Dọn sạch thùng rác")
+    @ApiMessage(key = "api.file.emptyTrash", message = "Empty trash")
     public ResponseEntity<Void> cleanTrash() {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         List<FileItemDTO> files = this.fileService.getAllTrashFiles(currentUser);
 
         if (files.isEmpty()) {
-            throw new NotFoundException("Thùng rác không có rác.");
+            throw new NotFoundException("error.trash.empty");
         }
 
         List<Integer> folderIds = files.stream().filter(f -> "folder".equals(f.getType()) && f.getFolder() != null)

@@ -4,11 +4,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 public class SignedUrlRequest {
-    @NotNull(message = "documentId không được để trống")
+    @NotNull(message = "{validation.signedUrl.documentId.notNull}")
     private Integer documentId;
 
-    @NotNull(message = "expiredTime không được để trống")
-    @Pattern(regexp = "3|5|10", message = "expiredTime chỉ được phép là 3, 5 hoặc 10 phút")
+    @NotNull(message = "{validation.signedUrl.expiredTime.notNull}")
+    @Pattern(regexp = "3|5|10", message = "{validation.signedUrl.expiredTime.pattern}")
     private String expiredTime;
 
     public Integer getDocumentId() {

@@ -54,7 +54,7 @@ public class DocumentController {
     }
 
     @PostMapping(path = "/secure/documents/upload")
-    @ApiMessage(message = "Upload tài liệu")
+    @ApiMessage(key = "api.document.upload", message = "Upload document")
     public ResponseEntity<Map<String, Object>> upload(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
@@ -62,10 +62,10 @@ public class DocumentController {
         if (fileUploadReq.getFolderId() != null) {
             folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
             if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
-                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+                throw new NotFoundException("error.folder.notFoundOrDeleted");
             }
             if (!this.folderShareService.checkCanEdit(currentUser, folder)) {
-                throw new ForbiddenException("Bạn không có quyền upload tài liệu tại vị trí này");
+                throw new ForbiddenException("error.forbidden.uploadDocumentHere");
             }
         }
 
@@ -104,16 +104,16 @@ public class DocumentController {
 
 
     @PostMapping(path = "/secure/documents/upload-replace")
-    @ApiMessage(message = "Upload và thay thế")
+    @ApiMessage(key = "api.document.uploadReplace", message = "Upload and replace")
     public ResponseEntity<List<Document>> uploadReplace(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
         Folder folder = null;
         if (fileUploadReq.getFolderId() != null) {
             folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
             if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
-                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+                throw new NotFoundException("error.folder.notFoundOrDeleted");
             }
             if (!this.folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
-                throw new ForbiddenException("Bạn không có quyền upload tài liệu tại vị trí này");
+                throw new ForbiddenException("error.forbidden.uploadDocumentHere");
             }
         }
 
@@ -125,13 +125,13 @@ public class DocumentController {
             if (folder != null) {
                 existingDoc = documentService.findByNameAndFolderAndIsDeletedFalse(filename, folder);
                 if (existingDoc == null) {
-                    throw new NotFoundException("Không tìm thấy file trong thư mục để thay thế: " + filename);
+                    throw new NotFoundException("error.document.replace.notInFolder", filename);
                 }
             } else {
                 existingDoc = documentService.findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(
                         filename, SecurityUtil.getCurrentUserFromThreadLocal());
                 if (existingDoc == null) {
-                    throw new NotFoundException("Không tìm thấy file để thay thể: " + filename);
+                    throw new NotFoundException("error.document.replace.notFound", filename);
                 }
             }
 
@@ -143,16 +143,16 @@ public class DocumentController {
     }
 
     @PostMapping(path = "/secure/documents/upload-keep")
-    @ApiMessage(message = "Upload và giữ cả 2")
+    @ApiMessage(key = "api.document.uploadKeepBoth", message = "Upload and keep both")
     public ResponseEntity<List<Document>> uploadKeep(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
         Folder folder = null;
         if (fileUploadReq.getFolderId() != null) {
             folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
             if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
-                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+                throw new NotFoundException("error.folder.notFoundOrDeleted");
             }
             if (!this.folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
-                throw new ForbiddenException("Bạn không có quyền upload tài liệu tại vị trí này");
+                throw new ForbiddenException("error.forbidden.uploadDocumentHere");
             }
         }
 
@@ -166,25 +166,25 @@ public class DocumentController {
 
 
     @PatchMapping("/secure/documents/{id}")
-    @ApiMessage(message = "Cập nhật tài liệu")
+    @ApiMessage(key = "api.document.update", message = "Update document")
     public ResponseEntity<DocumentDTO> update(@PathVariable Integer id, @Valid @RequestBody Document request) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xoá.");
+            throw new NotFoundException("error.document.notFoundOrDeleted");
         }
 
         if (!this.documentShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("Bạn không có quyền chỉnh sửa tài liệu này");
+            throw new ForbiddenException("error.forbidden.editDocument");
         }
 
         if (doc.getFolder() != null) {
             if (documentService.existsByNameAndFolderAndIsDeletedFalseAndIdNot(request.getName(), doc.getFolder(), doc.getId())) {
-                throw new UniqueConstraintException("Không thể đổi tên này trong cùng thư mục.");
+                throw new UniqueConstraintException("error.unique.renameInParent");
             }
         } else {
             if (documentService.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(request.getName(),
                     SecurityUtil.getCurrentUserFromThreadLocal(), doc.getId())) {
-                throw new UniqueConstraintException("Không thể đổi tên này trong thư mục gốc.");
+                throw new UniqueConstraintException("error.unique.renameInRoot");
             }
         }
 
@@ -196,11 +196,11 @@ public class DocumentController {
     public ResponseEntity<InputStreamResource> download(@PathVariable Integer id) {
         Document doc = this.documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xoá");
+            throw new NotFoundException("error.document.notFoundOrDeleted");
         }
 
         if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("Bạn không có quyền tải tài liệu này");
+            throw new ForbiddenException("error.forbidden.downloadDocument");
         }
 
         InputStream inputStream = documentService.downloadFileStream(doc.getFilePath());
@@ -223,7 +223,7 @@ public class DocumentController {
         List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy tài liệu với các ID (hoặc đã bị xóa mềm): " + notFoundIds);
+            throw new NotFoundException("error.document.idsSoftDeleted", notFoundIds);
         }
 
         StreamingResponseBody stream = outputStream -> {
@@ -246,7 +246,7 @@ public class DocumentController {
     }
 
     @PatchMapping("/secure/documents")
-    @ApiMessage(message = "Chuyển tài liệu vào thùng rác")
+    @ApiMessage(key = "api.document.trash", message = "Move document to trash")
     public ResponseEntity<Void> softDelete(@RequestBody List<Integer> ids) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
@@ -257,7 +257,7 @@ public class DocumentController {
         List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy tài liệu với các ID (hoặc đã bị xóa mềm): " + notFoundIds);
+            throw new NotFoundException("error.document.idsSoftDeleted", notFoundIds);
         }
 
         for (Document doc : docs) {
@@ -269,7 +269,7 @@ public class DocumentController {
 
 
     @PatchMapping(path = "/secure/documents/restore")
-    @ApiMessage(message = "Khôi phục tài liệu")
+    @ApiMessage(key = "api.document.restore", message = "Restore document")
     public ResponseEntity<List<Document>> restore(@RequestBody List<Integer> ids) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
@@ -280,7 +280,7 @@ public class DocumentController {
         List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy tài liệu với các ID (hoặc chưa bị xóa mềm): " + notFoundIds);
+            throw new NotFoundException("error.document.idsNotSoftDeleted", notFoundIds);
         }
 
         for (Document doc : docs) {
@@ -291,7 +291,7 @@ public class DocumentController {
     }
 
     @DeleteMapping("/secure/documents/permanent")
-    @ApiMessage(message = "Xoá vĩnh viễn tài liệu")
+    @ApiMessage(key = "api.document.permanentDelete", message = "Permanently delete document")
     public ResponseEntity<Void> hardDelete(@RequestBody List<Integer> ids) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
@@ -302,7 +302,7 @@ public class DocumentController {
         List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy tài liệu với các ID (hoặc chưa bị xóa mềm): " + notFoundIds);
+            throw new NotFoundException("error.document.idsNotSoftDeleted", notFoundIds);
         }
 
         for (Document doc : docs) {
@@ -312,7 +312,7 @@ public class DocumentController {
     }
 
     @PostMapping("/secure/documents/copy")
-    @ApiMessage(message = "Sao chép tài liệu")
+    @ApiMessage(key = "api.document.copy", message = "Copy document")
     public ResponseEntity<Void> copyDocuments(@RequestBody CopyCutReq request) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
@@ -323,14 +323,14 @@ public class DocumentController {
         List<Integer> notFoundIds = request.getIds().stream().filter(id -> !docsMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy tài liệu với các ID (hoặc đã bị xóa mềm): " + notFoundIds);
+            throw new NotFoundException("error.document.idsSoftDeleted", notFoundIds);
         }
 
         Folder targetFolder = null;
         if (request.getTargetFolderId() != null) {
             targetFolder = this.folderService.getFolderById(request.getTargetFolderId());
             if (targetFolder == null || Boolean.TRUE.equals(targetFolder.getDeleted())) {
-                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+                throw new NotFoundException("error.folder.notFoundOrDeleted");
             }
         }
 
@@ -341,7 +341,7 @@ public class DocumentController {
     }
 
     @PostMapping("/secure/documents/move")
-    @ApiMessage(message = "Di chuyển tài liệu")
+    @ApiMessage(key = "api.document.move", message = "Move document")
     public ResponseEntity<Void> moveDocuments(@RequestBody CopyCutReq request) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
@@ -352,14 +352,14 @@ public class DocumentController {
         List<Integer> notFoundIds = request.getIds().stream().filter(id -> !docsMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy tài liệu với các ID (hoặc đã bị xóa mềm): " + notFoundIds);
+            throw new NotFoundException("error.document.idsSoftDeleted", notFoundIds);
         }
 
         Folder targetFolder = null;
         if (request.getTargetFolderId() != null) {
             targetFolder = this.folderService.getFolderById(request.getTargetFolderId());
             if (targetFolder == null || Boolean.TRUE.equals(targetFolder.getDeleted())) {
-                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+                throw new NotFoundException("error.folder.notFoundOrDeleted");
             }
         }
 
@@ -375,30 +375,30 @@ public class DocumentController {
     }
 
     @GetMapping(path = "/secure/documents/{id}")
-    @ApiMessage(message = "Xem chi tiết tài liệu")
+    @ApiMessage(key = "api.document.detail", message = "View document details")
     public ResponseEntity<DocumentDTO> detail(@PathVariable Integer id) {
         Document doc = this.documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
+            throw new NotFoundException("error.document.notFoundOrDeleted");
         }
 
         if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("Bạn không có quyền xem tài liệu này");
+            throw new ForbiddenException("error.forbidden.viewDocument");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(this.documentService.convertDocumentToDocumentDTO(doc));
     }
 
     @GetMapping(path = "/secure/documents/{id}/preview")
-    @ApiMessage(message = "Xem tài liệu")
+    @ApiMessage(key = "api.document.view", message = "View document")
     public ResponseEntity<InputStreamResource> preview(@PathVariable Integer id) {
         Document doc = this.documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
+            throw new NotFoundException("error.document.notFoundOrDeleted");
         }
 
         if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("Bạn không có quyền xem tài liệu này");
+            throw new ForbiddenException("error.forbidden.viewDocument");
         }
 
         InputStream inputStream = documentService.downloadFileStream(doc.getFilePath());
@@ -411,15 +411,15 @@ public class DocumentController {
     }
 
     @PostMapping(path = "/secure/documents/share-url")
-    @ApiMessage(message = "Tạo signed url")
+    @ApiMessage(key = "api.document.signedUrl", message = "Create signed URL")
     public ResponseEntity<DataResponse<String>> getSignedUrl(@Valid @RequestBody SignedUrlRequest request) {
         Document doc = this.documentService.getDocumentById(request.getDocumentId());
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
+            throw new NotFoundException("error.document.notFoundOrDeleted");
         }
 
         if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("Bạn không có quyền upload tài liệu tại vị trí này");
+            throw new ForbiddenException("error.forbidden.uploadDocumentHere");
         }
 
         String url = this.documentService.generateSignedUrl(doc, Integer.parseInt(request.getExpiredTime()));
@@ -434,10 +434,10 @@ public class DocumentController {
     }
 
     @PostMapping(path = "/secure/documents/hide-data")
-    @ApiMessage(message = "Ẩn dữ liệu")
+    @ApiMessage(key = "api.document.hideData", message = "Hide data")
     public ResponseEntity<InputStreamResource> hideData(@Valid @ModelAttribute HideDataReq request) throws Exception {
         if (!"application/pdf".equals(request.getFile().getContentType())) {
-            throw new FileException("Loại file không hợp lệ.");
+            throw new FileException("error.file.invalidType");
         }
 
         ByteArrayOutputStream out = stegoService.hideData(request.getFile().getInputStream(), request.getContent(), request.getPassword());
@@ -451,15 +451,15 @@ public class DocumentController {
     }
 
     @PostMapping(path = "/secure/documents/extract-data")
-    @ApiMessage(message = "Trích xuất dữ liệu")
+    @ApiMessage(key = "api.document.extractData", message = "Extract data")
     public ResponseEntity<DataResponse<String>> extractData(@Valid @ModelAttribute ExtractDataReq request) throws Exception {
         if (!"application/pdf".equals(request.getFile().getContentType())) {
-            throw new FileException("Loại file không hợp lệ.");
+            throw new FileException("error.file.invalidType");
         }
 
         String content = stegoService.extractData(request.getFile().getInputStream(), request.getPassword());
         if (content == null) {
-            throw new FileException("Không tìm thấy dữ liệu ẩn");
+            throw new FileException("error.stego.hiddenDataNotFound");
         }
 
         return ResponseEntity.ok(new DataResponse<>(content));

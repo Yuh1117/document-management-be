@@ -35,12 +35,12 @@ public class DocumentShareController {
     }
 
     @PostMapping(path = "/secure/documents/share")
-    @ApiMessage(message = "Tạo mới chia sẻ")
+    @ApiMessage(key = "api.documentShare.create", message = "Create share")
     public ResponseEntity<List<DocumentShare>> share(@Valid @RequestBody ShareReq shareReq) throws MessagingException {
         Document doc = this.documentService.getDocumentById(shareReq.getDocumentId());
 
         if (!this.documentShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("Bạn không có quyền chia sẻ tài liệu này");
+            throw new ForbiddenException("error.forbidden.shareDocument");
         }
 
         List<DocumentShare> res = this.documentShareService.shareDocument(doc, shareReq.getShares());
@@ -48,15 +48,15 @@ public class DocumentShareController {
     }
 
     @GetMapping(path = "/secure/documents/share/{id}")
-    @ApiMessage(message = "Xem chi tiết chia sẻ")
+    @ApiMessage(key = "api.documentShare.detail", message = "View share details")
     public ResponseEntity<List<DocumentShare>> getShare(@PathVariable("id") Integer id) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xoá.");
+            throw new NotFoundException("error.document.notFoundOrDeleted");
         }
 
         if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("Bạn không có quyền xem.");
+            throw new ForbiddenException("error.forbidden.view");
         }
 
         List<DocumentShare> res = this.documentShareService.getShares(doc);
@@ -64,20 +64,20 @@ public class DocumentShareController {
     }
 
     @DeleteMapping("/secure/documents/share/{id}")
-    @ApiMessage(message = "Xóa quyền chia sẻ")
+    @ApiMessage(key = "api.documentShare.delete", message = "Remove share permission")
     public ResponseEntity<Void> unshare(@PathVariable Integer id, @RequestBody List<Integer> request) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa.");
+            throw new NotFoundException("error.document.notFoundOrDeleted");
         }
 
         if (!documentShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("Bạn không có quyền chỉnh sửa chia sẻ.");
+            throw new ForbiddenException("error.forbidden.shareEdit");
         }
 
         List<User> users = this.userService.getAllByIds(request);
         if (users.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy người dùng.");
+            throw new NotFoundException("error.user.notFoundWithDot");
         }
 
         this.documentShareService.removeShares(doc, users);

@@ -11,7 +11,7 @@ import java.util.List;
 public class RoleDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Integer id;
-    @NotBlank(message = "Tên không được để trống")
+    @NotBlank(message = "{validation.role.name.notBlank}")
     private String name;
     private String description;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)

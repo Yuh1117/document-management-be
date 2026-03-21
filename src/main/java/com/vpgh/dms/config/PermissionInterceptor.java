@@ -35,10 +35,10 @@ public class PermissionInterceptor implements HandlerInterceptor {
                         i.getMethod().equals(httpMethod));
 
                 if (!isAllow) {
-                    throw new ForbiddenException("Bạn không có quyền thực hiện hành động này!");
+                    throw new ForbiddenException("error.permission.deniedAction");
                 }
             } else {
-                throw new ForbiddenException("Bạn không có quyền thực hiện hành động này!");
+                throw new ForbiddenException("error.permission.deniedAction");
             }
         }
 

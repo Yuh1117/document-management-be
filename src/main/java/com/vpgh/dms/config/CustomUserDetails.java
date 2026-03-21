@@ -22,7 +22,7 @@ public class CustomUserDetails implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = this.userService.getUserByEmail(username);
         if (user == null) {
-            throw new UsernameNotFoundException("Email/mật khẩu không hợp lệ!");
+            throw new UsernameNotFoundException("error.auth.invalidCredentials");
         }
 
         Set<GrantedAuthority> authorities = new HashSet<>();

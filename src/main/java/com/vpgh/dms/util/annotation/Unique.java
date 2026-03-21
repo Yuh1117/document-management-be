@@ -11,7 +11,7 @@ import java.lang.annotation.*;
 @Constraint(validatedBy = UniqueFieldValidator.class)
 @Documented
 public @interface Unique {
-    String message() default "{field} đã tồn tại!";
+    String message() default "{validation.user.email.unique}";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
     Class<?> entity();

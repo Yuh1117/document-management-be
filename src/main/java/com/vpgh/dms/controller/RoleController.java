@@ -32,14 +32,14 @@ public class RoleController {
     }
 
     @PostMapping(path = "/admin/roles")
-    @ApiMessage(message = "Tạo mới vai trò")
+    @ApiMessage(key = "api.role.create", message = "Create role")
     public ResponseEntity<Role> create(@RequestBody @Valid RoleDTO reqRole) {
         Role role = this.roleService.handleCreateRole(reqRole);
         return ResponseEntity.status(HttpStatus.CREATED).body(role);
     }
 
     @GetMapping(path = "/admin/roles")
-    @ApiMessage(message = "Lấy danh sách vai trò")
+    @ApiMessage(key = "api.role.list", message = "List roles")
     public ResponseEntity<PaginationResDTO<List<Role>>> list(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
@@ -58,24 +58,24 @@ public class RoleController {
     }
 
     @GetMapping(path = "/admin/roles/{id}")
-    @ApiMessage(message = "Lấy chi tiết vai trò")
+    @ApiMessage(key = "api.role.detail", message = "Get role details")
     public ResponseEntity<Role> detail(@PathVariable(value = "id") Integer id) {
         Role role = this.roleService.getRoleById(id);
         if (role == null) {
-            throw new NotFoundException("Không tìm thấy vai trò");
+            throw new NotFoundException("error.role.notFound");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(role);
     }
 
     @PatchMapping(path = "/admin/roles/{id}")
-    @ApiMessage(message = "Cập nhật vai trò")
+    @ApiMessage(key = "api.role.update", message = "Update role")
     public ResponseEntity<Role> update(@PathVariable("id") Integer id,
                                        @RequestBody RoleDTO reqRole) {
 
         Role role = this.roleService.getRoleById(id);
         if (role == null) {
-            throw new NotFoundException("Không tìm thấy vai trò");
+            throw new NotFoundException("error.role.notFound");
         }
 
         reqRole.setId(role.getId());
@@ -96,17 +96,17 @@ public class RoleController {
 
 
     @DeleteMapping(path = "/admin/roles/{id}")
-    @ApiMessage(message = "Xóa vai trò")
+    @ApiMessage(key = "api.role.delete", message = "Delete role")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
         Role role = this.roleService.getRoleById(id);
         if (role == null) {
-            throw new NotFoundException("Không tìm thấy vai trò");
+            throw new NotFoundException("error.role.notFound");
         }
 
         try {
             this.roleService.deleteRoleById(role.getId());
         } catch (DataIntegrityViolationException ex) {
-            throw new DataConflictException("Không thể xóa vai trò này!");
+            throw new DataConflictException("error.role.cannotDelete");
         }
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

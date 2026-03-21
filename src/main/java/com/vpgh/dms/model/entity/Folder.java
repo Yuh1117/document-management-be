@@ -16,7 +16,7 @@ public class Folder extends FullAuditableEntity {
     private Integer id;
 
     @Column(nullable = false)
-    @NotBlank(message = "Tên không được để trống")
+    @NotBlank(message = "{validation.folder.name.notBlank}")
     private String name;
     private Boolean inheritPermissions = true;
     private Boolean isDeleted = false;
