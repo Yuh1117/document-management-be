@@ -94,12 +94,14 @@ services:
     volumes:
       - ../document-management-processor:/app
       - hf-cache:/cache/huggingface
+      - easyocr-cache:/root/.EasyOCR
       - pip-cache:/root/.cache/pip
     depends_on:
       elasticsearch:
         condition: service_healthy
     env_file:
-      - .env
+      - ../document-management-processor/.env
+    gpus: all
     networks:
       - dms-network
 
@@ -111,6 +113,7 @@ services:
     volumes:
       - ../document-management-processor:/app
       - hf-cache:/cache/huggingface
+      - easyocr-cache:/root/.EasyOCR
       - pip-cache:/root/.cache/pip
     depends_on:
       rabbitmq:
@@ -118,7 +121,8 @@ services:
       elasticsearch:
         condition: service_healthy
     env_file:
-      - .env
+      - ../document-management-processor/.env
+    gpus: all
     networks:
       - dms-network
 
@@ -128,6 +132,7 @@ volumes:
   elasticsearch-data:
   m2-cache:
   hf-cache:
+  easyocr-cache:
   pip-cache:
 
 networks:
