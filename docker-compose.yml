@@ -77,7 +77,6 @@ services:
       - postgres
       - processor
       - rabbitmq
-      - elasticsearch
     env_file:
       - .env
     networks:

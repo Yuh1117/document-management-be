@@ -37,7 +37,8 @@ public class Document extends FullAuditableEntity {
     @Enumerated(EnumType.STRING)
     private StorageType storageType;
     private Boolean isDeleted = false;
-
+    @Column(columnDefinition = "LONGTEXT")
+    private String extractedText;
     @Enumerated(EnumType.STRING)
     private ProcessingStatus processingStatus;
     private Integer ocrQualityScore;
@@ -179,6 +180,14 @@ public class Document extends FullAuditableEntity {
 
     public void setProcessingError(String processingError) {
         this.processingError = processingError;
+    }
+
+    public String getExtractedText() {
+        return extractedText;
+    }
+
+    public void setExtractedText(String extractedText) {
+        this.extractedText = extractedText;
     }
 
     public Folder getFolder() {

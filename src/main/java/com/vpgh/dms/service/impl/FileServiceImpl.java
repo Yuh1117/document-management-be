@@ -1,27 +1,32 @@
 package com.vpgh.dms.service.impl;
 
 import com.vpgh.dms.model.dto.*;
+import com.vpgh.dms.model.dto.processor.ProcessorSearchRequest;
+import com.vpgh.dms.model.dto.processor.ProcessorSearchResponse;
 import com.vpgh.dms.model.dto.response.FileItemDTO;
 import com.vpgh.dms.model.dto.response.FileItemProjection;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.FileRepository;
-import com.vpgh.dms.service.*;
+import com.vpgh.dms.service.FileService;
+import com.vpgh.dms.service.ProcessorSearchClient;
 import com.vpgh.dms.util.PageSize;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class FileServiceImpl implements FileService {
     private final FileRepository fileRepository;
+    private final ProcessorSearchClient processorSearchClient;
 
-    public FileServiceImpl(FileRepository fileRepository) {
+    public FileServiceImpl(FileRepository fileRepository, ProcessorSearchClient processorSearchClient) {
         this.fileRepository = fileRepository;
+        this.processorSearchClient = processorSearchClient;
     }
 
     @Override
@@ -37,9 +42,9 @@ public class FileServiceImpl implements FileService {
             keyword = params.get("kw");
         }
 
-        Page<FileItemProjection> pageItem = fileRepository.findAllByUserAndParent(user.getId(), parentId, false, keyword, pageable);
-        Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
-        return items;
+        Page<FileItemProjection> pageItem = fileRepository.findAllByUserAndParent(user.getId(), parentId, false,
+                keyword, pageable);
+        return pageItem.map(this::mapToFileItemDTO);
     }
 
     @Override
@@ -50,8 +55,7 @@ public class FileServiceImpl implements FileService {
             pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
         }
         Page<FileItemProjection> pageItem = fileRepository.findTrashFiles(user.getId(), pageable);
-        Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
-        return items;
+        return pageItem.map(this::mapToFileItemDTO);
     }
 
     @Override
@@ -75,8 +79,7 @@ public class FileServiceImpl implements FileService {
             pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
         }
         Page<FileItemProjection> pageItem = fileRepository.findRecentFiles(user.getId(), false, pageable);
-        Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
-        return items;
+        return pageItem.map(this::mapToFileItemDTO);
     }
 
     @Override
@@ -88,8 +91,7 @@ public class FileServiceImpl implements FileService {
         }
 
         Page<FileItemProjection> pageItem = fileRepository.findFolderFiles(user.getId(), folderId, false, pageable);
-        Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
-        return items;
+        return pageItem.map(this::mapToFileItemDTO);
     }
 
     @Override
@@ -100,17 +102,100 @@ public class FileServiceImpl implements FileService {
             pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
         }
         Page<FileItemProjection> pageItem = fileRepository.findSharedFiles(user.getId(), pageable);
-        Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
-        return items;
+        return pageItem.map(this::mapToFileItemDTO);
     }
 
     @Override
     public Page<FileItemDTO> getAdvancedSearchFiles(User user, Map<String, String> params) {
+        if (params != null) {
+            String kwType = params.get("kwType");
+            if (kwType != null && !kwType.isBlank()) {
+                String normalized = kwType.trim().toLowerCase(Locale.ROOT);
+                if ("full_text".equals(normalized)) {
+                    return searchViaElasticsearch(user, params, "full_text");
+                }
+                if ("semantic".equals(normalized)) {
+                    return searchViaElasticsearch(user, params, "semantic");
+                }
+                if ("hybrid".equals(normalized)) {
+                    return searchViaElasticsearch(user, params, "hybrid");
+                }
+            }
+        }
+
+        return searchExactInDatabase(user, params);
+    }
+
+    private Page<FileItemDTO> searchViaElasticsearch(User user, Map<String, String> params, String mode) {
+        int page = parsePositiveInt(params.get("page"), 1);
+        int pageSize = Math.min(parsePositiveInt(params.get("page_size"), PageSize.FOLDER_PAGE_SIZE.getSize()), 100);
+
+        String rawKeyword = params.get("kw");
+        String searchKeyword = (rawKeyword != null && !rawKeyword.isBlank()) ? rawKeyword.trim() : null;
+        if (searchKeyword == null || searchKeyword.isEmpty()) {
+            return new PageImpl<>(List.of(), PageRequest.of(page - 1, pageSize), 0);
+        }
+
+        Integer folderId = null;
+        String folderIdStr = params.get("folderId");
+        if (folderIdStr != null && !folderIdStr.isBlank()) {
+            try {
+                folderId = Integer.parseInt(folderIdStr.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        ProcessorSearchRequest request = new ProcessorSearchRequest(searchKeyword, user.getId(), folderId, page,
+                pageSize, mode);
+        ProcessorSearchResponse response = processorSearchClient.search(request);
+        List<ProcessorSearchResponse.ProcessorSearchHit> hits = response.getHits() != null ? response.getHits()
+                : List.of();
+
+        List<Integer> orderedDocIds = hits.stream()
+                .map(hit -> {
+                    try {
+                        return hit.getDocumentId() != null ? Integer.parseInt(hit.getDocumentId().trim()) : null;
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        Pageable pageable = PageRequest.of(page - 1, pageSize);
+        if (orderedDocIds.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, response.getTotal());
+        }
+
+        MimeSizeFilters filters = parseMimeSizeFilters(params);
+        List<FileItemProjection> rows = fileRepository.findOwnedDocumentsByIdsAndFilters(user.getId(),
+                orderedDocIds, filters.mimeType(), filters.sizeBytes(), filters.sizeType());
+        Map<Integer, FileItemProjection> rowMap = rows.stream().collect(Collectors.toMap(r -> r.getId(), r -> r));
+        List<FileItemDTO> content = orderedDocIds.stream()
+                .map(rowMap::get)
+                .filter(Objects::nonNull)
+                .map(this::mapToFileItemDTO)
+                .toList();
+
+        return new PageImpl<>(content, pageable, response.getTotal());
+    }
+
+    private static int parsePositiveInt(String raw, int defaultValue) {
+        if (raw == null || raw.isBlank()) {
+            return defaultValue;
+        }
+        try {
+            int v = Integer.parseInt(raw.trim());
+            return v >= 1 ? v : defaultValue;
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    private Page<FileItemDTO> searchExactInDatabase(User user, Map<String, String> params) {
         Pageable pageable = Pageable.unpaged();
         String rawKeyword = null;
-        String mimeType = null;
-        Double size = null;
-        String sizeType = null;
 
         if (params != null) {
             if (params.containsKey("page")) {
@@ -118,30 +203,46 @@ public class FileServiceImpl implements FileService {
                 pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
             }
             rawKeyword = params.get("kw");
-
-            String mimeTypeStr = params.get("type");
-            if (mimeTypeStr != null && !mimeTypeStr.isBlank()) {
-                mimeType = mapMimeType(mimeTypeStr);
-            }
-
-            String sizeTypeStr = params.get("sizeType");
-            if (sizeTypeStr != null && !sizeTypeStr.isBlank()) {
-                sizeType = sizeTypeStr;
-                String sizeStr = params.get("size");
-                if (sizeStr != null && !sizeStr.isBlank()) {
-                    try {
-                        size = Double.parseDouble(sizeStr) * 1024 * 1024;
-                    } catch (NumberFormatException ignored) {
-                    }
-                }
-            }
-
         }
 
+        MimeSizeFilters filters = parseMimeSizeFilters(params);
         String searchKeyword = (rawKeyword != null && !rawKeyword.isBlank()) ? rawKeyword.trim() : null;
-        Page<FileItemProjection> pageItem = fileRepository.findExactDocs(user.getId(), searchKeyword, mimeType, size, sizeType, pageable);
-        Page<FileItemDTO> items = pageItem.map(p -> mapToFileItemDTO(p));
-        return items;
+        Page<FileItemProjection> pageItem = fileRepository.findExactDocs(
+                user.getId(),
+                searchKeyword,
+                filters.mimeType(),
+                filters.sizeBytes(),
+                filters.sizeType(),
+                pageable);
+        return pageItem.map(this::mapToFileItemDTO);
+    }
+
+    private record MimeSizeFilters(String mimeType, Double sizeBytes, String sizeType) {
+    }
+
+    private static MimeSizeFilters parseMimeSizeFilters(Map<String, String> params) {
+        if (params == null) {
+            return new MimeSizeFilters(null, null, null);
+        }
+        String mimeType = null;
+        String typeStr = params.get("type");
+        if (typeStr != null && !typeStr.isBlank() && !"any".equalsIgnoreCase(typeStr.trim())) {
+            mimeType = mapMimeTypeStatic(typeStr.trim());
+        }
+        Double sizeBytes = null;
+        String sizeType = null;
+        String sizeTypeStr = params.get("sizeType");
+        if (sizeTypeStr != null && !sizeTypeStr.isBlank()) {
+            sizeType = sizeTypeStr.trim();
+            String sizeStr = params.get("size");
+            if (sizeStr != null && !sizeStr.isBlank()) {
+                try {
+                    sizeBytes = Double.parseDouble(sizeStr.trim()) * 1024 * 1024;
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return new MimeSizeFilters(mimeType, sizeBytes, sizeType);
     }
 
     private FileItemDTO mapToFileItemDTO(FileItemProjection p) {
@@ -180,10 +281,7 @@ public class FileServiceImpl implements FileService {
         return dto;
     }
 
-    private String mapMimeType(String type) {
-        if (type == null || type.equals("any")) {
-            return null;
-        }
+    private static String mapMimeTypeStatic(String type) {
         return switch (type) {
             case "pdf" -> "application/pdf";
             case "word" -> "%word%";

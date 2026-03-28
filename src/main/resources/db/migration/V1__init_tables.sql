@@ -94,6 +94,7 @@ CREATE TABLE public.documents (
     is_deleted boolean,
     is_encrypted boolean,
     storage_type character varying(255),
+    extracted_text TEXT,
     processing_status character varying(255),
     ocr_quality_score integer,
     processing_error TEXT,

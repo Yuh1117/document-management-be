@@ -68,7 +68,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     @Transactional
     public void updateProcessingStatus(Integer documentId, ProcessingStatus status, Integer ocrQualityScore,
-            String processingError) {
+            String processingError, String extractedText) {
         Document doc = this.documentRepository.findById(documentId).orElse(null);
         if (doc == null) {
             return;
@@ -76,6 +76,9 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setProcessingStatus(status);
         doc.setOcrQualityScore(ocrQualityScore);
         doc.setProcessingError(processingError);
+        if (extractedText != null) {
+            doc.setExtractedText(extractedText);
+        }
         this.documentRepository.save(doc);
     }
 

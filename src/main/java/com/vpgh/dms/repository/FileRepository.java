@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 @Repository
 public interface FileRepository extends JpaRepository<Folder, Integer> {
@@ -27,9 +28,9 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                       f.parent_id = :parentId
                   )
                AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')))
-            
+
             UNION ALL
-            
+
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
@@ -44,41 +45,38 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                       d.folder_id = :parentId
                   )
               AND (:keyword IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT(:keyword, '%')))
-            
+
             ORDER BY sortType ASC, name ASC
-            """,
-            countQuery = """    
-                    SELECT COUNT(*) FROM (
-                        SELECT f.id
-                        FROM folders f
-                        WHERE f.created_by = :userId AND f.is_deleted = :deleted
-                          AND (
-                              :parentId = -1 OR
-                              (:parentId IS NULL AND f.parent_id IS NULL) OR
-                              f.parent_id = :parentId
-                          )
-                          AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')))
-                    
-                        UNION ALL
-                    
-                        SELECT d.id
-                        FROM documents d
-                        WHERE d.created_by = :userId AND d.is_deleted = :deleted
-                          AND (
-                              :parentId = -1 OR
-                              (:parentId IS NULL AND d.folder_id IS NULL) OR
-                              d.folder_id = :parentId
-                          )
-                          AND (:keyword IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT(:keyword, '%')))
-                    ) AS total
-                    """,
-            nativeQuery = true
-    )
+            """, countQuery = """
+            SELECT COUNT(*) FROM (
+                SELECT f.id
+                FROM folders f
+                WHERE f.created_by = :userId AND f.is_deleted = :deleted
+                  AND (
+                      :parentId = -1 OR
+                      (:parentId IS NULL AND f.parent_id IS NULL) OR
+                      f.parent_id = :parentId
+                  )
+                  AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')))
+
+                UNION ALL
+
+                SELECT d.id
+                FROM documents d
+                WHERE d.created_by = :userId AND d.is_deleted = :deleted
+                  AND (
+                      :parentId = -1 OR
+                      (:parentId IS NULL AND d.folder_id IS NULL) OR
+                      d.folder_id = :parentId
+                  )
+                  AND (:keyword IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT(:keyword, '%')))
+            ) AS total
+            """, nativeQuery = true)
     Page<FileItemProjection> findAllByUserAndParent(@Param("userId") Integer userId,
-                                                    @Param("parentId") Integer parentId,
-                                                    @Param("deleted") Boolean deleted,
-                                                    @Param("keyword") String keyword,
-                                                    Pageable pageable);
+            @Param("parentId") Integer parentId,
+            @Param("deleted") Boolean deleted,
+            @Param("keyword") String keyword,
+            Pageable pageable);
 
     @Query(value = """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
@@ -92,9 +90,9 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                 AND (f.parent_id IS NULL OR EXISTS (
                     SELECT 1 FROM folders p WHERE p.id = f.parent_id AND p.is_deleted = false
                   ))
-            
+
             UNION ALL
-            
+
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
@@ -106,30 +104,27 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
               AND (d.folder_id IS NULL OR EXISTS (
                     SELECT 1 FROM folders p WHERE p.id = d.folder_id AND p.is_deleted = false
                   ))
-            
+
             ORDER BY sortType ASC, name ASC
-            """,
-            countQuery = """    
-                    SELECT COUNT(*) FROM (
-                        SELECT f.id
-                        FROM folders f
-                        WHERE f.created_by = :userId AND f.is_deleted = :deleted
-                          AND (f.parent_id IS NULL OR EXISTS (
-                            SELECT 1 FROM folders p WHERE p.id = f.parent_id AND p.is_deleted = false
-                          ))
-                    
-                        UNION ALL
-                    
-                        SELECT d.id
-                        FROM documents d
-                        WHERE d.created_by = :userId AND d.is_deleted = :deleted
-                          AND (d.folder_id IS NULL OR EXISTS (
-                            SELECT 1 FROM folders p WHERE p.id = d.folder_id AND p.is_deleted = false
-                          ))
-                    ) AS total
-                    """,
-            nativeQuery = true
-    )
+            """, countQuery = """
+            SELECT COUNT(*) FROM (
+                SELECT f.id
+                FROM folders f
+                WHERE f.created_by = :userId AND f.is_deleted = :deleted
+                  AND (f.parent_id IS NULL OR EXISTS (
+                    SELECT 1 FROM folders p WHERE p.id = f.parent_id AND p.is_deleted = false
+                  ))
+
+                UNION ALL
+
+                SELECT d.id
+                FROM documents d
+                WHERE d.created_by = :userId AND d.is_deleted = :deleted
+                  AND (d.folder_id IS NULL OR EXISTS (
+                    SELECT 1 FROM folders p WHERE p.id = d.folder_id AND p.is_deleted = false
+                  ))
+            ) AS total
+            """, nativeQuery = true)
     Page<FileItemProjection> findTrashFiles(@Param("userId") Integer userId, Pageable pageable);
 
     @Query(value = """
@@ -140,9 +135,9 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             FROM folders f
             JOIN users u ON f.created_by = u.id
             WHERE f.created_by = :userId AND f.is_deleted = :deleted
-            
+
             UNION ALL
-            
+
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
@@ -150,27 +145,24 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             FROM documents d
             JOIN users u ON d.created_by = u.id
             WHERE d.created_by = :userId AND d.is_deleted = :deleted
-            
+
             ORDER BY updatedAt DESC NULLS LAST, createdAt DESC
-            """,
-            countQuery = """    
-                    SELECT COUNT(*) FROM (
-                        SELECT f.id
-                        FROM folders f
-                        WHERE f.created_by = :userId AND f.is_deleted = :deleted
-                    
-                        UNION ALL
-                    
-                        SELECT d.id
-                        FROM documents d
-                        WHERE d.created_by = :userId AND d.is_deleted = :deleted
-                    ) AS total
-                    """,
-            nativeQuery = true
-    )
+            """, countQuery = """
+            SELECT COUNT(*) FROM (
+                SELECT f.id
+                FROM folders f
+                WHERE f.created_by = :userId AND f.is_deleted = :deleted
+
+                UNION ALL
+
+                SELECT d.id
+                FROM documents d
+                WHERE d.created_by = :userId AND d.is_deleted = :deleted
+            ) AS total
+            """, nativeQuery = true)
     Page<FileItemProjection> findRecentFiles(@Param("userId") Integer userId,
-                                             @Param("deleted") Boolean deleted,
-                                             Pageable pageable);
+            @Param("deleted") Boolean deleted,
+            Pageable pageable);
 
     @Query(value = """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
@@ -187,9 +179,9 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             LEFT JOIN folder_shares fs ON f.id = fs.folder_id AND fs.user_id = :userId
             WHERE f.is_deleted = :deleted AND f.parent_id = :folderId
                 AND (f.created_by = :userId OR fs.user_id IS NOT NULL)
-            
+
             UNION ALL
-            
+
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,  d.mime_type as mime_type,
@@ -204,32 +196,29 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             LEFT JOIN document_shares ds ON d.id = ds.document_id AND ds.user_id = :userId
             WHERE d.is_deleted = :deleted AND d.folder_id = :folderId
                   AND (d.created_by = :userId OR ds.user_id IS NOT NULL)
-            
+
             ORDER BY sortType ASC, name ASC
-            """,
-            countQuery = """
-                    SELECT COUNT(*) FROM (
-                        SELECT f.id
-                        FROM folders f
-                        LEFT JOIN folder_shares fs ON f.id = fs.folder_id AND fs.user_id = :userId
-                        WHERE f.is_deleted = :deleted AND f.parent_id = :folderId
-                              AND (f.created_by = :userId OR fs.user_id IS NOT NULL)
-                    
-                        UNION ALL
-                    
-                        SELECT d.id
-                        FROM documents d
-                        LEFT JOIN document_shares ds ON d.id = ds.document_id AND ds.user_id = :userId
-                        WHERE d.is_deleted = :deleted AND d.folder_id = :folderId
-                              AND (d.created_by = :userId OR ds.user_id IS NOT NULL)
-                    ) AS total
-                    """,
-            nativeQuery = true
-    )
+            """, countQuery = """
+            SELECT COUNT(*) FROM (
+                SELECT f.id
+                FROM folders f
+                LEFT JOIN folder_shares fs ON f.id = fs.folder_id AND fs.user_id = :userId
+                WHERE f.is_deleted = :deleted AND f.parent_id = :folderId
+                      AND (f.created_by = :userId OR fs.user_id IS NOT NULL)
+
+                UNION ALL
+
+                SELECT d.id
+                FROM documents d
+                LEFT JOIN document_shares ds ON d.id = ds.document_id AND ds.user_id = :userId
+                WHERE d.is_deleted = :deleted AND d.folder_id = :folderId
+                      AND (d.created_by = :userId OR ds.user_id IS NOT NULL)
+            ) AS total
+            """, nativeQuery = true)
     Page<FileItemProjection> findFolderFiles(@Param("userId") Integer userId,
-                                             @Param("folderId") Integer folderId,
-                                             @Param("deleted") Boolean deleted,
-                                             Pageable pageable);
+            @Param("folderId") Integer folderId,
+            @Param("deleted") Boolean deleted,
+            Pageable pageable);
 
     @Query(value = """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
@@ -248,9 +237,9 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                         WHERE fs2.user_id = :userId AND f2.id = f.parent_id AND f2.is_deleted = false
                     )
                 )
-            
+
             UNION ALL
-            
+
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
@@ -267,41 +256,38 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                         WHERE fs3.user_id = :userId AND f3.id = d.folder_id AND f3.is_deleted = false
                     )
                 )
-            
+
             ORDER BY sortType ASC, name ASC
-            
-            """,
-            countQuery = """
-                        SELECT COUNT(*) FROM (
-                            SELECT f.id
-                            FROM folders f
-                            JOIN folder_shares fs ON f.id = fs.folder_id
-                            WHERE fs.user_id = :userId AND f.is_deleted = false
-                                AND  (f.parent_id IS NULL OR NOT EXISTS (
-                                    SELECT 1
-                                    FROM folder_shares fs2
-                                    JOIN folders f2 ON fs2.folder_id = f2.id
-                                    WHERE fs2.user_id = :userId AND f2.id = f.parent_id AND f2.is_deleted = false
-                                   )
-                              )
-                    
-                            UNION ALL
-                    
-                            SELECT d.id
-                            FROM documents d
-                            JOIN document_shares ds ON d.id = ds.document_id
-                            WHERE ds.user_id = :userId AND d.is_deleted = false
-                                AND  (d.folder_id IS NULL OR NOT EXISTS (
-                                        SELECT 1
-                                        FROM folder_shares fs3
-                                        JOIN folders f3 ON fs3.folder_id = f3.id
-                                        WHERE fs3.user_id = :userId AND f3.id = d.folder_id AND f3.is_deleted = false
-                                    )
-                                )
-                        ) AS total
-                    """,
-            nativeQuery = true
-    )
+
+            """, countQuery = """
+                SELECT COUNT(*) FROM (
+                    SELECT f.id
+                    FROM folders f
+                    JOIN folder_shares fs ON f.id = fs.folder_id
+                    WHERE fs.user_id = :userId AND f.is_deleted = false
+                        AND  (f.parent_id IS NULL OR NOT EXISTS (
+                            SELECT 1
+                            FROM folder_shares fs2
+                            JOIN folders f2 ON fs2.folder_id = f2.id
+                            WHERE fs2.user_id = :userId AND f2.id = f.parent_id AND f2.is_deleted = false
+                           )
+                      )
+
+                    UNION ALL
+
+                    SELECT d.id
+                    FROM documents d
+                    JOIN document_shares ds ON d.id = ds.document_id
+                    WHERE ds.user_id = :userId AND d.is_deleted = false
+                        AND  (d.folder_id IS NULL OR NOT EXISTS (
+                                SELECT 1
+                                FROM folder_shares fs3
+                                JOIN folders f3 ON fs3.folder_id = f3.id
+                                WHERE fs3.user_id = :userId AND f3.id = d.folder_id AND f3.is_deleted = false
+                            )
+                        )
+                ) AS total
+            """, nativeQuery = true)
     Page<FileItemProjection> findSharedFiles(@Param("userId") Integer userId, Pageable pageable);
 
     @Query(value = """
@@ -318,24 +304,40 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
               AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
                   OR (:sizeType = 'maxSize' AND d.file_size <= :size))
             ORDER BY d.name ASC
-            """,
-            countQuery = """
-                    SELECT COUNT(*)
-                    FROM documents d
-                    WHERE d.created_by = :userId
-                      AND d.is_deleted = false
-                      AND (:keyword IS NULL OR :keyword = '' OR (d.name ILIKE '%' || :keyword || '%' OR (d.description IS NOT NULL AND d.description ILIKE '%' || :keyword || '%')))
-                      AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
-                      AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
-                        OR (:sizeType = 'maxSize' AND d.file_size <= :size))
-                    """,
-            nativeQuery = true
-    )
+            """, countQuery = """
+            SELECT COUNT(*)
+            FROM documents d
+            WHERE d.created_by = :userId
+              AND d.is_deleted = false
+              AND (:keyword IS NULL OR :keyword = '' OR (d.name ILIKE '%' || :keyword || '%' OR (d.description IS NOT NULL AND d.description ILIKE '%' || :keyword || '%')))
+              AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
+              AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
+                OR (:sizeType = 'maxSize' AND d.file_size <= :size))
+            """, nativeQuery = true)
     Page<FileItemProjection> findExactDocs(@Param("userId") Integer userId,
-                                           @Param("keyword") String keyword,
-                                           @Param("mimeType") String mimeType,
-                                           @Param("size") Double size,
-                                           @Param("sizeType") String sizeType,
-                                           Pageable pageable);
+            @Param("keyword") String keyword,
+            @Param("mimeType") String mimeType,
+            @Param("size") Double size,
+            @Param("sizeType") String sizeType,
+            Pageable pageable);
+
+    @Query(value = """
+            SELECT d.id AS id, d.name AS name, 'document' AS type,
+                   d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
+                   u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
+                   d.description AS description, 'OWNER' AS permission, d.mime_type AS mime_type
+            FROM documents d
+            JOIN users u ON d.created_by = u.id
+            WHERE d.created_by = :userId AND d.is_deleted = false
+              AND d.id IN (:ids)
+              AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
+              AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
+                  OR (:sizeType = 'maxSize' AND d.file_size <= :size))
+            """, nativeQuery = true)
+    List<FileItemProjection> findOwnedDocumentsByIdsAndFilters(@Param("userId") Integer userId,
+            @Param("ids") List<Integer> ids,
+            @Param("mimeType") String mimeType,
+            @Param("size") Double size,
+            @Param("sizeType") String sizeType);
 
 }

@@ -9,6 +9,7 @@ public class DocumentProcessingStatusReq {
     private ProcessingStatus processingStatus;
     private Integer ocrQualityScore;
     private String processingError;
+    private String extractedText;
 
     public ProcessingStatus getProcessingStatus() {
         return processingStatus;
@@ -32,5 +33,13 @@ public class DocumentProcessingStatusReq {
 
     public void setProcessingError(String processingError) {
         this.processingError = processingError;
+    }
+
+    public String getExtractedText() {
+        return extractedText;
+    }
+
+    public void setExtractedText(String extractedText) {
+        this.extractedText = extractedText;
     }
 }

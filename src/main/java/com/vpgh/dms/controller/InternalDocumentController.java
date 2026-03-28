@@ -20,7 +20,7 @@ public class InternalDocumentController {
     public ResponseEntity<Void> updateProcessingStatus(@PathVariable Integer id,
             @Valid @RequestBody DocumentProcessingStatusReq body) {
         documentService.updateProcessingStatus(id, body.getProcessingStatus(), body.getOcrQualityScore(),
-                body.getProcessingError());
+                body.getProcessingError(), body.getExtractedText());
         return ResponseEntity.noContent().build();
     }
 }
