@@ -433,6 +433,22 @@ public class DocumentController {
                 .body(res);
     }
 
+    @PostMapping(path = "/secure/documents/{id}/summarize")
+    @ApiMessage(key = "api.document.summarize", message = "Summarize document")
+    public ResponseEntity<DocumentDTO> summarize(@PathVariable Integer id) {
+        Document doc = documentService.getDocumentById(id);
+        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
+            throw new NotFoundException("error.document.notFoundOrDeleted");
+        }
+
+        if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
+            throw new ForbiddenException("error.forbidden.viewDocument");
+        }
+
+        DocumentDTO result = this.documentService.summarizeDocument(id);
+        return ResponseEntity.ok(result);
+    }
+
     @PostMapping(path = "/secure/documents/hide-data")
     @ApiMessage(key = "api.document.hideData", message = "Hide data")
     public ResponseEntity<InputStreamResource> hideData(@Valid @ModelAttribute HideDataReq request) throws Exception {

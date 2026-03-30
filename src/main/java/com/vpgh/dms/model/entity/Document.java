@@ -44,6 +44,12 @@ public class Document extends FullAuditableEntity {
     private Integer ocrQualityScore;
     @Column(columnDefinition = "TEXT")
     private String processingError;
+    @Column(columnDefinition = "TEXT")
+    private String summaryText;
+    @Column(length = 100)
+    private String modelVersion;
+    @Column(length = 50)
+    private String promptVersion;
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
@@ -220,6 +226,30 @@ public class Document extends FullAuditableEntity {
 
     public void setVersions(Set<DocumentVersion> versions) {
         this.versions = versions;
+    }
+
+    public String getSummaryText() {
+        return summaryText;
+    }
+
+    public void setSummaryText(String summaryText) {
+        this.summaryText = summaryText;
+    }
+
+    public String getModelVersion() {
+        return modelVersion;
+    }
+
+    public void setModelVersion(String modelVersion) {
+        this.modelVersion = modelVersion;
+    }
+
+    public String getPromptVersion() {
+        return promptVersion;
+    }
+
+    public void setPromptVersion(String promptVersion) {
+        this.promptVersion = promptVersion;
     }
 
 }

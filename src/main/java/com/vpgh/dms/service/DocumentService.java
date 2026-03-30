@@ -62,4 +62,6 @@ public interface DocumentService {
 
     void updateProcessingStatus(Integer documentId, ProcessingStatus status, Integer ocrQualityScore,
             String processingError, String extractedText);
+
+    DocumentDTO summarizeDocument(Integer documentId);
 }
