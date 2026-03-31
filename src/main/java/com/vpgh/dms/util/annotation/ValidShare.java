@@ -11,7 +11,7 @@ import java.lang.annotation.*;
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidShare {
-    String message() default "Dữ liệu không hợp lệ";
+    String message() default "{validation.payload.invalid}";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

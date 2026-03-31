@@ -1,6 +1,8 @@
 package com.vpgh.dms.util.exception;
 
 import com.vpgh.dms.util.DataResponse;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -12,11 +14,30 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalException {
+
+    private final MessageSource messageSource;
+
+    public GlobalException(MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
+
+    private String resolveMessage(Exception ex) {
+        if (ex instanceof LocalizableException le) {
+            Locale locale = LocaleContextHolder.getLocale();
+            return messageSource.getMessage(le.getMessageCode(), le.getMessageArgs(), ex.getMessage(), locale);
+        }
+        String msg = ex.getMessage();
+        if (msg != null && msg.startsWith("error.")) {
+            return messageSource.getMessage(msg, null, msg, LocaleContextHolder.getLocale());
+        }
+        return msg;
+    }
 
     @ExceptionHandler(value = {
             UniqueConstraintException.class,
@@ -25,7 +46,7 @@ public class GlobalException {
             FileException.class})
     public ResponseEntity<DataResponse<String>> handleException(Exception ex) {
         DataResponse<String> errorResponse = new DataResponse<>();
-        errorResponse.setContent(ex.getMessage());
+        errorResponse.setContent(resolveMessage(ex));
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
@@ -53,7 +74,7 @@ public class GlobalException {
     @ExceptionHandler(value = BadCredentialsException.class)
     public ResponseEntity<DataResponse<String>> handleException(BadCredentialsException ex) {
         DataResponse<String> errorResponse = new DataResponse<>();
-        errorResponse.setContent(ex.getMessage());
+        errorResponse.setContent(resolveMessage(ex));
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
@@ -61,7 +82,7 @@ public class GlobalException {
     @ExceptionHandler(value = DataConflictException.class)
     public ResponseEntity<DataResponse<String>> handleException(DataConflictException ex) {
         DataResponse<String> errorResponse = new DataResponse<>();
-        errorResponse.setContent(ex.getMessage());
+        errorResponse.setContent(resolveMessage(ex));
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
@@ -69,7 +90,7 @@ public class GlobalException {
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<DataResponse<String>> handleException(ForbiddenException ex) {
         DataResponse<String> errorResponse = new DataResponse<>();
-        errorResponse.setContent(ex.getMessage());
+        errorResponse.setContent(resolveMessage(ex));
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
@@ -77,7 +98,7 @@ public class GlobalException {
     @ExceptionHandler(value = Exception.class)
     public ResponseEntity<DataResponse<Object>> handleAllException(Exception ex) {
         DataResponse<Object> errorResponse = new DataResponse<>();
-        errorResponse.setContent(ex.getMessage());
+        errorResponse.setContent(resolveMessage(ex));
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }

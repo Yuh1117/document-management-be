@@ -1,16 +1,15 @@
 package com.vpgh.dms.service;
 
+import com.vpgh.dms.model.constant.ProcessingStatus;
 import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
-import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
 
 public interface DocumentService {
     Document uploadNewFile(MultipartFile file, Folder folder) throws IOException;
@@ -19,7 +18,7 @@ public interface DocumentService {
 
     Document uploadKeepBothFiles(MultipartFile file, Folder folder) throws IOException;
 
-//    byte[] downloadFile(String key);
+    // byte[] downloadFile(String key);
 
     InputStream downloadFileStream(String filePath);
 
@@ -60,4 +59,9 @@ public interface DocumentService {
     String generateSignedUrl(Document doc, int expiryInMinutes);
 
     boolean isOwnerDocument(Document doc, User user);
+
+    void updateProcessingStatus(Integer documentId, ProcessingStatus status, Integer ocrQualityScore,
+            String processingError, String extractedText);
+
+    DocumentDTO summarizeDocument(Integer documentId, String language);
 }

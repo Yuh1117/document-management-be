@@ -1,8 +1,6 @@
 package com.vpgh.dms.util.validator;
 
 import com.vpgh.dms.model.dto.request.FileUploadReq;
-import com.vpgh.dms.model.entity.Folder;
-import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.service.SystemSettingService;
 import com.vpgh.dms.util.annotation.ValidFile;
 import jakarta.validation.ConstraintValidator;

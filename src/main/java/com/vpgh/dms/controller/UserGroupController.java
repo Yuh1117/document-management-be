@@ -38,14 +38,14 @@ public class UserGroupController {
     }
 
     @PostMapping(path = "/secure/user-groups")
-    @ApiMessage(message = "Tạo mới nhóm")
+    @ApiMessage(key = "api.userGroup.create", message = "Create group")
     public ResponseEntity<UserGroup> create(@RequestBody @Valid UserGroupDTO groupReq) {
         UserGroup group = this.userGroupService.handleCreateGroup(groupReq);
         return ResponseEntity.status(HttpStatus.CREATED).body(group);
     }
 
     @GetMapping(path = "/secure/user-groups")
-    @ApiMessage(message = "Danh sách nhóm")
+    @ApiMessage(key = "api.userGroup.list", message = "List groups")
     public ResponseEntity<PaginationResDTO<List<UserGroupDTO>>> list(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
@@ -65,28 +65,28 @@ public class UserGroupController {
     }
 
     @GetMapping(path = "/secure/user-groups/{id}")
-    @ApiMessage(message = "Lấy chi tiết nhóm")
+    @ApiMessage(key = "api.userGroup.detail", message = "Get group details")
     public ResponseEntity<UserGroup> detail(@PathVariable(value = "id") Integer id) {
         UserGroup group = this.userGroupService.getGroupById(id);
         if (group == null) {
-            throw new NotFoundException("Nhóm không tồn tại");
+            throw new NotFoundException("error.group.notFound");
         }
 
         if (this.userGroupService.getMemberInGroup(group, SecurityUtil.getCurrentUserFromThreadLocal()) == null) {
-            throw new ForbiddenException("Bạn không ở trong nhóm này.");
+            throw new ForbiddenException("error.group.notInGroup");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(group);
     }
 
     @PatchMapping(path = "/secure/user-groups/{id}")
-    @ApiMessage(message = "Cập nhật nhóm")
+    @ApiMessage(key = "api.userGroup.update", message = "Update group")
     public ResponseEntity<UserGroup> update(@PathVariable("id") Integer id,
                                             @RequestBody UserGroupDTO groupReq) {
 
         UserGroup group = this.userGroupService.getGroupById(id);
         if (group == null) {
-            throw new NotFoundException("Nhóm không tồn tại");
+            throw new NotFoundException("error.group.notFound");
         }
 
         groupReq.setId(group.getId());
@@ -106,18 +106,18 @@ public class UserGroupController {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         UserGroupMember member = this.userGroupService.getMemberInGroup(group, currentUser);
         if (member == null) {
-            throw new ForbiddenException("Bạn không ở trong nhóm này.");
+            throw new ForbiddenException("error.group.notInGroup");
         }
 
         if (!this.userGroupService.isAdminGroup(member)) {
-            throw new ForbiddenException("Bạn không có quyền thực hiện.");
+            throw new ForbiddenException("error.group.noPermission");
         }
 
         if (groupReq.getMembers() != null) {
             boolean check = groupReq.getMembers().stream().anyMatch(m ->
                     this.userGroupService.isOwnerGroup(group, this.userService.getUserByEmail(m.getEmail())));
             if (check) {
-                throw new ForbiddenException("Không thể cập nhật chủ nhóm.");
+                throw new ForbiddenException("error.group.cannotUpdateOwner");
             }
         }
 
@@ -125,21 +125,21 @@ public class UserGroupController {
     }
 
     @PatchMapping(path = "/secure/user-groups/{id}/quit")
-    @ApiMessage(message = "Thoát khỏi nhóm")
+    @ApiMessage(key = "api.userGroup.leave", message = "Leave group")
     public ResponseEntity<Void> quitGroup(@PathVariable("id") Integer id) {
         UserGroup group = this.userGroupService.getGroupById(id);
         if (group == null) {
-            throw new NotFoundException("Nhóm không tồn tại");
+            throw new NotFoundException("error.group.notFound");
         }
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         UserGroupMember member = this.userGroupService.getMemberInGroup(group, currentUser);
         if (member == null) {
-            throw new ForbiddenException("Bạn không ở trong nhóm này.");
+            throw new ForbiddenException("error.group.notInGroup");
         }
 
         if (this.userGroupService.isOwnerGroup(group, currentUser)) {
-            throw new ForbiddenException("Bạn không thể rời khỏi nhóm.");
+            throw new ForbiddenException("error.group.cannotLeave");
         }
 
         group.getMembers().remove(member);
@@ -149,21 +149,21 @@ public class UserGroupController {
 
 
     @DeleteMapping(path = "/secure/user-groups/{id}")
-    @ApiMessage(message = "Xóa nhóm")
+    @ApiMessage(key = "api.userGroup.delete", message = "Delete group")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
         UserGroup group = this.userGroupService.getGroupById(id);
         if (group == null) {
-            throw new NotFoundException("Nhóm không tồn tại");
+            throw new NotFoundException("error.group.notFound");
         }
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         UserGroupMember member = this.userGroupService.getMemberInGroup(group, currentUser);
         if (member == null) {
-            throw new ForbiddenException("Bạn không ở trong nhóm này.");
+            throw new ForbiddenException("error.group.notInGroup");
         }
 
         if (!this.userGroupService.isOwnerGroup(group, currentUser)) {
-            throw new ForbiddenException("Bạn không thể xoá nhóm");
+            throw new ForbiddenException("error.group.cannotDeleteGroup");
         }
 
         this.userGroupService.deleteGroupById(group.getId());

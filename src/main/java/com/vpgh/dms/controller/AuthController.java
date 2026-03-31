@@ -53,7 +53,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @ApiMessage(message = "Đăng nhập")
+    @ApiMessage(key = "api.auth.login", message = "Sign in")
     public ResponseEntity<UserLoginResDTO> login(@RequestBody @Valid UserLoginReqDTO user) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                 user.getEmail(), user.getPassword());
@@ -73,7 +73,7 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    @ApiMessage(message = "Đăng ký")
+    @ApiMessage(key = "api.auth.register", message = "Register")
     public ResponseEntity<UserDTO> signup(@ModelAttribute @Valid UserSignupReqDTO user) {
         User nuser = new User();
         nuser.setFirstName(user.getFirstName());
@@ -88,7 +88,7 @@ public class AuthController {
     }
 
     @GetMapping("/secure/profile")
-    @ApiMessage(message = "Lấy profile")
+    @ApiMessage(key = "api.auth.profile", message = "Get profile")
     public ResponseEntity<UserDTO> getProfile() {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
@@ -96,7 +96,7 @@ public class AuthController {
     }
 
     @PostMapping("/auth/google")
-    @ApiMessage(message = "Đăng nhập bằng Google")
+    @ApiMessage(key = "api.auth.google", message = "Sign in with Google")
     public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> body) {
         try {
             String code = body.get("code");

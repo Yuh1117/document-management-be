@@ -24,7 +24,6 @@ public class PermissionInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String path = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
-        String requestURI = request.getRequestURI();
         String httpMethod = request.getMethod();
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
@@ -36,10 +35,10 @@ public class PermissionInterceptor implements HandlerInterceptor {
                         i.getMethod().equals(httpMethod));
 
                 if (!isAllow) {
-                    throw new ForbiddenException("Bạn không có quyền thực hiện hành động này!");
+                    throw new ForbiddenException("error.permission.deniedAction");
                 }
             } else {
-                throw new ForbiddenException("Bạn không có quyền thực hiện hành động này!");
+                throw new ForbiddenException("error.permission.deniedAction");
             }
         }
 

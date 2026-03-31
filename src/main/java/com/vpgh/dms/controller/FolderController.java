@@ -40,27 +40,27 @@ public class FolderController {
     }
 
     @PostMapping(path = "/secure/folders")
-    @ApiMessage(message = "Tạo mới thư mục")
+    @ApiMessage(key = "api.folder.create", message = "Create folder")
     public ResponseEntity<Folder> create(@RequestBody @Valid Folder folder) {
         if (folder.getParent() != null && folder.getParent().getId() != null) {
             Folder f = this.folderService.getFolderById(folder.getParent().getId());
             if (f == null || Boolean.TRUE.equals(folder.getDeleted())) {
-                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+                throw new NotFoundException("error.folder.notFoundOrDeleted");
             }
             if (!this.folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), f)) {
-                throw new ForbiddenException("Bạn không có quyền tạo thư mục tại vị trí này");
+                throw new ForbiddenException("error.forbidden.createFolderHere");
             }
             folder.setParent(f);
         }
 
         if (folder.getParent() != null) {
             if (folderService.existsByNameAndParentAndIsDeletedFalseAndIdNot(folder.getName(), folder.getParent(), folder.getId())) {
-                throw new UniqueConstraintException("Không thể tạo thư mục với tên này trong cùng thư mục cha.");
+                throw new UniqueConstraintException("error.unique.folderNameInParent");
             }
         } else {
             if (folderService.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(folder.getName(),
                     SecurityUtil.getCurrentUserFromThreadLocal(), folder.getId())) {
-                throw new UniqueConstraintException("Không thể tạo thư mục này trong thư mục gốc.");
+                throw new UniqueConstraintException("error.unique.folderInRoot");
             }
         }
 
@@ -72,16 +72,16 @@ public class FolderController {
     }
 
     @PostMapping(path = "/secure/folders/upload")
-    @ApiMessage(message = "Upload thư mục")
+    @ApiMessage(key = "api.folder.upload", message = "Upload folder")
     public ResponseEntity<Folder> uploadFolder(@Valid @ModelAttribute FolderUploadReq folderUploadReq) throws IOException {
         Folder parentFolder = null;
         if (folderUploadReq.getParentId() != null) {
             parentFolder = this.folderService.getFolderById(folderUploadReq.getParentId());
             if (parentFolder == null || Boolean.TRUE.equals(parentFolder.getDeleted())) {
-                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+                throw new NotFoundException("error.folder.notFoundOrDeleted");
             }
             if (!this.folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), parentFolder)) {
-                throw new ForbiddenException("Bạn không có quyền upload thư mục tại vị trí này");
+                throw new ForbiddenException("error.forbidden.uploadFolderHere");
             }
         }
 
@@ -92,12 +92,12 @@ public class FolderController {
 
             if (parentFolder != null) {
                 if (folderService.existsByNameAndParentAndIsDeletedFalseAndIdNot(firstFolderName, parentFolder, null)) {
-                    throw new UniqueConstraintException("Không thể tạo thư mục với tên này trong cùng thư mục cha.");
+                    throw new UniqueConstraintException("error.unique.folderNameInParent");
                 }
             } else {
                 if (folderService.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(firstFolderName,
                         SecurityUtil.getCurrentUserFromThreadLocal(), null)) {
-                    throw new UniqueConstraintException("Không thể tạo thư mục này trong thư mục gốc.");
+                    throw new UniqueConstraintException("error.unique.folderInRoot");
                 }
             }
             break;
@@ -114,12 +114,12 @@ public class FolderController {
     public ResponseEntity<StreamingResponseBody> downloadFolder(@PathVariable Integer id) {
         Folder rootFolder = folderService.getFolderById(id);
         if (rootFolder == null || Boolean.TRUE.equals(rootFolder.getDeleted())) {
-            throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+            throw new NotFoundException("error.folder.notFoundOrDeleted");
         }
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         if (!this.folderShareService.checkCanView(currentUser, rootFolder)) {
-            throw new ForbiddenException("Bạn không có quyền tải thư mục này");
+            throw new ForbiddenException("error.forbidden.downloadFolder");
         }
 
         StreamingResponseBody stream = outputStream -> {
@@ -145,7 +145,7 @@ public class FolderController {
         List<Integer> notFoundIds = folderIds.stream().filter(id -> !folderMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy thư mục với ID: " + notFoundIds);
+            throw new NotFoundException("error.folder.notFoundById", notFoundIds);
         }
 
         StreamingResponseBody stream = outputStream -> {
@@ -163,26 +163,26 @@ public class FolderController {
     }
 
     @PatchMapping(path = "/secure/folders/{id}")
-    @ApiMessage(message = "Cập nhật thư mục")
+    @ApiMessage(key = "api.folder.update", message = "Update folder")
     public ResponseEntity<FolderDTO> update(@PathVariable Integer id, @RequestBody @Valid Folder request) {
         Folder folder = this.folderService.getFolderById(id);
         if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
-            throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+            throw new NotFoundException("error.folder.notFoundOrDeleted");
         }
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         if (!this.folderShareService.checkCanEdit(currentUser, folder)) {
-            throw new ForbiddenException("Bạn không có quyền chỉnh sửa thư mục này");
+            throw new ForbiddenException("error.forbidden.editFolder");
         }
 
         if (folder.getParent() != null) {
             if (folderService.existsByNameAndParentAndIsDeletedFalseAndIdNot(request.getName(), folder.getParent(), folder.getId())) {
-                throw new UniqueConstraintException("Không thể đổi tên này trong cùng thư mục cha.");
+                throw new UniqueConstraintException("error.unique.renameInParent");
             }
         } else {
             if (folderService.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(request.getName(), SecurityUtil.getCurrentUserFromThreadLocal(),
                     folder.getId())) {
-                throw new UniqueConstraintException("Không thể đổi tên này trong thư mục gốc");
+                throw new UniqueConstraintException("error.unique.renameInRoot");
             }
         }
 
@@ -191,7 +191,7 @@ public class FolderController {
     }
 
     @PatchMapping(path = "/secure/folders")
-    @ApiMessage(message = "Chuyển thư mục vào thùng rác")
+    @ApiMessage(key = "api.folder.trash", message = "Move folder to trash")
     public ResponseEntity<Void> softDelete(@RequestBody List<Integer> ids) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
@@ -202,7 +202,7 @@ public class FolderController {
         List<Integer> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy thư mục với các ID (hoặc đã bị xóa mềm): " + notFoundIds);
+            throw new NotFoundException("error.folder.idsSoftDeleted", notFoundIds);
         }
 
         for (Folder f : folders) {
@@ -212,7 +212,7 @@ public class FolderController {
     }
 
     @PatchMapping(path = "/secure/folders/restore")
-    @ApiMessage(message = "Khôi phục thư mục")
+    @ApiMessage(key = "api.folder.restore", message = "Restore folder")
     public ResponseEntity<List<FolderDTO>> restore(@RequestBody List<Integer> ids) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
@@ -223,7 +223,7 @@ public class FolderController {
         List<Integer> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy thư mục với các ID (hoặc chưa bị xóa mềm): " + notFoundIds);
+            throw new NotFoundException("error.folder.idsNotSoftDeleted", notFoundIds);
         }
 
         for (Folder f : folders) {
@@ -235,7 +235,7 @@ public class FolderController {
     }
 
     @DeleteMapping(path = "/secure/folders/permanent")
-    @ApiMessage(message = "Xoá vĩnh viễn thư mục")
+    @ApiMessage(key = "api.folder.permanentDelete", message = "Permanently delete folder")
     public ResponseEntity<Void> hardDelete(@RequestBody List<Integer> ids) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
@@ -246,7 +246,7 @@ public class FolderController {
         List<Integer> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy thư mục với các ID (hoặc chưa bị xóa mềm): " + notFoundIds);
+            throw new NotFoundException("error.folder.idsNotSoftDeleted", notFoundIds);
         }
 
         for (Folder f : folders) {
@@ -256,7 +256,7 @@ public class FolderController {
     }
 
     @PostMapping("/secure/folders/copy")
-    @ApiMessage(message = "Sao chép thư mục")
+    @ApiMessage(key = "api.folder.copy", message = "Copy folder")
     public ResponseEntity<Void> copyFolders(@RequestBody CopyCutReq request) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
@@ -267,21 +267,21 @@ public class FolderController {
         List<Integer> notFoundIds = request.getIds().stream().filter(id -> !folderMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy thư mục với các ID (hoặc đã bị xóa mềm): " + notFoundIds);
+            throw new NotFoundException("error.folder.idsSoftDeleted", notFoundIds);
         }
 
         Folder targetFolder = null;
         if (request.getTargetFolderId() != null) {
             targetFolder = this.folderService.getFolderById(request.getTargetFolderId());
             if (targetFolder == null || Boolean.TRUE.equals(targetFolder.getDeleted())) {
-                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+                throw new NotFoundException("error.folder.notFoundOrDeleted");
             }
         }
 
         for (Folder folder : folders) {
             if (targetFolder != null
                     && (folder.getId().equals(targetFolder.getId()) || this.folderService.isDescendant(folder, targetFolder))) {
-                throw new FileException("Không thể sao chép thư mục vào chính nó hoặc thư mục con của nó: " + folder.getName());
+                throw new FileException("error.folder.copyIntoSelf", folder.getName());
             }
             this.folderService.copyFolder(folder, targetFolder);
         }
@@ -289,7 +289,7 @@ public class FolderController {
     }
 
     @PostMapping("/secure/folders/move")
-    @ApiMessage(message = "Di chuyển thư mục")
+    @ApiMessage(key = "api.folder.move", message = "Move folder")
     public ResponseEntity<Void> moveFolders(@RequestBody CopyCutReq request) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
@@ -300,14 +300,14 @@ public class FolderController {
         List<Integer> notFoundIds = request.getIds().stream().filter(id -> !folderMap.containsKey(id)).toList();
 
         if (!notFoundIds.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy thư mục với các ID (hoặc đã bị xóa mềm): " + notFoundIds);
+            throw new NotFoundException("error.folder.idsSoftDeleted", notFoundIds);
         }
 
         Folder targetFolder = null;
         if (request.getTargetFolderId() != null) {
             targetFolder = this.folderService.getFolderById(request.getTargetFolderId());
             if (targetFolder == null || Boolean.TRUE.equals(targetFolder.getDeleted())) {
-                throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+                throw new NotFoundException("error.folder.notFoundOrDeleted");
             }
         }
 
@@ -320,7 +320,7 @@ public class FolderController {
 
             if (targetFolder != null
                     && (folder.getId().equals(targetFolder.getId()) || this.folderService.isDescendant(folder, targetFolder))) {
-                throw new FileException("Không thể di chuyển thư mục vào chính nó hoặc thư mục con của nó: " + folder.getName());
+                throw new FileException("error.folder.moveIntoSelf", folder.getName());
             }
             this.folderService.moveFolder(folder, targetFolder);
         }
@@ -328,15 +328,15 @@ public class FolderController {
     }
 
     @GetMapping(path = "/secure/folders/{id}")
-    @ApiMessage(message = "Xem chi tiết thư mục")
+    @ApiMessage(key = "api.folder.detail", message = "View folder details")
     public ResponseEntity<FolderDTO> detail(@PathVariable Integer id) {
         Folder folder = this.folderService.getFolderById(id);
         if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
-            throw new NotFoundException("Thư mục không tồn tại hoặc đã bị xóa");
+            throw new NotFoundException("error.folder.notFoundOrDeleted");
         }
 
         if (!this.folderShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
-            throw new ForbiddenException("Bạn không có quyền xem thư mục này");
+            throw new ForbiddenException("error.forbidden.viewFolder");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(this.folderService.convertFolderToFolderDTO(folder));

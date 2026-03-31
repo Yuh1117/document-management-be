@@ -1,20 +1,26 @@
 package com.vpgh.dms.service.impl;
 
 import com.vpgh.dms.model.dto.DocumentDTO;
+import com.vpgh.dms.model.constant.ProcessingStatus;
 import com.vpgh.dms.model.constant.StorageType;
+import com.vpgh.dms.model.dto.processor.ProcessorSummarizeRequest;
+import com.vpgh.dms.model.dto.processor.ProcessorSummarizeResponse;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.DocumentVersion;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.repository.DocumentVersionRepository;
-import com.vpgh.dms.service.DocumentParseService;
 import com.vpgh.dms.service.DocumentService;
+import com.vpgh.dms.service.ProcessorSummarizeClient;
 import com.vpgh.dms.service.UserService;
+import com.vpgh.dms.service.impl.queue.DocumentQueuePublisher;
 import com.vpgh.dms.util.SecurityUtil;
+import com.vpgh.dms.util.exception.NotFoundException;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -41,25 +47,46 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentVersionRepository documentVersionRepository;
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
-    private final DocumentParseService documentParseService;
+    private final DocumentQueuePublisher documentQueuePublisher;
+    private final ProcessorSummarizeClient processorSummarizeClient;
     @Value("${aws.bucket.name}")
     private String bucketName;
     private static final String ROOT_FOLDER_PREFIX = "root";
 
-    public DocumentServiceImpl(S3Presigner s3Presigner, S3Client s3Client, DocumentVersionRepository documentVersionRepository,
-                               UserService userService, DocumentRepository documentRepository,
-                               DocumentParseService documentParseService) {
+    public DocumentServiceImpl(S3Presigner s3Presigner, S3Client s3Client,
+            DocumentVersionRepository documentVersionRepository,
+            UserService userService, DocumentRepository documentRepository,
+            DocumentQueuePublisher documentQueuePublisher,
+            ProcessorSummarizeClient processorSummarizeClient) {
         this.s3Presigner = s3Presigner;
         this.s3Client = s3Client;
         this.documentVersionRepository = documentVersionRepository;
         this.userService = userService;
         this.documentRepository = documentRepository;
-        this.documentParseService = documentParseService;
+        this.documentQueuePublisher = documentQueuePublisher;
+        this.processorSummarizeClient = processorSummarizeClient;
     }
 
     @Override
     public Document save(Document document) {
         return this.documentRepository.save(document);
+    }
+
+    @Override
+    @Transactional
+    public void updateProcessingStatus(Integer documentId, ProcessingStatus status, Integer ocrQualityScore,
+            String processingError, String extractedText) {
+        Document doc = this.documentRepository.findById(documentId).orElse(null);
+        if (doc == null) {
+            return;
+        }
+        doc.setProcessingStatus(status);
+        doc.setOcrQualityScore(ocrQualityScore);
+        doc.setProcessingError(processingError);
+        if (extractedText != null) {
+            doc.setExtractedText(extractedText);
+        }
+        this.documentRepository.save(doc);
     }
 
     @Override
@@ -100,8 +127,15 @@ public class DocumentServiceImpl implements DocumentService {
         existingDoc.setFileHash(DigestUtils.md5DigestAsHex(fileBytes));
 
         Document saved = this.documentRepository.save(existingDoc);
-        this.documentParseService.parseAndIndexAsync(saved, tempFile);
-        return saved;
+
+        saved.setProcessingStatus(ProcessingStatus.PROCESSING);
+        saved.setProcessingError(null);
+        saved.setOcrQualityScore(null);
+        Document updated = this.documentRepository.save(saved);
+
+        documentQueuePublisher.publishDocument(updated);
+        tempFile.delete();
+        return updated;
     }
 
     @Override
@@ -110,16 +144,16 @@ public class DocumentServiceImpl implements DocumentService {
         return saveNewDocument(file, folder, uniqueName);
     }
 
-
-//    @Override
-//    public byte[] downloadFile(String filePath) {
-//        String key = extractKeyFromPath(filePath);
-//        ResponseBytes<GetObjectResponse> objectAsBytes = s3Client.getObjectAsBytes(GetObjectRequest.builder()
-//                .bucket(bucketName)
-//                .key(key)
-//                .build());
-//        return objectAsBytes.asByteArray();
-//    }
+    // @Override
+    // public byte[] downloadFile(String filePath) {
+    // String key = extractKeyFromPath(filePath);
+    // ResponseBytes<GetObjectResponse> objectAsBytes =
+    // s3Client.getObjectAsBytes(GetObjectRequest.builder()
+    // .bucket(bucketName)
+    // .key(key)
+    // .build());
+    // return objectAsBytes.asByteArray();
+    // }
 
     @Override
     public InputStream downloadFileStream(String filePath) {
@@ -129,7 +163,6 @@ public class DocumentServiceImpl implements DocumentService {
                 .key(key)
                 .build());
     }
-
 
     @Override
     public void hardDelete(Document doc) {
@@ -154,6 +187,9 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setMimeType(doc.getMimeType());
         dto.setStorageType(doc.getStorageType());
         dto.setDeleted(doc.getDeleted());
+        dto.setSummaryText(doc.getSummaryText());
+        dto.setModelVersion(doc.getModelVersion());
+        dto.setPromptVersion(doc.getPromptVersion());
         dto.setCreatedAt(doc.getCreatedAt());
         dto.setUpdatedAt(doc.getUpdatedAt());
         dto.setCreatedBy(this.userService.convertUserToUserDTO(doc.getCreatedBy()));
@@ -194,8 +230,10 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public boolean existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, Integer id) {
-        return this.documentRepository.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(name, createdBy, id);
+    public boolean existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy,
+            Integer id) {
+        return this.documentRepository.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(name, createdBy,
+                id);
     }
 
     @Override
@@ -205,7 +243,8 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public Document findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(String name, User createdBy) {
-        return this.documentRepository.findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(name, createdBy).orElse(null);
+        return this.documentRepository.findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(name, createdBy)
+                .orElse(null);
     }
 
     @Override
@@ -250,28 +289,10 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public void moveDocument(Document doc, Folder targetFolder) {
-        String oldKey = extractKeyFromPath(doc.getFilePath());
-        String folderPath = buildS3FolderPath(targetFolder);
-        String storedFilename = doc.getStoredFilename();
-        String newKey = buildS3Key(folderPath, storedFilename);
-
-        s3Client.copyObject(CopyObjectRequest.builder()
-                .sourceBucket(bucketName)
-                .sourceKey(oldKey)
-                .destinationBucket(bucketName)
-                .destinationKey(newKey)
-                .build());
-
-        s3Client.deleteObject(DeleteObjectRequest.builder()
-                .bucket(bucketName)
-                .key(oldKey)
-                .build());
-
         String newName = doc.getName();
         if (!Objects.equals(doc.getFolder(), targetFolder)) {
             newName = generateUniqueName(doc.getName(), targetFolder);
         }
-        doc.setFilePath(buildS3Uri(newKey));
         doc.setFolder(targetFolder);
         doc.setName(newName);
 
@@ -304,6 +325,30 @@ public class DocumentServiceImpl implements DocumentService {
         return doc.getCreatedBy().getId().equals(user.getId());
     }
 
+    @Override
+    @Transactional
+    public DocumentDTO summarizeDocument(Integer documentId, String language) {
+        Document doc = this.documentRepository.findById(documentId).orElse(null);
+        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
+            throw new NotFoundException("error.document.notFoundOrDeleted");
+        }
+
+        String extractedText = doc.getExtractedText();
+        if (extractedText == null || extractedText.isBlank()) {
+            throw new IllegalStateException("error.document.noExtractedText");
+        }
+
+        ProcessorSummarizeResponse response = processorSummarizeClient
+                .summarize(new ProcessorSummarizeRequest(extractedText, language));
+
+        doc.setSummaryText(response.summaryText());
+        doc.setModelVersion(response.modelVersion());
+        doc.setPromptVersion(response.promptVersion());
+
+        Document saved = this.documentRepository.save(doc);
+        return convertDocumentToDocumentDTO(saved);
+    }
+
     private Document saveNewDocument(MultipartFile file, Folder folder, String fileName) throws IOException {
         String folderPath = buildS3FolderPath(folder);
         String storedFilename = generateStoredFilename(fileName);
@@ -326,8 +371,14 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setStorageType(StorageType.AWS_S3);
         doc.setFolder(folder);
 
+        doc.setProcessingStatus(ProcessingStatus.PROCESSING);
+        doc.setProcessingError(null);
+        doc.setOcrQualityScore(null);
+
         Document saved = documentRepository.save(doc);
-        this.documentParseService.parseAndIndexAsync(saved, tempFile);
+        documentQueuePublisher.publishDocument(saved);
+
+        tempFile.delete();
 
         return saved;
     }
@@ -353,9 +404,9 @@ public class DocumentServiceImpl implements DocumentService {
 
     private void uploadToS3(String key, InputStream inputStream, long size) throws IOException {
         s3Client.putObject(PutObjectRequest.builder()
-                        .bucket(bucketName)
-                        .key(key)
-                        .build(),
+                .bucket(bucketName)
+                .key(key)
+                .build(),
                 RequestBody.fromInputStream(inputStream, size));
     }
 
@@ -392,15 +443,8 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private String buildS3FolderPath(Folder folder) {
-        List<String> parts = new ArrayList<>();
-        parts.add(folder != null ? folder.getCreatedBy().getEmail() : SecurityUtil.getCurrentUserFromThreadLocal().getEmail());
-
-        while (folder != null) {
-            parts.add(folder.getName());
-            folder = folder.getParent();
-        }
-        Collections.reverse(parts.subList(1, parts.size()));
-        return String.join("/", parts);
+        return folder != null ? folder.getCreatedBy().getEmail()
+                : SecurityUtil.getCurrentUserFromThreadLocal().getEmail();
     }
 
     private String extractKeyFromPath(String s3Path) {

@@ -8,9 +8,9 @@ import jakarta.validation.constraints.NotBlank;
 public class SystemSettingDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Integer id;
-    @NotBlank(message = "Key không được để trống!")
+    @NotBlank(message = "{validation.setting.key.notBlank}")
     private String key;
-    @NotBlank(message = "Giá trị không được để trống!")
+    @NotBlank(message = "{validation.setting.value.notBlank}")
     private String value;
     private String description;
 

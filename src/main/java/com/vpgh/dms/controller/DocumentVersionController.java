@@ -40,15 +40,15 @@ public class DocumentVersionController {
 
 
     @GetMapping(path = "/secure/documents/{id}/versions")
-    @ApiMessage(message = "Xem lịch sử phiên bản tài liệu")
+    @ApiMessage(key = "api.documentVersion.history", message = "View document version history")
     public ResponseEntity<PaginationResDTO<List<DocumentVersion>>> detail(@PathVariable Integer id, @RequestParam Map<String, String> params) {
         Document doc = this.documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
+            throw new NotFoundException("error.document.notFoundOrDeleted");
         }
 
         if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("Bạn không có quyền xem tài liệu này");
+            throw new ForbiddenException("error.forbidden.viewDocument");
         }
 
         String page = params.get("page");
@@ -72,16 +72,16 @@ public class DocumentVersionController {
 
         Document doc = this.documentService.getDocumentById(documentId);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("Tài liệu không tồn tại hoặc đã bị xóa");
+            throw new NotFoundException("error.document.notFoundOrDeleted");
         }
 
         if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("Bạn không có quyền tải tài liệu này");
+            throw new ForbiddenException("error.forbidden.downloadDocument");
         }
 
         DocumentVersion version = this.documentVersionService.getVersionById(versionId);
         if (version == null) {
-            throw new NotFoundException("Phiên bản tài liệu không tồn tại");
+            throw new NotFoundException("error.documentVersion.notFound");
         }
 
         InputStream inputStream = documentService.downloadFileStream(version.getFilePath());

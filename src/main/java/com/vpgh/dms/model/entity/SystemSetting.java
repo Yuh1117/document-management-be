@@ -12,10 +12,10 @@ public class SystemSetting extends FullAuditableEntity {
     private Integer id;
 
     @Column(nullable = false, name = "`key`", unique = true)
-    @NotBlank(message = "Key không được để trống!")
+    @NotBlank(message = "{validation.setting.key.notBlank}")
     private String key;
     @Column(columnDefinition = "LONGTEXT", nullable = false)
-    @NotBlank(message = "Giá trị không được để trống!")
+    @NotBlank(message = "{validation.setting.value.notBlank}")
     private String value;
     private String description;
 

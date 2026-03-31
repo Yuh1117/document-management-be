@@ -13,15 +13,15 @@ import java.time.Instant;
 public class UserDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Integer id;
-    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Email không hợp lệ!")
-    @NotBlank(message = "Email không được để trống")
+    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "{validation.user.email.invalid}")
+    @NotBlank(message = "{validation.user.email.notBlank}")
     private String email;
-    @NotBlank(message = "Mật khẩu không được để trống")
+    @NotBlank(message = "{validation.user.password.notBlank}")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
-    @NotBlank(message = "Tên không được để trống")
+    @NotBlank(message = "{validation.user.firstName.notBlank}")
     private String firstName;
-    @NotBlank(message = "Họ không được để trống")
+    @NotBlank(message = "{validation.user.lastName.notBlank}")
     private String lastName;
     private String avatar;
     private RoleDTO role;

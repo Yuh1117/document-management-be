@@ -33,14 +33,14 @@ public class UserController {
     }
 
     @PostMapping(path = "/admin/users")
-    @ApiMessage(message = "Tạo mới người dùng")
+    @ApiMessage(key = "api.user.create", message = "Create user")
     public ResponseEntity<UserDTO> create(@ModelAttribute @Valid UserDTO reqUser) {
         User user = this.userService.handleCreateUser(reqUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertUserToUserDTO(user));
     }
 
     @GetMapping(path = "/admin/users")
-    @ApiMessage(message = "Lấy danh sách người dùng")
+    @ApiMessage(key = "api.user.list", message = "List users")
     public ResponseEntity<PaginationResDTO<List<UserDTO>>> list(@RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
@@ -60,24 +60,24 @@ public class UserController {
     }
 
     @GetMapping(path = "/admin/users/{id}")
-    @ApiMessage(message = "Lấy chi tiết người dùng")
+    @ApiMessage(key = "api.user.detail", message = "Get user details")
     public ResponseEntity<UserDTO> detail(@PathVariable(value = "id") Integer id) {
         User user = this.userService.getUserById(id);
         if (user == null) {
-            throw new NotFoundException("Không tìm thấy người dùng");
+            throw new NotFoundException("error.user.notFound");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertUserToUserDTO(user));
     }
 
     @PatchMapping(path = "/admin/users/{id}")
-    @ApiMessage(message = "Cập nhật người dùng")
+    @ApiMessage(key = "api.user.update", message = "Update user")
     public ResponseEntity<UserDTO> update(@PathVariable(value = "id") Integer id,
                                           @ModelAttribute UserDTO reqUser) {
 
         User user = this.userService.getUserById(id);
         if (user == null) {
-            throw new NotFoundException("Không tìm thấy người dùng!");
+            throw new NotFoundException("error.user.notFound");
         }
 
         reqUser.setId(user.getId());
@@ -98,11 +98,11 @@ public class UserController {
     }
 
     @DeleteMapping(path = "/admin/users/{id}")
-    @ApiMessage(message = "Xóa người dùng")
+    @ApiMessage(key = "api.user.delete", message = "Delete user")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
         User user = this.userService.getUserById(id);
         if (user == null) {
-            throw new NotFoundException("Không tìm thấy người dùng!");
+            throw new NotFoundException("error.user.notFound");
         }
 
         this.userService.deleteUserById(user.getId());

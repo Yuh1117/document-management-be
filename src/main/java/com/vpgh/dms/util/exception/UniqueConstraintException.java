@@ -1,7 +1,23 @@
 package com.vpgh.dms.util.exception;
 
-public class UniqueConstraintException extends RuntimeException {
-    public UniqueConstraintException(String message) {
-        super(message);
+public class UniqueConstraintException extends RuntimeException implements LocalizableException {
+
+    private final String messageCode;
+    private final Object[] messageArgs;
+
+    public UniqueConstraintException(String messageCode, Object... messageArgs) {
+        super(messageCode);
+        this.messageCode = messageCode;
+        this.messageArgs = messageArgs != null ? messageArgs : new Object[0];
+    }
+
+    @Override
+    public String getMessageCode() {
+        return messageCode;
+    }
+
+    @Override
+    public Object[] getMessageArgs() {
+        return messageArgs;
     }
 }

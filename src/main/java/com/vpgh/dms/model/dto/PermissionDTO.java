@@ -8,13 +8,13 @@ import jakarta.validation.constraints.NotNull;
 public class PermissionDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Integer id;
-    @NotNull(message = "Tên không được để trống!")
+    @NotNull(message = "{validation.permission.name.notNull}")
     private String name;
-    @NotNull(message = "Path không được để trống!")
+    @NotNull(message = "{validation.permission.path.notNull}")
     private String apiPath;
-    @NotNull(message = "Method không được để trống!")
+    @NotNull(message = "{validation.permission.method.notNull}")
     private String method;
-    @NotNull(message = "Module không được để trống!")
+    @NotNull(message = "{validation.permission.module.notNull}")
     private String module;
 
     public Integer getId() {

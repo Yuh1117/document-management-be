@@ -4,10 +4,6 @@ WORKDIR /app
 
 COPY pom.xml ./
 
-COPY src/main/resources/vncorenlp /app/src/main/resources/vncorenlp
-
 RUN mvn dependency:resolve
-
-COPY src ./src
 
 CMD ["mvn", "spring-boot:run"]

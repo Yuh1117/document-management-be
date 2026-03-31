@@ -5,9 +5,9 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.web.multipart.MultipartFile;
 
 public class HideDataReq {
-    @NotNull(message = "Tệp không được để trống")
+    @NotNull(message = "{validation.file.notNull}")
     private MultipartFile file;
-    @NotBlank(message = "Nội dung không được để trống")
+    @NotBlank(message = "{validation.payload.content.notBlank}")
     private String content;
     private String password;
 
