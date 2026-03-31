@@ -327,7 +327,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public DocumentDTO summarizeDocument(Integer documentId) {
+    public DocumentDTO summarizeDocument(Integer documentId, String language) {
         Document doc = this.documentRepository.findById(documentId).orElse(null);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("error.document.notFoundOrDeleted");
@@ -339,7 +339,7 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         ProcessorSummarizeResponse response = processorSummarizeClient
-                .summarize(new ProcessorSummarizeRequest(extractedText));
+                .summarize(new ProcessorSummarizeRequest(extractedText, language));
 
         doc.setSummaryText(response.summaryText());
         doc.setModelVersion(response.modelVersion());

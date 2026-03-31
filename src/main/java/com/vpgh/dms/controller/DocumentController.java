@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -433,9 +434,9 @@ public class DocumentController {
                 .body(res);
     }
 
-    @PostMapping(path = "/secure/documents/{id}/summarize")
+    @GetMapping(path = "/secure/documents/{id}/summarize")
     @ApiMessage(key = "api.document.summarize", message = "Summarize document")
-    public ResponseEntity<DocumentDTO> summarize(@PathVariable Integer id) {
+    public ResponseEntity<DocumentDTO> summarize(@PathVariable Integer id, Locale locale) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("error.document.notFoundOrDeleted");
@@ -445,7 +446,7 @@ public class DocumentController {
             throw new ForbiddenException("error.forbidden.viewDocument");
         }
 
-        DocumentDTO result = this.documentService.summarizeDocument(id);
+        DocumentDTO result = this.documentService.summarizeDocument(id, locale.getLanguage());
         return ResponseEntity.ok(result);
     }
 

@@ -100,7 +100,7 @@ CREATE TABLE public.documents (
     processing_error TEXT,
     summary_text TEXT,
     model_version character varying(100),
-    prompt_version character varying(50);
+    prompt_version character varying(50),
     folder_id integer,
     created_at timestamp(6) with time zone,
     updated_at timestamp(6) with time zone,
