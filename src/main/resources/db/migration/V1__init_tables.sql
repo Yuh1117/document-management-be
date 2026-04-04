@@ -99,7 +99,7 @@ CREATE TABLE public.documents (
     ocr_quality_score integer,
     processing_error TEXT,
     summary_text TEXT,
-    model_version character varying(100),
+    model_name character varying(100),
     prompt_version character varying(50),
     folder_id integer,
     created_at timestamp(6) with time zone,

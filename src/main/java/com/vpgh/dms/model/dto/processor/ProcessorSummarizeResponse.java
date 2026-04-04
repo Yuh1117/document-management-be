@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record ProcessorSummarizeResponse(
         @JsonProperty("summary_text") String summaryText,
-        @JsonProperty("model_version") String modelVersion,
+        @JsonProperty("model_name") String modelName,
         @JsonProperty("prompt_version") String promptVersion
 ) {
 }

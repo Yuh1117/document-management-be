@@ -46,8 +46,8 @@ public class Document extends FullAuditableEntity {
     private String processingError;
     @Column(columnDefinition = "TEXT")
     private String summaryText;
-    @Column(length = 100)
-    private String modelVersion;
+    @Column(name = "model_name", length = 100)
+    private String modelName;
     @Column(length = 50)
     private String promptVersion;
     @Column(columnDefinition = "TEXT")
@@ -240,12 +240,12 @@ public class Document extends FullAuditableEntity {
         this.summaryText = summaryText;
     }
 
-    public String getModelVersion() {
-        return modelVersion;
+    public String getModelName() {
+        return modelName;
     }
 
-    public void setModelVersion(String modelVersion) {
-        this.modelVersion = modelVersion;
+    public void setModelName(String modelName) {
+        this.modelName = modelName;
     }
 
     public String getPromptVersion() {

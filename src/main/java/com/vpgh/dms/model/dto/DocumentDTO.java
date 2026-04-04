@@ -16,7 +16,7 @@ public class DocumentDTO {
     private StorageType storageType;
     private Boolean isDeleted;
     private String summaryText;
-    private String modelVersion;
+    private String modelName;
     private String promptVersion;
 
     private UserDTO createdBy;
@@ -144,12 +144,12 @@ public class DocumentDTO {
         this.summaryText = summaryText;
     }
 
-    public String getModelVersion() {
-        return modelVersion;
+    public String getModelName() {
+        return modelName;
     }
 
-    public void setModelVersion(String modelVersion) {
-        this.modelVersion = modelVersion;
+    public void setModelName(String modelName) {
+        this.modelName = modelName;
     }
 
     public String getPromptVersion() {

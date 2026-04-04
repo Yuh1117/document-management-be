@@ -194,7 +194,7 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setStorageType(doc.getStorageType());
         dto.setDeleted(doc.getDeleted());
         dto.setSummaryText(doc.getSummaryText());
-        dto.setModelVersion(doc.getModelVersion());
+        dto.setModelName(doc.getModelName());
         dto.setPromptVersion(doc.getPromptVersion());
         dto.setCreatedAt(doc.getCreatedAt());
         dto.setUpdatedAt(doc.getUpdatedAt());
@@ -348,7 +348,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .summarize(new ProcessorSummarizeRequest(extractedText, language));
 
         doc.setSummaryText(response.summaryText());
-        doc.setModelVersion(response.modelVersion());
+        doc.setModelName(response.modelName());
         doc.setPromptVersion(response.promptVersion());
 
         Document saved = this.documentRepository.save(doc);
