@@ -8,7 +8,7 @@ import com.vpgh.dms.model.dto.response.FileItemProjection;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.FileRepository;
 import com.vpgh.dms.service.FileService;
-import com.vpgh.dms.service.ProcessorSearchClient;
+import com.vpgh.dms.service.ProcessorSearchService;
 import com.vpgh.dms.util.PageSize;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -22,11 +22,11 @@ import java.util.stream.Collectors;
 @Service
 public class FileServiceImpl implements FileService {
     private final FileRepository fileRepository;
-    private final ProcessorSearchClient processorSearchClient;
+    private final ProcessorSearchService processorSearchService;
 
-    public FileServiceImpl(FileRepository fileRepository, ProcessorSearchClient processorSearchClient) {
+    public FileServiceImpl(FileRepository fileRepository, ProcessorSearchService processorSearchService) {
         this.fileRepository = fileRepository;
-        this.processorSearchClient = processorSearchClient;
+        this.processorSearchService = processorSearchService;
     }
 
     @Override
@@ -147,7 +147,7 @@ public class FileServiceImpl implements FileService {
 
         ProcessorSearchRequest request = new ProcessorSearchRequest(searchKeyword, user.getId(), folderId, page,
                 pageSize, mode);
-        ProcessorSearchResponse response = processorSearchClient.search(request);
+        ProcessorSearchResponse response = processorSearchService.search(request);
         List<ProcessorSearchResponse.ProcessorSearchHit> hits = response.getHits() != null ? response.getHits()
                 : List.of();
 

@@ -50,6 +50,10 @@ public class Document extends FullAuditableEntity {
     private String modelVersion;
     @Column(length = 50)
     private String promptVersion;
+    @Column(columnDefinition = "TEXT")
+    private String validationReport;
+    @Column(columnDefinition = "TEXT")
+    private String ocrMetrics;
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
@@ -250,6 +254,22 @@ public class Document extends FullAuditableEntity {
 
     public void setPromptVersion(String promptVersion) {
         this.promptVersion = promptVersion;
+    }
+
+    public String getValidationReport() {
+        return validationReport;
+    }
+
+    public void setValidationReport(String validationReport) {
+        this.validationReport = validationReport;
+    }
+
+    public String getOcrMetrics() {
+        return ocrMetrics;
+    }
+
+    public void setOcrMetrics(String ocrMetrics) {
+        this.ocrMetrics = ocrMetrics;
     }
 
 }

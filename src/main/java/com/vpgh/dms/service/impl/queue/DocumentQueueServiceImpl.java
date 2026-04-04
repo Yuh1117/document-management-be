@@ -1,6 +1,7 @@
 package com.vpgh.dms.service.impl.queue;
 
 import com.vpgh.dms.model.entity.Document;
+import com.vpgh.dms.service.DocumentQueueService;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -10,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class DocumentQueuePublisher {
+public class DocumentQueueServiceImpl implements DocumentQueueService {
 
     private final AmqpTemplate amqpTemplate;
 
@@ -20,10 +21,11 @@ public class DocumentQueuePublisher {
     @Value("${rabbitmq.document.routing-key}")
     private String routingKey;
 
-    public DocumentQueuePublisher(AmqpTemplate amqpTemplate) {
+    public DocumentQueueServiceImpl(AmqpTemplate amqpTemplate) {
         this.amqpTemplate = amqpTemplate;
     }
 
+    @Override
     @Async
     public void publishDocument(Document doc) {
         Map<String, Object> payload = new HashMap<>();
@@ -37,4 +39,3 @@ public class DocumentQueuePublisher {
         amqpTemplate.convertAndSend(exchange, routingKey, payload);
     }
 }
-

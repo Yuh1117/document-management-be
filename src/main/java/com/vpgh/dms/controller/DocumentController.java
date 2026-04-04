@@ -44,10 +44,13 @@ public class DocumentController {
     private final DocumentShareService documentShareService;
     private final StegoService stegoService;
     private final FolderShareService folderShareService;
+    private final ProcessorModelService processorModelService;
 
     public DocumentController(DocumentService documentService, FolderService folderService, DocumentShareService documentShareService,
-                              StegoService stegoService, FolderShareService folderShareService) {
+                              StegoService stegoService, FolderShareService folderShareService,
+                              ProcessorModelService processorModelService) {
         this.documentService = documentService;
+        this.processorModelService = processorModelService;
         this.folderService = folderService;
         this.documentShareService = documentShareService;
         this.stegoService = stegoService;
@@ -480,5 +483,12 @@ public class DocumentController {
         }
 
         return ResponseEntity.ok(new DataResponse<>(content));
+    }
+
+    @GetMapping(path = "/secure/models/summarize")
+    @ApiMessage(key = "api.models.summarize", message = "List summarize models")
+    public ResponseEntity<Map<String, Object>> listSummarizeModels() {
+        Map<String, Object> models = processorModelService.listModels();
+        return ResponseEntity.ok(models);
     }
 }
