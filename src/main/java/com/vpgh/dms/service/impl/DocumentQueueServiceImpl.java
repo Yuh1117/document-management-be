@@ -1,4 +1,4 @@
-package com.vpgh.dms.service.impl.queue;
+package com.vpgh.dms.service.impl;
 
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.service.DocumentQueueService;

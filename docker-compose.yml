@@ -95,6 +95,7 @@ services:
       - hf-cache:/cache/huggingface
       - easyocr-cache:/root/.EasyOCR
       - pip-cache:/root/.cache/pip
+      - mlflow-data:/mlflow
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -116,6 +117,7 @@ services:
       - hf-cache:/cache/huggingface
       - easyocr-cache:/root/.EasyOCR
       - pip-cache:/root/.cache/pip
+      - mlflow-data:/mlflow:ro
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -159,11 +161,25 @@ services:
       - dms-network
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.21.3
+    image: ghcr.io/mlflow/mlflow:v3.10.1
     container_name: dms-mlflow
     ports:
       - "5001:5001"
-    command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5001", "--backend-store-uri", "sqlite:///mlflow/mlflow.db", "--default-artifact-root", "/mlflow/artifacts"]
+    command:
+      [
+        "mlflow",
+        "server",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "5001",
+        "--allowed-hosts",
+        "localhost,localhost:5001,127.0.0.1,127.0.0.1:5001,mlflow,mlflow:5001,host.docker.internal",
+        "--backend-store-uri",
+        "sqlite:///mlflow/mlflow.db",
+        "--default-artifact-root",
+        "/mlflow/artifacts",
+      ]
     volumes:
       - mlflow-data:/mlflow
     networks:

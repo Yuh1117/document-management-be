@@ -46,9 +46,10 @@ public class DocumentController {
     private final FolderShareService folderShareService;
     private final ProcessorModelService processorModelService;
 
-    public DocumentController(DocumentService documentService, FolderService folderService, DocumentShareService documentShareService,
-                              StegoService stegoService, FolderShareService folderShareService,
-                              ProcessorModelService processorModelService) {
+    public DocumentController(DocumentService documentService, FolderService folderService,
+            DocumentShareService documentShareService,
+            StegoService stegoService, FolderShareService folderShareService,
+            ProcessorModelService processorModelService) {
         this.documentService = documentService;
         this.processorModelService = processorModelService;
         this.folderService = folderService;
@@ -59,7 +60,8 @@ public class DocumentController {
 
     @PostMapping(path = "/secure/documents/upload")
     @ApiMessage(key = "api.document.upload", message = "Upload document")
-    public ResponseEntity<Map<String, Object>> upload(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
+    public ResponseEntity<Map<String, Object>> upload(@Valid @ModelAttribute FileUploadReq fileUploadReq)
+            throws IOException {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
 
         Folder folder = null;
@@ -83,8 +85,7 @@ public class DocumentController {
                 conflict = documentService.existsByNameAndFolderAndIsDeletedFalseAndIdNot(filename, folder, null);
             } else {
                 conflict = documentService.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(
-                        filename, currentUser, null
-                );
+                        filename, currentUser, null);
             }
 
             if (conflict) {
@@ -106,10 +107,10 @@ public class DocumentController {
         return ResponseEntity.status(HttpStatus.MULTI_STATUS).body(response);
     }
 
-
     @PostMapping(path = "/secure/documents/upload-replace")
     @ApiMessage(key = "api.document.uploadReplace", message = "Upload and replace")
-    public ResponseEntity<List<Document>> uploadReplace(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
+    public ResponseEntity<List<Document>> uploadReplace(@Valid @ModelAttribute FileUploadReq fileUploadReq)
+            throws IOException {
         Folder folder = null;
         if (fileUploadReq.getFolderId() != null) {
             folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
@@ -148,7 +149,8 @@ public class DocumentController {
 
     @PostMapping(path = "/secure/documents/upload-keep")
     @ApiMessage(key = "api.document.uploadKeepBoth", message = "Upload and keep both")
-    public ResponseEntity<List<Document>> uploadKeep(@Valid @ModelAttribute FileUploadReq fileUploadReq) throws IOException {
+    public ResponseEntity<List<Document>> uploadKeep(@Valid @ModelAttribute FileUploadReq fileUploadReq)
+            throws IOException {
         Folder folder = null;
         if (fileUploadReq.getFolderId() != null) {
             folder = this.folderService.getFolderById(fileUploadReq.getFolderId());
@@ -168,7 +170,6 @@ public class DocumentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(uploadedDocs);
     }
 
-
     @PatchMapping("/secure/documents/{id}")
     @ApiMessage(key = "api.document.update", message = "Update document")
     public ResponseEntity<DocumentDTO> update(@PathVariable Integer id, @Valid @RequestBody Document request) {
@@ -182,7 +183,8 @@ public class DocumentController {
         }
 
         if (doc.getFolder() != null) {
-            if (documentService.existsByNameAndFolderAndIsDeletedFalseAndIdNot(request.getName(), doc.getFolder(), doc.getId())) {
+            if (documentService.existsByNameAndFolderAndIsDeletedFalseAndIdNot(request.getName(), doc.getFolder(),
+                    doc.getId())) {
                 throw new UniqueConstraintException("error.unique.renameInParent");
             }
         } else {
@@ -270,7 +272,6 @@ public class DocumentController {
         }
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
-
 
     @PatchMapping(path = "/secure/documents/restore")
     @ApiMessage(key = "api.document.restore", message = "Restore document")
@@ -369,9 +370,11 @@ public class DocumentController {
 
         for (Document doc : docs) {
             if (doc.getFolder() == null) {
-                if (targetFolder == null) continue;
+                if (targetFolder == null)
+                    continue;
             } else {
-                if (doc.getFolder().equals(targetFolder)) continue;
+                if (doc.getFolder().equals(targetFolder))
+                    continue;
             }
             this.documentService.moveDocument(doc, targetFolder);
         }
@@ -439,7 +442,7 @@ public class DocumentController {
 
     @GetMapping(path = "/secure/documents/{id}/summarize")
     @ApiMessage(key = "api.document.summarize", message = "Summarize document")
-    public ResponseEntity<DocumentDTO> summarize(@PathVariable Integer id, Locale locale) {
+    public ResponseEntity<Map<String, Object>> summarize(@PathVariable Integer id, Locale locale) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("error.document.notFoundOrDeleted");
@@ -449,8 +452,12 @@ public class DocumentController {
             throw new ForbiddenException("error.forbidden.viewDocument");
         }
 
-        DocumentDTO result = this.documentService.summarizeDocument(id, locale.getLanguage());
-        return ResponseEntity.ok(result);
+        Document result = this.documentService.summarizeDocument(id, locale.getLanguage());
+        return ResponseEntity.ok(Map.of(
+                "id", result.getId(),
+                "summaryText", result.getSummaryText(),
+                "modelName", result.getModelName(),
+                "promptVersion", result.getPromptVersion()));
     }
 
     @PostMapping(path = "/secure/documents/hide-data")
@@ -460,19 +467,23 @@ public class DocumentController {
             throw new FileException("error.file.invalidType");
         }
 
-        ByteArrayOutputStream out = stegoService.hideData(request.getFile().getInputStream(), request.getContent(), request.getPassword());
+        ByteArrayOutputStream out = stegoService.hideData(request.getFile().getInputStream(), request.getContent(),
+                request.getPassword());
         ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + URLEncoder.encode(request.getFile().getOriginalFilename(), StandardCharsets.UTF_8) + "\"")
+                        "attachment; filename=\""
+                                + URLEncoder.encode(request.getFile().getOriginalFilename(), StandardCharsets.UTF_8)
+                                + "\"")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(new InputStreamResource(in));
     }
 
     @PostMapping(path = "/secure/documents/extract-data")
     @ApiMessage(key = "api.document.extractData", message = "Extract data")
-    public ResponseEntity<DataResponse<String>> extractData(@Valid @ModelAttribute ExtractDataReq request) throws Exception {
+    public ResponseEntity<DataResponse<String>> extractData(@Valid @ModelAttribute ExtractDataReq request)
+            throws Exception {
         if (!"application/pdf".equals(request.getFile().getContentType())) {
             throw new FileException("error.file.invalidType");
         }

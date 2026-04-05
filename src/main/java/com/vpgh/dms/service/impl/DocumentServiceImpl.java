@@ -333,7 +333,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public DocumentDTO summarizeDocument(Integer documentId, String language) {
+    public Document summarizeDocument(Integer documentId, String language) {
         Document doc = this.documentRepository.findById(documentId).orElse(null);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("error.document.notFoundOrDeleted");
@@ -352,7 +352,7 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setPromptVersion(response.promptVersion());
 
         Document saved = this.documentRepository.save(doc);
-        return convertDocumentToDocumentDTO(saved);
+        return saved;
     }
 
     private Document saveNewDocument(MultipartFile file, Folder folder, String fileName) throws IOException {
