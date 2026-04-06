@@ -1,7 +1,9 @@
 package com.vpgh.dms.controller;
 
 import com.vpgh.dms.model.dto.DocumentDTO;
+import com.vpgh.dms.model.dto.processor.ProcessorModelsListResponse;
 import com.vpgh.dms.model.dto.request.*;
+import com.vpgh.dms.model.dto.response.DocumentSummarizeRes;
 import com.vpgh.dms.model.entity.*;
 import com.vpgh.dms.service.*;
 import com.vpgh.dms.util.DataResponse;
@@ -442,7 +444,7 @@ public class DocumentController {
 
     @GetMapping(path = "/secure/documents/{id}/summarize")
     @ApiMessage(key = "api.document.summarize", message = "Summarize document")
-    public ResponseEntity<Map<String, Object>> summarize(@PathVariable Integer id, Locale locale) {
+    public ResponseEntity<DocumentSummarizeRes> summarize(@PathVariable Integer id, Locale locale) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("error.document.notFoundOrDeleted");
@@ -453,11 +455,16 @@ public class DocumentController {
         }
 
         Document result = this.documentService.summarizeDocument(id, locale.getLanguage());
-        return ResponseEntity.ok(Map.of(
-                "id", result.getId(),
-                "summaryText", result.getSummaryText(),
-                "modelName", result.getModelName(),
-                "promptVersion", result.getPromptVersion()));
+
+        return ResponseEntity.ok(new DocumentSummarizeRes(result.getId(), result.getSummaryText(),
+                result.getModelName(), result.getPromptVersion()));
+    }
+
+    @GetMapping(path = "/secure/models/summarize")
+    @ApiMessage(key = "api.models.summarize", message = "List summarize models")
+    public ResponseEntity<ProcessorModelsListResponse> listSummarizeModels() {
+        ProcessorModelsListResponse models = processorModelService.listModels();
+        return ResponseEntity.ok(models);
     }
 
     @PostMapping(path = "/secure/documents/hide-data")
@@ -496,10 +503,4 @@ public class DocumentController {
         return ResponseEntity.ok(new DataResponse<>(content));
     }
 
-    @GetMapping(path = "/secure/models/summarize")
-    @ApiMessage(key = "api.models.summarize", message = "List summarize models")
-    public ResponseEntity<Map<String, Object>> listSummarizeModels() {
-        Map<String, Object> models = processorModelService.listModels();
-        return ResponseEntity.ok(models);
-    }
 }

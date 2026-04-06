@@ -1,13 +1,11 @@
 package com.vpgh.dms.service.impl;
 
+import com.vpgh.dms.model.dto.processor.ProcessorModelsListResponse;
 import com.vpgh.dms.service.ProcessorModelService;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-
-import java.util.Map;
 
 @Service
 public class ProcessorModelServiceImpl implements ProcessorModelService {
@@ -19,13 +17,12 @@ public class ProcessorModelServiceImpl implements ProcessorModelService {
     }
 
     @Override
-    public Map<String, Object> listModels() {
+    public ProcessorModelsListResponse listModels() {
         try {
             return processorRestClient.get()
                     .uri("/models")
                     .retrieve()
-                    .body(new ParameterizedTypeReference<>() {
-                    });
+                    .body(ProcessorModelsListResponse.class);
         } catch (RestClientException e) {
             throw new IllegalStateException("Processor list models failed: " + e.getMessage(), e);
         }
