@@ -95,6 +95,7 @@ services:
       - hf-cache:/cache/huggingface
       - easyocr-cache:/root/.EasyOCR
       - pip-cache:/root/.cache/pip
+      - mlflow-data:/mlflow
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -109,11 +110,14 @@ services:
     container_name: dms-worker
     restart: unless-stopped
     command: ["python", "-m", "app.worker"]
+    ports:
+      - "8001:8001"
     volumes:
       - ../document-management-processor:/app
       - hf-cache:/cache/huggingface
       - easyocr-cache:/root/.EasyOCR
       - pip-cache:/root/.cache/pip
+      - mlflow-data:/mlflow:ro
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -125,6 +129,62 @@ services:
     networks:
       - dms-network
 
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    container_name: dms-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - processor
+      - worker
+    networks:
+      - dms-network
+
+  grafana:
+    image: grafana/grafana:11.6.0
+    container_name: dms-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - dms-network
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.10.1
+    container_name: dms-mlflow
+    ports:
+      - "5001:5001"
+    command:
+      [
+        "mlflow",
+        "server",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "5001",
+        "--allowed-hosts",
+        "localhost,localhost:5001,127.0.0.1,127.0.0.1:5001,mlflow,mlflow:5001,host.docker.internal",
+        "--backend-store-uri",
+        "sqlite:///mlflow/mlflow.db",
+        "--default-artifact-root",
+        "/mlflow/artifacts",
+      ]
+    volumes:
+      - mlflow-data:/mlflow
+    networks:
+      - dms-network
+
 volumes:
   postgres-data:
   rabbitmq-data:
@@ -133,6 +193,9 @@ volumes:
   hf-cache:
   easyocr-cache:
   pip-cache:
+  prometheus-data:
+  grafana-data:
+  mlflow-data:
 
 networks:
   dms-network:

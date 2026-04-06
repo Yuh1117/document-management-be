@@ -11,10 +11,10 @@ import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.repository.DocumentVersionRepository;
+import com.vpgh.dms.service.DocumentQueueService;
 import com.vpgh.dms.service.DocumentService;
-import com.vpgh.dms.service.ProcessorSummarizeClient;
+import com.vpgh.dms.service.ProcessorSummarizeService;
 import com.vpgh.dms.service.UserService;
-import com.vpgh.dms.service.impl.queue.DocumentQueuePublisher;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.exception.NotFoundException;
 import org.apache.commons.io.FilenameUtils;
@@ -47,8 +47,8 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentVersionRepository documentVersionRepository;
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
-    private final DocumentQueuePublisher documentQueuePublisher;
-    private final ProcessorSummarizeClient processorSummarizeClient;
+    private final DocumentQueueService documentQueueService;
+    private final ProcessorSummarizeService processorSummarizeService;
     @Value("${aws.bucket.name}")
     private String bucketName;
     private static final String ROOT_FOLDER_PREFIX = "root";
@@ -56,15 +56,15 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentServiceImpl(S3Presigner s3Presigner, S3Client s3Client,
             DocumentVersionRepository documentVersionRepository,
             UserService userService, DocumentRepository documentRepository,
-            DocumentQueuePublisher documentQueuePublisher,
-            ProcessorSummarizeClient processorSummarizeClient) {
+            DocumentQueueService documentQueueService,
+            ProcessorSummarizeService processorSummarizeService) {
         this.s3Presigner = s3Presigner;
         this.s3Client = s3Client;
         this.documentVersionRepository = documentVersionRepository;
         this.userService = userService;
         this.documentRepository = documentRepository;
-        this.documentQueuePublisher = documentQueuePublisher;
-        this.processorSummarizeClient = processorSummarizeClient;
+        this.documentQueueService = documentQueueService;
+        this.processorSummarizeService = processorSummarizeService;
     }
 
     @Override
@@ -75,7 +75,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     @Transactional
     public void updateProcessingStatus(Integer documentId, ProcessingStatus status, Integer ocrQualityScore,
-            String processingError, String extractedText) {
+            String processingError, String extractedText, String validationReport, String ocrMetrics) {
         Document doc = this.documentRepository.findById(documentId).orElse(null);
         if (doc == null) {
             return;
@@ -85,6 +85,12 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setProcessingError(processingError);
         if (extractedText != null) {
             doc.setExtractedText(extractedText);
+        }
+        if (validationReport != null) {
+            doc.setValidationReport(validationReport);
+        }
+        if (ocrMetrics != null) {
+            doc.setOcrMetrics(ocrMetrics);
         }
         this.documentRepository.save(doc);
     }
@@ -133,7 +139,7 @@ public class DocumentServiceImpl implements DocumentService {
         saved.setOcrQualityScore(null);
         Document updated = this.documentRepository.save(saved);
 
-        documentQueuePublisher.publishDocument(updated);
+        documentQueueService.publishDocument(updated);
         tempFile.delete();
         return updated;
     }
@@ -188,7 +194,7 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setStorageType(doc.getStorageType());
         dto.setDeleted(doc.getDeleted());
         dto.setSummaryText(doc.getSummaryText());
-        dto.setModelVersion(doc.getModelVersion());
+        dto.setModelName(doc.getModelName());
         dto.setPromptVersion(doc.getPromptVersion());
         dto.setCreatedAt(doc.getCreatedAt());
         dto.setUpdatedAt(doc.getUpdatedAt());
@@ -327,7 +333,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public DocumentDTO summarizeDocument(Integer documentId, String language) {
+    public Document summarizeDocument(Integer documentId, String language) {
         Document doc = this.documentRepository.findById(documentId).orElse(null);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("error.document.notFoundOrDeleted");
@@ -338,15 +344,15 @@ public class DocumentServiceImpl implements DocumentService {
             throw new IllegalStateException("error.document.noExtractedText");
         }
 
-        ProcessorSummarizeResponse response = processorSummarizeClient
+        ProcessorSummarizeResponse response = processorSummarizeService
                 .summarize(new ProcessorSummarizeRequest(extractedText, language));
 
         doc.setSummaryText(response.summaryText());
-        doc.setModelVersion(response.modelVersion());
+        doc.setModelName(response.modelName());
         doc.setPromptVersion(response.promptVersion());
 
         Document saved = this.documentRepository.save(doc);
-        return convertDocumentToDocumentDTO(saved);
+        return saved;
     }
 
     private Document saveNewDocument(MultipartFile file, Folder folder, String fileName) throws IOException {
@@ -376,7 +382,7 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setOcrQualityScore(null);
 
         Document saved = documentRepository.save(doc);
-        documentQueuePublisher.publishDocument(saved);
+        documentQueueService.publishDocument(saved);
 
         tempFile.delete();
 

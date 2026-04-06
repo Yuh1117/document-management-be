@@ -10,6 +10,8 @@ public class DocumentProcessingStatusReq {
     private Integer ocrQualityScore;
     private String processingError;
     private String extractedText;
+    private String validationReport;
+    private String ocrMetrics;
 
     public ProcessingStatus getProcessingStatus() {
         return processingStatus;
@@ -41,5 +43,21 @@ public class DocumentProcessingStatusReq {
 
     public void setExtractedText(String extractedText) {
         this.extractedText = extractedText;
+    }
+
+    public String getValidationReport() {
+        return validationReport;
+    }
+
+    public void setValidationReport(String validationReport) {
+        this.validationReport = validationReport;
+    }
+
+    public String getOcrMetrics() {
+        return ocrMetrics;
+    }
+
+    public void setOcrMetrics(String ocrMetrics) {
+        this.ocrMetrics = ocrMetrics;
     }
 }

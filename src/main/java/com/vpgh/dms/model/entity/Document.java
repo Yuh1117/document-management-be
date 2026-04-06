@@ -46,10 +46,14 @@ public class Document extends FullAuditableEntity {
     private String processingError;
     @Column(columnDefinition = "TEXT")
     private String summaryText;
-    @Column(length = 100)
-    private String modelVersion;
+    @Column(name = "model_name", length = 100)
+    private String modelName;
     @Column(length = 50)
     private String promptVersion;
+    @Column(columnDefinition = "TEXT")
+    private String validationReport;
+    @Column(columnDefinition = "TEXT")
+    private String ocrMetrics;
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
@@ -236,12 +240,12 @@ public class Document extends FullAuditableEntity {
         this.summaryText = summaryText;
     }
 
-    public String getModelVersion() {
-        return modelVersion;
+    public String getModelName() {
+        return modelName;
     }
 
-    public void setModelVersion(String modelVersion) {
-        this.modelVersion = modelVersion;
+    public void setModelName(String modelName) {
+        this.modelName = modelName;
     }
 
     public String getPromptVersion() {
@@ -250,6 +254,22 @@ public class Document extends FullAuditableEntity {
 
     public void setPromptVersion(String promptVersion) {
         this.promptVersion = promptVersion;
+    }
+
+    public String getValidationReport() {
+        return validationReport;
+    }
+
+    public void setValidationReport(String validationReport) {
+        this.validationReport = validationReport;
+    }
+
+    public String getOcrMetrics() {
+        return ocrMetrics;
+    }
+
+    public void setOcrMetrics(String ocrMetrics) {
+        this.ocrMetrics = ocrMetrics;
     }
 
 }
