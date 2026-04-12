@@ -19,9 +19,8 @@ public class InternalDocumentController {
     @PatchMapping("/{id}/processing-status")
     public ResponseEntity<Void> updateProcessingStatus(@PathVariable Integer id,
             @Valid @RequestBody DocumentProcessingStatusReq body) {
-        documentService.updateProcessingStatus(id, body.getProcessingStatus(), body.getOcrQualityScore(),
-                body.getProcessingError(), body.getExtractedText(),
-                body.getValidationReport(), body.getOcrMetrics());
+        documentService.updateProcessingStatus(id, body.getProcessingStatus(),
+                body.getProcessingReport(), body.getExtractedText(), body.getOcrMetrics());
         return ResponseEntity.noContent().build();
     }
 }

@@ -74,20 +74,18 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public void updateProcessingStatus(Integer documentId, ProcessingStatus status, Integer ocrQualityScore,
-            String processingError, String extractedText, String validationReport, String ocrMetrics) {
+    public void updateProcessingStatus(Integer documentId, ProcessingStatus status,
+            String processingReport, String extractedText, String ocrMetrics) {
         Document doc = this.documentRepository.findById(documentId).orElse(null);
         if (doc == null) {
             return;
         }
         doc.setProcessingStatus(status);
-        doc.setOcrQualityScore(ocrQualityScore);
-        doc.setProcessingError(processingError);
+        if (processingReport != null) {
+            doc.setProcessingReport(processingReport);
+        }
         if (extractedText != null) {
             doc.setExtractedText(extractedText);
-        }
-        if (validationReport != null) {
-            doc.setValidationReport(validationReport);
         }
         if (ocrMetrics != null) {
             doc.setOcrMetrics(ocrMetrics);
@@ -135,8 +133,7 @@ public class DocumentServiceImpl implements DocumentService {
         Document saved = this.documentRepository.save(existingDoc);
 
         saved.setProcessingStatus(ProcessingStatus.PROCESSING);
-        saved.setProcessingError(null);
-        saved.setOcrQualityScore(null);
+        saved.setProcessingReport(null);
         Document updated = this.documentRepository.save(saved);
 
         documentQueueService.publishDocument(updated);
@@ -378,8 +375,7 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setFolder(folder);
 
         doc.setProcessingStatus(ProcessingStatus.PROCESSING);
-        doc.setProcessingError(null);
-        doc.setOcrQualityScore(null);
+        doc.setProcessingReport(null);
 
         Document saved = documentRepository.save(doc);
         documentQueueService.publishDocument(saved);

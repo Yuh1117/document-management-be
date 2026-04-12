@@ -41,17 +41,14 @@ public class Document extends FullAuditableEntity {
     private String extractedText;
     @Enumerated(EnumType.STRING)
     private ProcessingStatus processingStatus;
-    private Integer ocrQualityScore;
     @Column(columnDefinition = "TEXT")
-    private String processingError;
+    private String processingReport;
     @Column(columnDefinition = "TEXT")
     private String summaryText;
     @Column(name = "model_name", length = 100)
     private String modelName;
     @Column(length = 50)
     private String promptVersion;
-    @Column(columnDefinition = "TEXT")
-    private String validationReport;
     @Column(columnDefinition = "TEXT")
     private String ocrMetrics;
 
@@ -176,20 +173,12 @@ public class Document extends FullAuditableEntity {
         this.processingStatus = processingStatus;
     }
 
-    public Integer getOcrQualityScore() {
-        return ocrQualityScore;
+    public String getProcessingReport() {
+        return processingReport;
     }
 
-    public void setOcrQualityScore(Integer ocrQualityScore) {
-        this.ocrQualityScore = ocrQualityScore;
-    }
-
-    public String getProcessingError() {
-        return processingError;
-    }
-
-    public void setProcessingError(String processingError) {
-        this.processingError = processingError;
+    public void setProcessingReport(String processingReport) {
+        this.processingReport = processingReport;
     }
 
     public String getExtractedText() {
@@ -254,14 +243,6 @@ public class Document extends FullAuditableEntity {
 
     public void setPromptVersion(String promptVersion) {
         this.promptVersion = promptVersion;
-    }
-
-    public String getValidationReport() {
-        return validationReport;
-    }
-
-    public void setValidationReport(String validationReport) {
-        this.validationReport = validationReport;
     }
 
     public String getOcrMetrics() {
