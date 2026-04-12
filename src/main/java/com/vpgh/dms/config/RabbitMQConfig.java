@@ -36,6 +36,9 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.document.routing-key}")
     private String documentRoutingKey;
 
+    @Value("${rabbitmq.document.processing-result.queue}")
+    private String processingResultQueueName;
+
     @Bean
     public ConnectionFactory rabbitConnectionFactory() {
         CachingConnectionFactory factory = new CachingConnectionFactory(host, port);
@@ -61,6 +64,11 @@ public class RabbitMQConfig {
     @Bean
     public Queue documentQueue() {
         return new Queue(documentQueueName, true);
+    }
+
+    @Bean
+    public Queue processingResultQueue() {
+        return new Queue(processingResultQueueName, true);
     }
 
     @Bean
