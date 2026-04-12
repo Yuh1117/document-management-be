@@ -4,8 +4,18 @@ import jakarta.validation.constraints.NotNull;
 
 public class SummaryFeedbackReq {
     @NotNull
+    private Integer summaryId;
+    @NotNull
     private Boolean isHelpful;
     private String comment;
+
+    public Integer getSummaryId() {
+        return summaryId;
+    }
+
+    public void setSummaryId(Integer summaryId) {
+        this.summaryId = summaryId;
+    }
 
     public Boolean getIsHelpful() {
         return isHelpful;

@@ -3,6 +3,7 @@ package com.vpgh.dms.service;
 import com.vpgh.dms.model.constant.ProcessingStatus;
 import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.entity.Document;
+import com.vpgh.dms.model.entity.DocumentSummary;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
 import org.springframework.web.multipart.MultipartFile;
@@ -63,5 +64,5 @@ public interface DocumentService {
     void updateProcessingStatus(Integer documentId, ProcessingStatus status,
             String processingReport, String extractedText, String ocrMetrics);
 
-    Document summarizeDocument(Integer documentId, String language);
+    DocumentSummary summarizeDocument(Integer documentId, String language);
 }

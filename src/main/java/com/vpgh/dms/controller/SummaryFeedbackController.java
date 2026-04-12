@@ -36,8 +36,6 @@ public class SummaryFeedbackController {
         response.setDocumentId(id);
         response.setIsHelpful(feedback.getIsHelpful());
         response.setComment(feedback.getComment());
-        response.setModelName(feedback.getModelName());
-        response.setPromptVersion(feedback.getPromptVersion());
         response.setCreatedAt(feedback.getCreatedAt());
 
         return ResponseEntity.ok(response);

@@ -13,8 +13,8 @@ public class SummaryFeedback {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "document_id", nullable = false)
-    private Document document;
+    @JoinColumn(name = "summary_id", nullable = false)
+    private DocumentSummary summary;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -25,12 +25,6 @@ public class SummaryFeedback {
 
     @Column(columnDefinition = "TEXT")
     private String comment;
-
-    @Column(name = "model_name", length = 100)
-    private String modelName;
-
-    @Column(name = "prompt_version", length = 50)
-    private String promptVersion;
 
     @Column(name = "created_at")
     private Instant createdAt;
@@ -50,12 +44,12 @@ public class SummaryFeedback {
         this.id = id;
     }
 
-    public Document getDocument() {
-        return document;
+    public DocumentSummary getSummary() {
+        return summary;
     }
 
-    public void setDocument(Document document) {
-        this.document = document;
+    public void setSummary(DocumentSummary summary) {
+        this.summary = summary;
     }
 
     public User getUser() {
@@ -80,22 +74,6 @@ public class SummaryFeedback {
 
     public void setComment(String comment) {
         this.comment = comment;
-    }
-
-    public String getModelName() {
-        return modelName;
-    }
-
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
-    }
-
-    public String getPromptVersion() {
-        return promptVersion;
-    }
-
-    public void setPromptVersion(String promptVersion) {
-        this.promptVersion = promptVersion;
     }
 
     public Instant getCreatedAt() {

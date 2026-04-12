@@ -44,12 +44,6 @@ public class Document extends FullAuditableEntity {
     @Column(columnDefinition = "TEXT")
     private String processingReport;
     @Column(columnDefinition = "TEXT")
-    private String summaryText;
-    @Column(name = "model_name", length = 100)
-    private String modelName;
-    @Column(length = 50)
-    private String promptVersion;
-    @Column(columnDefinition = "TEXT")
     private String ocrMetrics;
 
     @ManyToOne
@@ -219,30 +213,6 @@ public class Document extends FullAuditableEntity {
 
     public void setVersions(Set<DocumentVersion> versions) {
         this.versions = versions;
-    }
-
-    public String getSummaryText() {
-        return summaryText;
-    }
-
-    public void setSummaryText(String summaryText) {
-        this.summaryText = summaryText;
-    }
-
-    public String getModelName() {
-        return modelName;
-    }
-
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
-    }
-
-    public String getPromptVersion() {
-        return promptVersion;
-    }
-
-    public void setPromptVersion(String promptVersion) {
-        this.promptVersion = promptVersion;
     }
 
     public String getOcrMetrics() {

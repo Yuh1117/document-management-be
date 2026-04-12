@@ -5,6 +5,7 @@ import com.vpgh.dms.model.dto.processor.ProcessorModelsListResponse;
 import com.vpgh.dms.model.dto.request.*;
 import com.vpgh.dms.model.dto.response.DocumentSummarizeRes;
 import com.vpgh.dms.model.entity.*;
+import com.vpgh.dms.model.entity.DocumentSummary;
 import com.vpgh.dms.service.*;
 import com.vpgh.dms.util.DataResponse;
 import com.vpgh.dms.util.SecurityUtil;
@@ -454,10 +455,10 @@ public class DocumentController {
             throw new ForbiddenException("error.forbidden.viewDocument");
         }
 
-        Document result = this.documentService.summarizeDocument(id, locale.getLanguage());
+        DocumentSummary summary = this.documentService.summarizeDocument(id, locale.getLanguage());
 
-        return ResponseEntity.ok(new DocumentSummarizeRes(result.getId(), result.getSummaryText(),
-                result.getModelName(), result.getPromptVersion()));
+        return ResponseEntity.ok(new DocumentSummarizeRes(summary.getId(), summary.getSummaryText(),
+                summary.getModelName(), summary.getPromptVersion()));
     }
 
     @GetMapping(path = "/secure/models/summarize")
