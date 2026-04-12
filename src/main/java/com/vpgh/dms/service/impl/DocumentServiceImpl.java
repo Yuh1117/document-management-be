@@ -3,22 +3,16 @@ package com.vpgh.dms.service.impl;
 import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.constant.ProcessingStatus;
 import com.vpgh.dms.model.constant.StorageType;
-import com.vpgh.dms.model.dto.processor.ProcessorSummarizeRequest;
-import com.vpgh.dms.model.dto.processor.ProcessorSummarizeResponse;
 import com.vpgh.dms.model.entity.Document;
-import com.vpgh.dms.model.entity.DocumentSummary;
 import com.vpgh.dms.model.entity.DocumentVersion;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.DocumentRepository;
-import com.vpgh.dms.repository.DocumentSummaryRepository;
 import com.vpgh.dms.repository.DocumentVersionRepository;
 import com.vpgh.dms.service.DocumentQueueService;
 import com.vpgh.dms.service.DocumentService;
-import com.vpgh.dms.service.ProcessorSummarizeService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.SecurityUtil;
-import com.vpgh.dms.util.exception.NotFoundException;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -50,8 +44,6 @@ public class DocumentServiceImpl implements DocumentService {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final DocumentQueueService documentQueueService;
-    private final ProcessorSummarizeService processorSummarizeService;
-    private final DocumentSummaryRepository documentSummaryRepository;
     @Value("${aws.bucket.name}")
     private String bucketName;
     private static final String ROOT_FOLDER_PREFIX = "root";
@@ -59,17 +51,13 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentServiceImpl(S3Presigner s3Presigner, S3Client s3Client,
             DocumentVersionRepository documentVersionRepository,
             UserService userService, DocumentRepository documentRepository,
-            DocumentQueueService documentQueueService,
-            ProcessorSummarizeService processorSummarizeService,
-            DocumentSummaryRepository documentSummaryRepository) {
+            DocumentQueueService documentQueueService) {
         this.s3Presigner = s3Presigner;
         this.s3Client = s3Client;
         this.documentVersionRepository = documentVersionRepository;
         this.userService = userService;
         this.documentRepository = documentRepository;
         this.documentQueueService = documentQueueService;
-        this.processorSummarizeService = processorSummarizeService;
-        this.documentSummaryRepository = documentSummaryRepository;
     }
 
     @Override
@@ -195,11 +183,6 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setMimeType(doc.getMimeType());
         dto.setStorageType(doc.getStorageType());
         dto.setDeleted(doc.getDeleted());
-        documentSummaryRepository.findTopByDocumentOrderByCreatedAtDesc(doc).ifPresent(summary -> {
-            dto.setSummaryText(summary.getSummaryText());
-            dto.setModelName(summary.getModelName());
-            dto.setPromptVersion(summary.getPromptVersion());
-        });
         dto.setCreatedAt(doc.getCreatedAt());
         dto.setUpdatedAt(doc.getUpdatedAt());
         dto.setCreatedBy(this.userService.convertUserToUserDTO(doc.getCreatedBy()));
@@ -333,32 +316,6 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public boolean isOwnerDocument(Document doc, User user) {
         return doc.getCreatedBy().getId().equals(user.getId());
-    }
-
-    @Override
-    @Transactional
-    public DocumentSummary summarizeDocument(Integer documentId, String language) {
-        Document doc = this.documentRepository.findById(documentId).orElse(null);
-        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("error.document.notFoundOrDeleted");
-        }
-
-        String extractedText = doc.getExtractedText();
-        if (extractedText == null || extractedText.isBlank()) {
-            throw new IllegalStateException("error.document.noExtractedText");
-        }
-
-        ProcessorSummarizeResponse response = processorSummarizeService
-                .summarize(new ProcessorSummarizeRequest(extractedText, language));
-
-        DocumentSummary summary = new DocumentSummary();
-        summary.setDocument(doc);
-        summary.setSummaryText(response.summaryText());
-        summary.setModelName(response.modelName());
-        summary.setPromptVersion(response.promptVersion());
-        summary.setCreatedBy(SecurityUtil.getCurrentUserFromThreadLocal());
-
-        return documentSummaryRepository.save(summary);
     }
 
     private Document saveNewDocument(MultipartFile file, Folder folder, String fileName) throws IOException {

@@ -1,11 +1,8 @@
 package com.vpgh.dms.controller;
 
 import com.vpgh.dms.model.dto.DocumentDTO;
-import com.vpgh.dms.model.dto.processor.ProcessorModelsListResponse;
 import com.vpgh.dms.model.dto.request.*;
-import com.vpgh.dms.model.dto.response.DocumentSummarizeRes;
 import com.vpgh.dms.model.entity.*;
-import com.vpgh.dms.model.entity.DocumentSummary;
 import com.vpgh.dms.service.*;
 import com.vpgh.dms.util.DataResponse;
 import com.vpgh.dms.util.SecurityUtil;
@@ -33,7 +30,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -47,14 +43,12 @@ public class DocumentController {
     private final DocumentShareService documentShareService;
     private final StegoService stegoService;
     private final FolderShareService folderShareService;
-    private final ProcessorModelService processorModelService;
 
     public DocumentController(DocumentService documentService, FolderService folderService,
             DocumentShareService documentShareService,
             StegoService stegoService, FolderShareService folderShareService,
             ProcessorModelService processorModelService) {
         this.documentService = documentService;
-        this.processorModelService = processorModelService;
         this.folderService = folderService;
         this.documentShareService = documentShareService;
         this.stegoService = stegoService;
@@ -441,31 +435,6 @@ public class DocumentController {
                 .header(HttpHeaders.PRAGMA, "no-cache")
                 .header(HttpHeaders.EXPIRES, "0")
                 .body(res);
-    }
-
-    @GetMapping(path = "/secure/documents/{id}/summarize")
-    @ApiMessage(key = "api.document.summarize", message = "Summarize document")
-    public ResponseEntity<DocumentSummarizeRes> summarize(@PathVariable Integer id, Locale locale) {
-        Document doc = documentService.getDocumentById(id);
-        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("error.document.notFoundOrDeleted");
-        }
-
-        if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("error.forbidden.viewDocument");
-        }
-
-        DocumentSummary summary = this.documentService.summarizeDocument(id, locale.getLanguage());
-
-        return ResponseEntity.ok(new DocumentSummarizeRes(summary.getId(), summary.getSummaryText(),
-                summary.getModelName(), summary.getPromptVersion()));
-    }
-
-    @GetMapping(path = "/secure/models/summarize")
-    @ApiMessage(key = "api.models.summarize", message = "List summarize models")
-    public ResponseEntity<ProcessorModelsListResponse> listSummarizeModels() {
-        ProcessorModelsListResponse models = processorModelService.listModels();
-        return ResponseEntity.ok(models);
     }
 
     @PostMapping(path = "/secure/documents/hide-data")

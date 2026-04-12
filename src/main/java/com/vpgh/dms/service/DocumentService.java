@@ -64,5 +64,4 @@ public interface DocumentService {
     void updateProcessingStatus(Integer documentId, ProcessingStatus status,
             String processingReport, String extractedText, String ocrMetrics);
 
-    DocumentSummary summarizeDocument(Integer documentId, String language);
 }

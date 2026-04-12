@@ -15,10 +15,6 @@ public class DocumentDTO {
     private String mimeType;
     private StorageType storageType;
     private Boolean isDeleted;
-    private String summaryText;
-    private String modelName;
-    private String promptVersion;
-
     private UserDTO createdBy;
     private UserDTO updatedBy;
     private Instant createdAt;
@@ -136,27 +132,4 @@ public class DocumentDTO {
         isDeleted = deleted;
     }
 
-    public String getSummaryText() {
-        return summaryText;
-    }
-
-    public void setSummaryText(String summaryText) {
-        this.summaryText = summaryText;
-    }
-
-    public String getModelName() {
-        return modelName;
-    }
-
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
-    }
-
-    public String getPromptVersion() {
-        return promptVersion;
-    }
-
-    public void setPromptVersion(String promptVersion) {
-        this.promptVersion = promptVersion;
-    }
 }
