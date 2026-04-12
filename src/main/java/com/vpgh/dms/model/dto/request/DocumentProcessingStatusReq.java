@@ -7,10 +7,8 @@ public class DocumentProcessingStatusReq {
 
     @NotNull(message = "{validation.document.processingStatus.notNull}")
     private ProcessingStatus processingStatus;
-    private Integer ocrQualityScore;
-    private String processingError;
+    private String processingReport;
     private String extractedText;
-    private String validationReport;
     private String ocrMetrics;
 
     public ProcessingStatus getProcessingStatus() {
@@ -21,20 +19,12 @@ public class DocumentProcessingStatusReq {
         this.processingStatus = processingStatus;
     }
 
-    public Integer getOcrQualityScore() {
-        return ocrQualityScore;
+    public String getProcessingReport() {
+        return processingReport;
     }
 
-    public void setOcrQualityScore(Integer ocrQualityScore) {
-        this.ocrQualityScore = ocrQualityScore;
-    }
-
-    public String getProcessingError() {
-        return processingError;
-    }
-
-    public void setProcessingError(String processingError) {
-        this.processingError = processingError;
+    public void setProcessingReport(String processingReport) {
+        this.processingReport = processingReport;
     }
 
     public String getExtractedText() {
@@ -43,14 +33,6 @@ public class DocumentProcessingStatusReq {
 
     public void setExtractedText(String extractedText) {
         this.extractedText = extractedText;
-    }
-
-    public String getValidationReport() {
-        return validationReport;
-    }
-
-    public void setValidationReport(String validationReport) {
-        this.validationReport = validationReport;
     }
 
     public String getOcrMetrics() {

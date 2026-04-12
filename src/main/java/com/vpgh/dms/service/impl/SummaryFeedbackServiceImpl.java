@@ -4,9 +4,11 @@ import com.vpgh.dms.model.dto.request.SummaryFeedbackReq;
 import com.vpgh.dms.model.dto.response.SummaryFeedbackDocumentStatsRes;
 import com.vpgh.dms.model.dto.response.SummaryFeedbackModelStatsRes;
 import com.vpgh.dms.model.entity.Document;
+import com.vpgh.dms.model.entity.DocumentSummary;
 import com.vpgh.dms.model.entity.SummaryFeedback;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.DocumentRepository;
+import com.vpgh.dms.repository.DocumentSummarizeRepository;
 import com.vpgh.dms.repository.SummaryFeedbackRepository;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.SummaryFeedbackService;
@@ -25,15 +27,18 @@ public class SummaryFeedbackServiceImpl implements SummaryFeedbackService {
 
     private final SummaryFeedbackRepository feedbackRepository;
     private final DocumentRepository documentRepository;
+    private final DocumentSummarizeRepository documentSummaryRepository;
     private final UserService userService;
     private final DocumentService documentService;
 
     public SummaryFeedbackServiceImpl(SummaryFeedbackRepository feedbackRepository,
             DocumentRepository documentRepository,
+            DocumentSummarizeRepository documentSummaryRepository,
             UserService userService,
             DocumentService documentService) {
         this.feedbackRepository = feedbackRepository;
         this.documentRepository = documentRepository;
+        this.documentSummaryRepository = documentSummaryRepository;
         this.userService = userService;
         this.documentService = documentService;
     }
@@ -54,19 +59,20 @@ public class SummaryFeedbackServiceImpl implements SummaryFeedbackService {
             throw new ForbiddenException("error.document.forbidden");
         }
 
-        Optional<SummaryFeedback> existing = feedbackRepository.findByDocumentAndUser(doc, user);
+        DocumentSummary summary = documentSummaryRepository.findById(req.getSummaryId())
+                .orElseThrow(() -> new NotFoundException("error.document.noSummary"));
+
+        Optional<SummaryFeedback> existing = feedbackRepository.findBySummaryAndUser(summary, user);
         SummaryFeedback feedback;
         if (existing.isPresent()) {
             feedback = existing.get();
         } else {
             feedback = new SummaryFeedback();
-            feedback.setDocument(doc);
+            feedback.setSummary(summary);
             feedback.setUser(user);
         }
         feedback.setIsHelpful(req.getIsHelpful());
         feedback.setComment(req.getComment());
-        feedback.setModelName(doc.getModelName());
-        feedback.setPromptVersion(doc.getPromptVersion());
 
         return feedbackRepository.save(feedback);
     }

@@ -3,8 +3,6 @@ package com.vpgh.dms.service.impl;
 import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.constant.ProcessingStatus;
 import com.vpgh.dms.model.constant.StorageType;
-import com.vpgh.dms.model.dto.processor.ProcessorSummarizeRequest;
-import com.vpgh.dms.model.dto.processor.ProcessorSummarizeResponse;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.DocumentVersion;
 import com.vpgh.dms.model.entity.Folder;
@@ -13,10 +11,8 @@ import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.repository.DocumentVersionRepository;
 import com.vpgh.dms.service.DocumentQueueService;
 import com.vpgh.dms.service.DocumentService;
-import com.vpgh.dms.service.ProcessorSummarizeService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.SecurityUtil;
-import com.vpgh.dms.util.exception.NotFoundException;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -48,7 +44,6 @@ public class DocumentServiceImpl implements DocumentService {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final DocumentQueueService documentQueueService;
-    private final ProcessorSummarizeService processorSummarizeService;
     @Value("${aws.bucket.name}")
     private String bucketName;
     private static final String ROOT_FOLDER_PREFIX = "root";
@@ -56,15 +51,13 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentServiceImpl(S3Presigner s3Presigner, S3Client s3Client,
             DocumentVersionRepository documentVersionRepository,
             UserService userService, DocumentRepository documentRepository,
-            DocumentQueueService documentQueueService,
-            ProcessorSummarizeService processorSummarizeService) {
+            DocumentQueueService documentQueueService) {
         this.s3Presigner = s3Presigner;
         this.s3Client = s3Client;
         this.documentVersionRepository = documentVersionRepository;
         this.userService = userService;
         this.documentRepository = documentRepository;
         this.documentQueueService = documentQueueService;
-        this.processorSummarizeService = processorSummarizeService;
     }
 
     @Override
@@ -74,20 +67,18 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public void updateProcessingStatus(Integer documentId, ProcessingStatus status, Integer ocrQualityScore,
-            String processingError, String extractedText, String validationReport, String ocrMetrics) {
+    public void updateProcessingStatus(Integer documentId, ProcessingStatus status,
+            String processingReport, String extractedText, String ocrMetrics) {
         Document doc = this.documentRepository.findById(documentId).orElse(null);
         if (doc == null) {
             return;
         }
         doc.setProcessingStatus(status);
-        doc.setOcrQualityScore(ocrQualityScore);
-        doc.setProcessingError(processingError);
+        if (processingReport != null) {
+            doc.setProcessingReport(processingReport);
+        }
         if (extractedText != null) {
             doc.setExtractedText(extractedText);
-        }
-        if (validationReport != null) {
-            doc.setValidationReport(validationReport);
         }
         if (ocrMetrics != null) {
             doc.setOcrMetrics(ocrMetrics);
@@ -135,8 +126,7 @@ public class DocumentServiceImpl implements DocumentService {
         Document saved = this.documentRepository.save(existingDoc);
 
         saved.setProcessingStatus(ProcessingStatus.PROCESSING);
-        saved.setProcessingError(null);
-        saved.setOcrQualityScore(null);
+        saved.setProcessingReport(null);
         Document updated = this.documentRepository.save(saved);
 
         documentQueueService.publishDocument(updated);
@@ -193,9 +183,6 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setMimeType(doc.getMimeType());
         dto.setStorageType(doc.getStorageType());
         dto.setDeleted(doc.getDeleted());
-        dto.setSummaryText(doc.getSummaryText());
-        dto.setModelName(doc.getModelName());
-        dto.setPromptVersion(doc.getPromptVersion());
         dto.setCreatedAt(doc.getCreatedAt());
         dto.setUpdatedAt(doc.getUpdatedAt());
         dto.setCreatedBy(this.userService.convertUserToUserDTO(doc.getCreatedBy()));
@@ -331,30 +318,6 @@ public class DocumentServiceImpl implements DocumentService {
         return doc.getCreatedBy().getId().equals(user.getId());
     }
 
-    @Override
-    @Transactional
-    public Document summarizeDocument(Integer documentId, String language) {
-        Document doc = this.documentRepository.findById(documentId).orElse(null);
-        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("error.document.notFoundOrDeleted");
-        }
-
-        String extractedText = doc.getExtractedText();
-        if (extractedText == null || extractedText.isBlank()) {
-            throw new IllegalStateException("error.document.noExtractedText");
-        }
-
-        ProcessorSummarizeResponse response = processorSummarizeService
-                .summarize(new ProcessorSummarizeRequest(extractedText, language));
-
-        doc.setSummaryText(response.summaryText());
-        doc.setModelName(response.modelName());
-        doc.setPromptVersion(response.promptVersion());
-
-        Document saved = this.documentRepository.save(doc);
-        return saved;
-    }
-
     private Document saveNewDocument(MultipartFile file, Folder folder, String fileName) throws IOException {
         String folderPath = buildS3FolderPath(folder);
         String storedFilename = generateStoredFilename(fileName);
@@ -378,8 +341,7 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setFolder(folder);
 
         doc.setProcessingStatus(ProcessingStatus.PROCESSING);
-        doc.setProcessingError(null);
-        doc.setOcrQualityScore(null);
+        doc.setProcessingReport(null);
 
         Document saved = documentRepository.save(doc);
         documentQueueService.publishDocument(saved);

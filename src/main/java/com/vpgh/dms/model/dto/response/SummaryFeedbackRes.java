@@ -7,8 +7,6 @@ public class SummaryFeedbackRes {
     private Integer documentId;
     private Boolean isHelpful;
     private String comment;
-    private String modelName;
-    private String promptVersion;
     private Instant createdAt;
 
     public Integer getId() {
@@ -41,22 +39,6 @@ public class SummaryFeedbackRes {
 
     public void setComment(String comment) {
         this.comment = comment;
-    }
-
-    public String getModelName() {
-        return modelName;
-    }
-
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
-    }
-
-    public String getPromptVersion() {
-        return promptVersion;
-    }
-
-    public void setPromptVersion(String promptVersion) {
-        this.promptVersion = promptVersion;
     }
 
     public Instant getCreatedAt() {

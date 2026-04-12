@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/secure")
+@RequestMapping("/api")
 public class SummaryFeedbackController {
 
     private final SummaryFeedbackService summaryFeedbackService;
@@ -24,7 +24,7 @@ public class SummaryFeedbackController {
         this.summaryFeedbackService = summaryFeedbackService;
     }
 
-    @PostMapping("/documents/{id}/summary-feedback")
+    @PostMapping("/secure/documents/{id}/summary-feedback")
     public ResponseEntity<SummaryFeedbackRes> submitFeedback(
             @PathVariable Integer id,
             @Valid @RequestBody SummaryFeedbackReq body) {
@@ -36,20 +36,18 @@ public class SummaryFeedbackController {
         response.setDocumentId(id);
         response.setIsHelpful(feedback.getIsHelpful());
         response.setComment(feedback.getComment());
-        response.setModelName(feedback.getModelName());
-        response.setPromptVersion(feedback.getPromptVersion());
         response.setCreatedAt(feedback.getCreatedAt());
 
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/documents/{id}/summary-feedback")
+    @GetMapping("/secure/documents/{id}/summary-feedback")
     public ResponseEntity<SummaryFeedbackDocumentStatsRes> getFeedbackForDocument(@PathVariable Integer id) {
         SummaryFeedbackDocumentStatsRes stats = summaryFeedbackService.getFeedbackStats(id);
         return ResponseEntity.ok(stats);
     }
 
-    @GetMapping("/documents/summary-feedback/stats")
+    @GetMapping("/secure/documents/summary-feedback/stats")
     public ResponseEntity<List<SummaryFeedbackModelStatsRes>> getModelFeedbackStats() {
         List<SummaryFeedbackModelStatsRes> stats = summaryFeedbackService.getModelFeedbackStats();
         return ResponseEntity.ok(stats);

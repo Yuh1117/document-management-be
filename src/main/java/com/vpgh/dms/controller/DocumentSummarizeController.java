@@ -1,0 +1,64 @@
+package com.vpgh.dms.controller;
+
+import java.util.Locale;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.vpgh.dms.model.dto.processor.ProcessorModelsListResponse;
+import com.vpgh.dms.model.dto.response.DocumentSummarizeRes;
+import com.vpgh.dms.model.entity.Document;
+import com.vpgh.dms.model.entity.DocumentSummary;
+import com.vpgh.dms.service.DocumentService;
+import com.vpgh.dms.service.DocumentShareService;
+import com.vpgh.dms.service.DocumentSummarizeService;
+import com.vpgh.dms.service.ProcessorModelService;
+import com.vpgh.dms.util.SecurityUtil;
+import com.vpgh.dms.util.annotation.ApiMessage;
+import com.vpgh.dms.util.exception.ForbiddenException;
+import com.vpgh.dms.util.exception.NotFoundException;
+
+@RestController
+@RequestMapping("/api")
+public class DocumentSummarizeController {
+    private final DocumentShareService documentShareService;
+    private final ProcessorModelService processorModelService;
+    private final DocumentService documentService;
+    private final DocumentSummarizeService documentSummarizeService;
+
+    public DocumentSummarizeController(DocumentService documentService, DocumentShareService documentShareService,
+            ProcessorModelService processorModelService, DocumentSummarizeService documentSummarizeService) {
+        this.documentService = documentService;
+        this.documentShareService = documentShareService;
+        this.processorModelService = processorModelService;
+        this.documentSummarizeService = documentSummarizeService;
+    }
+
+    @GetMapping(path = "/secure/documents/{id}/summarize")
+    @ApiMessage(key = "api.document.summarize", message = "Summarize document")
+    public ResponseEntity<DocumentSummarizeRes> summarize(@PathVariable Integer id, Locale locale) {
+        Document doc = documentService.getDocumentById(id);
+        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
+            throw new NotFoundException("error.document.notFoundOrDeleted");
+        }
+
+        if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
+            throw new ForbiddenException("error.forbidden.viewDocument");
+        }
+
+        DocumentSummary summary = this.documentSummarizeService.summarizeDocument(doc, locale.getLanguage());
+
+        return ResponseEntity.ok(new DocumentSummarizeRes(summary.getId(), summary.getSummaryText(),
+                summary.getModelName(), summary.getPromptVersion()));
+    }
+
+    @GetMapping(path = "/secure/documents/summarize/models")
+    @ApiMessage(key = "api.models.summarize", message = "List summarize models")
+    public ResponseEntity<ProcessorModelsListResponse> listSummarizeModels() {
+        ProcessorModelsListResponse models = processorModelService.listModels();
+        return ResponseEntity.ok(models);
+    }
+}

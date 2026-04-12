@@ -41,17 +41,8 @@ public class Document extends FullAuditableEntity {
     private String extractedText;
     @Enumerated(EnumType.STRING)
     private ProcessingStatus processingStatus;
-    private Integer ocrQualityScore;
     @Column(columnDefinition = "TEXT")
-    private String processingError;
-    @Column(columnDefinition = "TEXT")
-    private String summaryText;
-    @Column(name = "model_name", length = 100)
-    private String modelName;
-    @Column(length = 50)
-    private String promptVersion;
-    @Column(columnDefinition = "TEXT")
-    private String validationReport;
+    private String processingReport;
     @Column(columnDefinition = "TEXT")
     private String ocrMetrics;
 
@@ -176,20 +167,12 @@ public class Document extends FullAuditableEntity {
         this.processingStatus = processingStatus;
     }
 
-    public Integer getOcrQualityScore() {
-        return ocrQualityScore;
+    public String getProcessingReport() {
+        return processingReport;
     }
 
-    public void setOcrQualityScore(Integer ocrQualityScore) {
-        this.ocrQualityScore = ocrQualityScore;
-    }
-
-    public String getProcessingError() {
-        return processingError;
-    }
-
-    public void setProcessingError(String processingError) {
-        this.processingError = processingError;
+    public void setProcessingReport(String processingReport) {
+        this.processingReport = processingReport;
     }
 
     public String getExtractedText() {
@@ -230,38 +213,6 @@ public class Document extends FullAuditableEntity {
 
     public void setVersions(Set<DocumentVersion> versions) {
         this.versions = versions;
-    }
-
-    public String getSummaryText() {
-        return summaryText;
-    }
-
-    public void setSummaryText(String summaryText) {
-        this.summaryText = summaryText;
-    }
-
-    public String getModelName() {
-        return modelName;
-    }
-
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
-    }
-
-    public String getPromptVersion() {
-        return promptVersion;
-    }
-
-    public void setPromptVersion(String promptVersion) {
-        this.promptVersion = promptVersion;
-    }
-
-    public String getValidationReport() {
-        return validationReport;
-    }
-
-    public void setValidationReport(String validationReport) {
-        this.validationReport = validationReport;
     }
 
     public String getOcrMetrics() {

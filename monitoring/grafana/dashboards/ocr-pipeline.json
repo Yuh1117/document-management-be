@@ -82,36 +82,6 @@
       "fieldConfig": {
         "defaults": { "unit": "s" }
       }
-    },
-    {
-      "id": 6,
-      "title": "HTTP Request Rate (Processor API)",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
-      "targets": [
-        {
-          "expr": "rate(http_requests_total[5m]) * 60",
-          "legendFormat": "{{method}} {{handler}} {{status}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "req/min" }
-      }
-    },
-    {
-      "id": 7,
-      "title": "HTTP Latency p95 (Processor API)",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
-          "legendFormat": "{{handler}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "s" }
-      }
     }
   ],
   "schemaVersion": 39
