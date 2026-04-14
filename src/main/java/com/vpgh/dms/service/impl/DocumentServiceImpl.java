@@ -11,6 +11,7 @@ import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.repository.DocumentVersionRepository;
 import com.vpgh.dms.service.DocumentQueueService;
 import com.vpgh.dms.service.DocumentService;
+import com.vpgh.dms.service.ProcessorIndexService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.SecurityUtil;
 import org.apache.commons.io.FilenameUtils;
@@ -44,6 +45,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final DocumentQueueService documentQueueService;
+    private final ProcessorIndexService processorIndexService;
     @Value("${aws.bucket.name}")
     private String bucketName;
     private static final String ROOT_FOLDER_PREFIX = "root";
@@ -51,13 +53,15 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentServiceImpl(S3Presigner s3Presigner, S3Client s3Client,
             DocumentVersionRepository documentVersionRepository,
             UserService userService, DocumentRepository documentRepository,
-            DocumentQueueService documentQueueService) {
+            DocumentQueueService documentQueueService,
+            ProcessorIndexService processorIndexService) {
         this.s3Presigner = s3Presigner;
         this.s3Client = s3Client;
         this.documentVersionRepository = documentVersionRepository;
         this.userService = userService;
         this.documentRepository = documentRepository;
         this.documentQueueService = documentQueueService;
+        this.processorIndexService = processorIndexService;
     }
 
     @Override
@@ -122,16 +126,12 @@ public class DocumentServiceImpl implements DocumentService {
         existingDoc.setMimeType(file.getContentType());
         byte[] fileBytes = Files.readAllBytes(tempFile.toPath());
         existingDoc.setFileHash(DigestUtils.md5DigestAsHex(fileBytes));
+        existingDoc.setProcessingReport(null);
 
         Document saved = this.documentRepository.save(existingDoc);
-
-        saved.setProcessingStatus(ProcessingStatus.PROCESSING);
-        saved.setProcessingReport(null);
-        Document updated = this.documentRepository.save(saved);
-
-        documentQueueService.publishDocument(updated);
+        documentQueueService.publishDocument(saved);
         tempFile.delete();
-        return updated;
+        return saved;
     }
 
     @Override
@@ -167,6 +167,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .bucket(bucketName)
                 .key(key)
                 .build());
+        processorIndexService.deleteIndex(doc.getId());
         this.documentRepository.delete(doc);
     }
 
@@ -339,15 +340,11 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setFileHash(DigestUtils.md5DigestAsHex(fileBytes));
         doc.setStorageType(StorageType.AWS_S3);
         doc.setFolder(folder);
-
-        doc.setProcessingStatus(ProcessingStatus.PROCESSING);
         doc.setProcessingReport(null);
 
         Document saved = documentRepository.save(doc);
         documentQueueService.publishDocument(saved);
-
         tempFile.delete();
-
         return saved;
     }
 
