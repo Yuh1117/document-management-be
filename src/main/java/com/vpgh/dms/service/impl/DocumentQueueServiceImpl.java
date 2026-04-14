@@ -34,7 +34,6 @@ public class DocumentQueueServiceImpl implements DocumentQueueService {
         payload.put("file_type", doc.getMimeType());
         payload.put("name", doc.getName());
         payload.put("owner_id", doc.getCreatedBy() != null ? doc.getCreatedBy().getId() : null);
-        payload.put("folder_id", doc.getFolder() != null ? doc.getFolder().getId() : null);
 
         amqpTemplate.convertAndSend(exchange, routingKey, payload);
     }
