@@ -9,7 +9,7 @@ public class DocumentProcessingStatusReq {
     private ProcessingStatus processingStatus;
     private String processingReport;
     private String extractedText;
-    private String ocrMetrics;
+    private String processingMetrics;
 
     public ProcessingStatus getProcessingStatus() {
         return processingStatus;
@@ -35,11 +35,11 @@ public class DocumentProcessingStatusReq {
         this.extractedText = extractedText;
     }
 
-    public String getOcrMetrics() {
-        return ocrMetrics;
+    public String getProcessingMetrics() {
+        return processingMetrics;
     }
 
-    public void setOcrMetrics(String ocrMetrics) {
-        this.ocrMetrics = ocrMetrics;
+    public void setProcessingMetrics(String processingMetrics) {
+        this.processingMetrics = processingMetrics;
     }
 }

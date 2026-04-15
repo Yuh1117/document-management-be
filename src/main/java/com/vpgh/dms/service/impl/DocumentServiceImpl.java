@@ -72,7 +72,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     @Transactional
     public void updateProcessingStatus(Integer documentId, ProcessingStatus status,
-            String processingReport, String extractedText, String ocrMetrics) {
+            String processingReport, String extractedText, String processingMetrics) {
         Document doc = this.documentRepository.findById(documentId).orElse(null);
         if (doc == null) {
             return;
@@ -84,8 +84,8 @@ public class DocumentServiceImpl implements DocumentService {
         if (extractedText != null) {
             doc.setExtractedText(extractedText);
         }
-        if (ocrMetrics != null) {
-            doc.setOcrMetrics(ocrMetrics);
+        if (processingMetrics != null) {
+            doc.setProcessingMetrics(processingMetrics);
         }
         this.documentRepository.save(doc);
     }

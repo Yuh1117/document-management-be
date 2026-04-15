@@ -62,6 +62,6 @@ public interface DocumentService {
     boolean isOwnerDocument(Document doc, User user);
 
     void updateProcessingStatus(Integer documentId, ProcessingStatus status,
-            String processingReport, String extractedText, String ocrMetrics);
+            String processingReport, String extractedText, String processingMetrics);
 
 }
