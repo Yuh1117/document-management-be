@@ -5,10 +5,16 @@ import java.util.Locale;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vpgh.dms.model.dto.processor.ProcessorModelsListResponse;
+import com.vpgh.dms.model.dto.processor.ProcessorReloadModelResponse;
+import com.vpgh.dms.model.dto.response.SummarizeModelInfoRes;
+import com.vpgh.dms.model.dto.response.SummarizeModelsListRes;
+
+import java.util.List;
 import com.vpgh.dms.model.dto.response.DocumentSummarizeRes;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.DocumentSummary;
@@ -55,10 +61,20 @@ public class DocumentSummarizeController {
                 summary.getModelName(), summary.getPromptVersion()));
     }
 
-    @GetMapping(path = "/secure/documents/summarize/models")
+    @GetMapping(path = "/admin/documents/summarize/models")
     @ApiMessage(key = "api.models.summarize", message = "List summarize models")
-    public ResponseEntity<ProcessorModelsListResponse> listSummarizeModels() {
-        ProcessorModelsListResponse models = processorModelService.listModels();
-        return ResponseEntity.ok(models);
+    public ResponseEntity<SummarizeModelsListRes> listSummarizeModels() {
+        ProcessorModelsListResponse processorResponse = processorModelService.listModels();
+        List<SummarizeModelInfoRes> models = processorResponse.models().stream()
+                .map(m -> new SummarizeModelInfoRes(m.version(), m.modelName(), m.isActive(), m.createdAt()))
+                .toList();
+        return ResponseEntity.ok(new SummarizeModelsListRes(models));
+    }
+
+    @PostMapping(path = "/admin/documents/summarize/models/reload")
+    @ApiMessage(key = "api.models.summarize.reload", message = "Reload summarize model")
+    public ResponseEntity<ProcessorReloadModelResponse> reloadSummarizeModel() {
+        ProcessorReloadModelResponse result = processorModelService.reloadModel();
+        return ResponseEntity.ok(result);
     }
 }
