@@ -1,6 +1,6 @@
 {
-  "uid": "ocr-pipeline",
-  "title": "OCR Pipeline",
+  "uid": "processing-pipeline",
+  "title": "Processing Pipeline",
   "timezone": "browser",
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
@@ -12,7 +12,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "targets": [
         {
-          "expr": "rate(ocr_documents_processed_total[5m]) * 60",
+          "expr": "rate(documents_processed_total[5m]) * 60",
           "legendFormat": "{{status}}"
         }
       ],
@@ -27,19 +27,19 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "targets": [
         {
-          "expr": "sum(ocr_documents_processed_total) by (status)",
+          "expr": "sum(documents_processed_total) by (status)",
           "legendFormat": "{{status}}"
         }
       ]
     },
     {
       "id": 3,
-      "title": "OCR Quality Score Distribution",
+      "title": "Quality Score Distribution",
       "type": "histogram",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
       "targets": [
         {
-          "expr": "ocr_quality_score_bucket",
+          "expr": "text_quality_score_bucket",
           "legendFormat": "{{le}}",
           "format": "heatmap"
         }
@@ -52,7 +52,7 @@
       "gridPos": { "h": 8, "w": 6, "x": 12, "y": 8 },
       "targets": [
         {
-          "expr": "ocr_validation_failures_total",
+          "expr": "validation_failures_total",
           "legendFormat": "failures"
         }
       ],
@@ -67,15 +67,15 @@
       "gridPos": { "h": 8, "w": 6, "x": 18, "y": 8 },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, rate(ocr_processing_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.50, rate(processing_duration_seconds_bucket[5m]))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, rate(ocr_processing_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.95, rate(processing_duration_seconds_bucket[5m]))",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, rate(ocr_processing_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.99, rate(processing_duration_seconds_bucket[5m]))",
           "legendFormat": "p99"
         }
       ],

@@ -44,7 +44,7 @@ public class Document extends FullAuditableEntity {
     @Column(columnDefinition = "TEXT")
     private String processingReport;
     @Column(columnDefinition = "TEXT")
-    private String ocrMetrics;
+    private String processingMetrics;
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
@@ -215,12 +215,12 @@ public class Document extends FullAuditableEntity {
         this.versions = versions;
     }
 
-    public String getOcrMetrics() {
-        return ocrMetrics;
+    public String getProcessingMetrics() {
+        return processingMetrics;
     }
 
-    public void setOcrMetrics(String ocrMetrics) {
-        this.ocrMetrics = ocrMetrics;
+    public void setProcessingMetrics(String processingMetrics) {
+        this.processingMetrics = processingMetrics;
     }
 
 }

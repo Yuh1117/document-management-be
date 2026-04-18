@@ -36,7 +36,7 @@ Data flow:
 - Role, permission, and user group management
 - File storage integrations: Cloudinary and AWS S3
 - RabbitMQ publisher — triggers processor pipeline on document upload
-- Proxies search and summarization requests to the processor service
+- Proxies search, summarization, and model management requests to the processor service
 - Summary feedback collection
 - Email notifications (Spring Mail + Thymeleaf templates)
 - Internationalization (EN/VI)
@@ -47,7 +47,7 @@ Data flow:
 ## Tech stack
 
 - Java 21
-- Spring Boot 3.5.x
+- Spring Boot 3.5
 - Maven
 - PostgreSQL
 - Flyway
@@ -127,7 +127,6 @@ Do not commit secrets to source control. Use environment variables or a secrets 
 Flyway migrations are stored in `src/main/resources/db/migration`:
 
 - `V1__init_tables.sql`
-- `V2__add_mlops_columns.sql`
 
 Flyway runs automatically on startup. To migrate manually:
 
@@ -150,6 +149,6 @@ mvn -DskipTests package
 
 ## Development notes
 
-- Source is under `src/main/java/com/vpgh/dms/` — `config/`, `controller/`, `model/`, `repository/`, `service/`.
+- Source is under `src/main/java/com/vpgh/dms/` — `config/`, `controller/`, `model/`, `repository/`, `service/`, `util/`.
 - Email templates are in `src/main/resources/templates/`.
 - i18n message bundles: `messages.properties` (EN) and `messages_vi.properties` (VI).

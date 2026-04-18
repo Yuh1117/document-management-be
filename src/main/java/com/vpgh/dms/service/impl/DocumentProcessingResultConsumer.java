@@ -40,9 +40,9 @@ public class DocumentProcessingResultConsumer {
 
         String processingReport = (String) payload.get("processingReport");
         String extractedText = (String) payload.get("extractedText");
-        String ocrMetrics = (String) payload.get("ocrMetrics");
+        String processingMetrics = (String) payload.get("processingMetrics");
 
         logger.info("Received processing result documentId={} status={}", documentId, status);
-        documentService.updateProcessingStatus(documentId, status, processingReport, extractedText, ocrMetrics);
+        documentService.updateProcessingStatus(documentId, status, processingReport, extractedText, processingMetrics);
     }
 }

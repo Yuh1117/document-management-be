@@ -3,6 +3,6 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: "worker-ocr"
+  - job_name: "worker-processor"
     static_configs:
       - targets: ["worker:8001"]
