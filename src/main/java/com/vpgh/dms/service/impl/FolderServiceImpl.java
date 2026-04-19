@@ -2,6 +2,7 @@ package com.vpgh.dms.service.impl;
 
 import com.vpgh.dms.model.dto.FolderDTO;
 import com.vpgh.dms.model.dto.SubFolderDTO;
+import com.vpgh.dms.model.dto.response.FolderUploadPlan;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
@@ -14,7 +15,6 @@ import com.vpgh.dms.util.PathUtil;
 import com.vpgh.dms.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -291,19 +291,15 @@ public class FolderServiceImpl implements FolderService {
     }
 
     @Override
-    public Folder uploadNewFolder(Folder parentFolder, List<MultipartFile> files, List<String> relativePaths)
-            throws IOException {
+    public FolderUploadPlan buildFolderStructure(Folder parentFolder, List<String> relativePaths) {
         Folder rootFolder = null;
+        List<Folder> targetFolders = new ArrayList<>();
 
-        for (int i = 0; i < files.size(); i++) {
-            MultipartFile file = files.get(i);
-            String relativePath = relativePaths.get(i);
-
+        for (String relativePath : relativePaths) {
             Folder currentParent = parentFolder;
 
             if (relativePath != null && !relativePath.isEmpty()) {
                 String[] parts = relativePath.split("/");
-
                 for (int j = 0; j < parts.length - 1; j++) {
                     String folderName = parts[j];
                     Folder existing = folderRepository.findByNameAndParentAndIsDeletedFalse(folderName, currentParent);
@@ -321,10 +317,10 @@ public class FolderServiceImpl implements FolderService {
                 }
             }
 
-            this.documentService.uploadNewFile(file, currentParent);
+            targetFolders.add(currentParent);
         }
 
-        return rootFolder;
+        return new FolderUploadPlan(rootFolder, targetFolders);
     }
 
     @Override

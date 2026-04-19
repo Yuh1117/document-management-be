@@ -18,6 +18,7 @@ import java.util.List;
 import com.vpgh.dms.model.dto.response.DocumentSummarizeRes;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.DocumentSummary;
+import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.DocumentShareService;
 import com.vpgh.dms.service.DocumentSummarizeService;
@@ -30,9 +31,9 @@ import com.vpgh.dms.util.exception.NotFoundException;
 @RestController
 @RequestMapping("/api")
 public class DocumentSummarizeController {
+    private final DocumentService documentService;
     private final DocumentShareService documentShareService;
     private final ProcessorModelService processorModelService;
-    private final DocumentService documentService;
     private final DocumentSummarizeService documentSummarizeService;
 
     public DocumentSummarizeController(DocumentService documentService, DocumentShareService documentShareService,
@@ -46,15 +47,7 @@ public class DocumentSummarizeController {
     @GetMapping(path = "/secure/documents/{id}/summarize")
     @ApiMessage(key = "api.document.summarize", message = "Summarize document")
     public ResponseEntity<DocumentSummarizeRes> summarize(@PathVariable Integer id, Locale locale) {
-        Document doc = documentService.getDocumentById(id);
-        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("error.document.notFoundOrDeleted");
-        }
-
-        if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("error.forbidden.viewDocument");
-        }
-
+        Document doc = resolveDocumentForView(id, SecurityUtil.getCurrentUserFromThreadLocal());
         DocumentSummary summary = this.documentSummarizeService.summarizeDocument(doc, locale.getLanguage());
 
         return ResponseEntity.ok(new DocumentSummarizeRes(summary.getId(), summary.getSummaryText(),
@@ -76,5 +69,16 @@ public class DocumentSummarizeController {
     public ResponseEntity<ProcessorReloadModelResponse> reloadSummarizeModel() {
         ProcessorReloadModelResponse result = processorModelService.reloadModel();
         return ResponseEntity.ok(result);
+    }
+
+    private Document resolveDocumentForView(Integer id, User user) {
+        Document doc = documentService.getDocumentById(id);
+        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
+            throw new NotFoundException("error.document.notFoundOrDeleted");
+        }
+        if (!documentShareService.checkCanView(user, doc)) {
+            throw new ForbiddenException("error.forbidden.viewDocument");
+        }
+        return doc;
     }
 }

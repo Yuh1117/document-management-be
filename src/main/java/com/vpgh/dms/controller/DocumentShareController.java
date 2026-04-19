@@ -28,7 +28,7 @@ public class DocumentShareController {
     private final UserService userService;
 
     public DocumentShareController(DocumentShareService documentShareService, DocumentService documentService,
-                                   UserService userService) {
+            UserService userService) {
         this.documentShareService = documentShareService;
         this.documentService = documentService;
         this.userService = userService;
@@ -37,12 +37,7 @@ public class DocumentShareController {
     @PostMapping(path = "/secure/documents/share")
     @ApiMessage(key = "api.documentShare.create", message = "Create share")
     public ResponseEntity<List<DocumentShare>> share(@Valid @RequestBody ShareReq shareReq) throws MessagingException {
-        Document doc = this.documentService.getDocumentById(shareReq.getDocumentId());
-
-        if (!this.documentShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("error.forbidden.shareDocument");
-        }
-
+        Document doc = resolveDocumentForEdit(shareReq.getDocumentId(), SecurityUtil.getCurrentUserFromThreadLocal());
         List<DocumentShare> res = this.documentShareService.shareDocument(doc, shareReq.getShares());
         return ResponseEntity.status(HttpStatus.CREATED).body(res);
     }
@@ -50,30 +45,14 @@ public class DocumentShareController {
     @GetMapping(path = "/secure/documents/share/{id}")
     @ApiMessage(key = "api.documentShare.detail", message = "View share details")
     public ResponseEntity<List<DocumentShare>> getShare(@PathVariable("id") Integer id) {
-        Document doc = documentService.getDocumentById(id);
-        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("error.document.notFoundOrDeleted");
-        }
-
-        if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("error.forbidden.view");
-        }
-
-        List<DocumentShare> res = this.documentShareService.getShares(doc);
-        return ResponseEntity.status(HttpStatus.OK).body(res);
+        Document doc = resolveDocumentForView(id, SecurityUtil.getCurrentUserFromThreadLocal());
+        return ResponseEntity.ok(this.documentShareService.getShares(doc));
     }
 
     @DeleteMapping("/secure/documents/share/{id}")
     @ApiMessage(key = "api.documentShare.delete", message = "Remove share permission")
     public ResponseEntity<Void> unshare(@PathVariable Integer id, @RequestBody List<Integer> request) {
-        Document doc = documentService.getDocumentById(id);
-        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("error.document.notFoundOrDeleted");
-        }
-
-        if (!documentShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("error.forbidden.shareEdit");
-        }
+        Document doc = resolveDocumentForEdit(id, SecurityUtil.getCurrentUserFromThreadLocal());
 
         List<User> users = this.userService.getAllByIds(request);
         if (users.isEmpty()) {
@@ -82,6 +61,28 @@ public class DocumentShareController {
 
         this.documentShareService.removeShares(doc, users);
         return ResponseEntity.noContent().build();
+    }
+
+    private Document resolveDocumentForView(Integer id, User user) {
+        Document doc = documentService.getDocumentById(id);
+        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
+            throw new NotFoundException("error.document.notFoundOrDeleted");
+        }
+        if (!documentShareService.checkCanView(user, doc)) {
+            throw new ForbiddenException("error.forbidden.viewDocument");
+        }
+        return doc;
+    }
+
+    private Document resolveDocumentForEdit(Integer id, User user) {
+        Document doc = documentService.getDocumentById(id);
+        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
+            throw new NotFoundException("error.document.notFoundOrDeleted");
+        }
+        if (!documentShareService.checkCanEdit(user, doc)) {
+            throw new ForbiddenException("error.forbidden.editDocument");
+        }
+        return doc;
     }
 
 }

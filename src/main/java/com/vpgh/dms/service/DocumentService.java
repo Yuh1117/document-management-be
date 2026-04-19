@@ -3,7 +3,6 @@ package com.vpgh.dms.service;
 import com.vpgh.dms.model.constant.ProcessingStatus;
 import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.entity.Document;
-import com.vpgh.dms.model.entity.DocumentSummary;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,8 +17,6 @@ public interface DocumentService {
     Document uploadReplaceFile(MultipartFile file, Folder folder, Document existingDoc) throws IOException;
 
     Document uploadKeepBothFiles(MultipartFile file, Folder folder) throws IOException;
-
-    // byte[] downloadFile(String key);
 
     InputStream downloadFileStream(String filePath);
 

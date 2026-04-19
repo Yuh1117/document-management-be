@@ -4,8 +4,8 @@ import com.vpgh.dms.model.dto.FolderDTO;
 import com.vpgh.dms.model.dto.SubFolderDTO;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
+import com.vpgh.dms.model.dto.response.FolderUploadPlan;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -49,7 +49,7 @@ public interface FolderService {
 
     void zipFolderIterative(Folder rootFolder, ZipOutputStream zipOut) throws IOException;
 
-    Folder uploadNewFolder(Folder parentFolder, List<MultipartFile> files, List<String> relativePaths) throws IOException;
+    FolderUploadPlan buildFolderStructure(Folder parentFolder, List<String> relativePaths);
 
     boolean isOwnerFolder(Folder folder, User user);
 

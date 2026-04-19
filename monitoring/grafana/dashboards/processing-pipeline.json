@@ -3,7 +3,7 @@
   "title": "Processing Pipeline",
   "timezone": "browser",
   "refresh": "30s",
-  "time": { "from": "now-1h", "to": "now" },
+  "time": { "from": "now-24h", "to": "now" },
   "panels": [
     {
       "id": 1,
@@ -22,12 +22,12 @@
     },
     {
       "id": 2,
-      "title": "Documents Processed (total)",
+      "title": "Documents Processed (in selected range)",
       "type": "stat",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "targets": [
         {
-          "expr": "sum(documents_processed_total) by (status)",
+          "expr": "round(sum(increase(documents_processed_total[$__range])) by (status))",
           "legendFormat": "{{status}}"
         }
       ]
@@ -52,7 +52,7 @@
       "gridPos": { "h": 8, "w": 6, "x": 12, "y": 8 },
       "targets": [
         {
-          "expr": "validation_failures_total",
+          "expr": "round(increase(validation_failures_total[$__range]))",
           "legendFormat": "failures"
         }
       ],

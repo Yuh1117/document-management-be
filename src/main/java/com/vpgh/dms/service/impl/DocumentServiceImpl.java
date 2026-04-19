@@ -140,17 +140,6 @@ public class DocumentServiceImpl implements DocumentService {
         return saveNewDocument(file, folder, uniqueName);
     }
 
-    // @Override
-    // public byte[] downloadFile(String filePath) {
-    // String key = extractKeyFromPath(filePath);
-    // ResponseBytes<GetObjectResponse> objectAsBytes =
-    // s3Client.getObjectAsBytes(GetObjectRequest.builder()
-    // .bucket(bucketName)
-    // .key(key)
-    // .build());
-    // return objectAsBytes.asByteArray();
-    // }
-
     @Override
     public InputStream downloadFileStream(String filePath) {
         String key = extractKeyFromPath(filePath);

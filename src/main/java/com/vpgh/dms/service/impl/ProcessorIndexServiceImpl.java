@@ -2,6 +2,7 @@ package com.vpgh.dms.service.impl;
 
 import com.vpgh.dms.service.ProcessorIndexService;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -16,6 +17,7 @@ public class ProcessorIndexServiceImpl implements ProcessorIndexService {
     }
 
     @Override
+    @Async
     public void deleteIndex(Integer docId) {
         try {
             processorRestClient.delete()
