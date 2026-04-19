@@ -3,6 +3,7 @@ package com.vpgh.dms.service.impl;
 import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.constant.ProcessingStatus;
 import com.vpgh.dms.model.constant.StorageType;
+import com.vpgh.dms.model.dto.response.UploadResult;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.DocumentVersion;
 import com.vpgh.dms.model.entity.Folder;
@@ -11,10 +12,12 @@ import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.repository.DocumentVersionRepository;
 import com.vpgh.dms.service.DocumentQueueService;
 import com.vpgh.dms.service.DocumentService;
+import com.vpgh.dms.service.DocumentShareService;
 import com.vpgh.dms.service.ProcessorIndexService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.SecurityUtil;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +37,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,6 +52,8 @@ public class DocumentServiceImpl implements DocumentService {
     private final S3Presigner s3Presigner;
     private final DocumentQueueService documentQueueService;
     private final ProcessorIndexService processorIndexService;
+    private final DocumentShareService documentShareService;
+    private final Executor uploadExecutor;
     @Value("${aws.bucket.name}")
     private String bucketName;
     private static final String ROOT_FOLDER_PREFIX = "root";
@@ -54,7 +62,9 @@ public class DocumentServiceImpl implements DocumentService {
             DocumentVersionRepository documentVersionRepository,
             UserService userService, DocumentRepository documentRepository,
             DocumentQueueService documentQueueService,
-            ProcessorIndexService processorIndexService) {
+            ProcessorIndexService processorIndexService,
+            DocumentShareService documentShareService,
+            @Qualifier("uploadExecutor") Executor uploadExecutor) {
         this.s3Presigner = s3Presigner;
         this.s3Client = s3Client;
         this.documentVersionRepository = documentVersionRepository;
@@ -62,6 +72,8 @@ public class DocumentServiceImpl implements DocumentService {
         this.documentRepository = documentRepository;
         this.documentQueueService = documentQueueService;
         this.processorIndexService = processorIndexService;
+        this.documentShareService = documentShareService;
+        this.uploadExecutor = uploadExecutor;
     }
 
     @Override
@@ -138,6 +150,114 @@ public class DocumentServiceImpl implements DocumentService {
     public Document uploadKeepBothFiles(MultipartFile file, Folder folder) throws IOException {
         String uniqueName = generateUniqueName(file.getOriginalFilename(), folder);
         return saveNewDocument(file, folder, uniqueName);
+    }
+
+    @Override
+    public UploadResult uploadNewFiles(List<MultipartFile> files, Folder folder, User currentUser) throws IOException {
+        List<CompletableFuture<Document>> futures = files.stream()
+                .map(file -> CompletableFuture.supplyAsync(() -> {
+                    String filename = file.getOriginalFilename();
+                    boolean conflict = folder != null
+                            ? existsByNameAndFolderAndIsDeletedFalseAndIdNot(filename, folder, null)
+                            : existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(filename, currentUser, null);
+                    if (conflict) {
+                        return null;
+                    }
+                    try {
+                        Document doc = uploadNewFile(file, folder);
+                        if (doc.getFolder() != null) {
+                            documentShareService.handleShareAfterUpload(folder, doc);
+                        }
+                        return doc;
+                    } catch (IOException e) {
+                        throw new CompletionException(e);
+                    }
+                }, uploadExecutor))
+                .collect(Collectors.toList());
+
+        List<Document> uploaded = new ArrayList<>();
+        List<String> conflicts = new ArrayList<>();
+        try {
+            for (int i = 0; i < futures.size(); i++) {
+                Document doc = futures.get(i).join();
+                if (doc == null) {
+                    conflicts.add(files.get(i).getOriginalFilename());
+                } else {
+                    uploaded.add(doc);
+                }
+            }
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof IOException io) throw io;
+            throw e;
+        }
+        return new UploadResult(uploaded, conflicts);
+    }
+
+    @Override
+    public List<Document> uploadReplaceFiles(List<MultipartFile> files, Folder folder, User currentUser)
+            throws IOException {
+        List<Document> existingDocs = new ArrayList<>();
+        for (MultipartFile file : files) {
+            String filename = file.getOriginalFilename();
+            Document existing = folder != null
+                    ? findByNameAndFolderAndIsDeletedFalse(filename, folder)
+                    : findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(filename, currentUser);
+            if (existing == null) {
+                String errorKey = folder != null
+                        ? "error.document.replace.notInFolder"
+                        : "error.document.replace.notFound";
+                throw new com.vpgh.dms.util.exception.NotFoundException(errorKey, filename);
+            }
+            existingDocs.add(existing);
+        }
+
+        List<CompletableFuture<Document>> futures = new ArrayList<>();
+        for (int i = 0; i < files.size(); i++) {
+            MultipartFile file = files.get(i);
+            Document existing = existingDocs.get(i);
+            futures.add(CompletableFuture.supplyAsync(() -> {
+                try {
+                    return uploadReplaceFile(file, folder, existing);
+                } catch (IOException e) {
+                    throw new CompletionException(e);
+                }
+            }, uploadExecutor));
+        }
+
+        List<Document> replaced = new ArrayList<>();
+        try {
+            for (CompletableFuture<Document> f : futures) {
+                replaced.add(f.join());
+            }
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof IOException io) throw io;
+            throw e;
+        }
+        return replaced;
+    }
+
+    @Override
+    public List<Document> uploadKeepBothFiles(List<MultipartFile> files, Folder folder) throws IOException {
+        List<CompletableFuture<Document>> futures = files.stream()
+                .map(file -> CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return uploadKeepBothFiles(file, folder);
+                    } catch (IOException e) {
+                        throw new CompletionException(e);
+                    }
+                }, uploadExecutor))
+                .collect(Collectors.toList());
+
+        List<Document> uploaded = new ArrayList<>();
+        try {
+            for (CompletableFuture<Document> f : futures) {
+                uploaded.add(f.join());
+            }
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof IOException io) throw io;
+            throw e;
+        }
+        return uploaded;
     }
 
     // @Override

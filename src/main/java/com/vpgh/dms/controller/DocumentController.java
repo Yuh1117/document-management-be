@@ -18,8 +18,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+
+import com.vpgh.dms.model.dto.response.UploadResult;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -27,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,34 +72,11 @@ public class DocumentController {
             }
         }
 
-        List<Document> uploadedDocs = new ArrayList<>();
-        List<String> conflictFiles = new ArrayList<>();
-        for (MultipartFile file : fileUploadReq.getFiles()) {
-            String filename = file.getOriginalFilename();
-
-            boolean conflict;
-            if (folder != null) {
-                conflict = documentService.existsByNameAndFolderAndIsDeletedFalseAndIdNot(filename, folder, null);
-            } else {
-                conflict = documentService.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(
-                        filename, currentUser, null);
-            }
-
-            if (conflict) {
-                conflictFiles.add(filename);
-                continue;
-            }
-
-            Document doc = this.documentService.uploadNewFile(file, folder);
-            uploadedDocs.add(doc);
-            if (doc.getFolder() != null) {
-                this.documentShareService.handleShareAfterUpload(folder, doc);
-            }
-        }
+        UploadResult result = documentService.uploadNewFiles(fileUploadReq.getFiles(), folder, currentUser);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("uploaded", uploadedDocs);
-        response.put("conflicts", conflictFiles);
+        response.put("uploaded", result.uploaded());
+        response.put("conflicts", result.conflicts());
 
         return ResponseEntity.status(HttpStatus.MULTI_STATUS).body(response);
     }
@@ -119,27 +96,8 @@ public class DocumentController {
             }
         }
 
-        List<Document> replacedDocs = new ArrayList<>();
-        for (MultipartFile file : fileUploadReq.getFiles()) {
-            String filename = file.getOriginalFilename();
-            Document existingDoc;
-
-            if (folder != null) {
-                existingDoc = documentService.findByNameAndFolderAndIsDeletedFalse(filename, folder);
-                if (existingDoc == null) {
-                    throw new NotFoundException("error.document.replace.notInFolder", filename);
-                }
-            } else {
-                existingDoc = documentService.findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(
-                        filename, SecurityUtil.getCurrentUserFromThreadLocal());
-                if (existingDoc == null) {
-                    throw new NotFoundException("error.document.replace.notFound", filename);
-                }
-            }
-
-            Document doc = documentService.uploadReplaceFile(file, folder, existingDoc);
-            replacedDocs.add(doc);
-        }
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+        List<Document> replacedDocs = documentService.uploadReplaceFiles(fileUploadReq.getFiles(), folder, currentUser);
 
         return ResponseEntity.status(HttpStatus.OK).body(replacedDocs);
     }
@@ -159,11 +117,8 @@ public class DocumentController {
             }
         }
 
-        List<Document> uploadedDocs = new ArrayList<>();
-        for (MultipartFile file : fileUploadReq.getFiles()) {
-            Document doc = documentService.uploadKeepBothFiles(file, folder);
-            uploadedDocs.add(doc);
-        }
+        List<Document> uploadedDocs = documentService.uploadKeepBothFiles(fileUploadReq.getFiles(), folder);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(uploadedDocs);
     }
 

@@ -12,6 +12,7 @@ import com.vpgh.dms.service.FolderService;
 import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.PathUtil;
 import com.vpgh.dms.util.SecurityUtil;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +20,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -30,15 +34,18 @@ public class FolderServiceImpl implements FolderService {
     private final DocumentRepository documentRepository;
     private final DocumentService documentService;
     private final UserService userService;
+    private final Executor uploadExecutor;
     @Value("${aws.bucket.name}")
     private String bucketName;
 
     public FolderServiceImpl(FolderRepository folderRepository, DocumentRepository documentRepository,
-            DocumentService documentService, UserService userService) {
+            DocumentService documentService, UserService userService,
+            @Qualifier("uploadExecutor") Executor uploadExecutor) {
         this.folderRepository = folderRepository;
         this.documentRepository = documentRepository;
         this.documentService = documentService;
         this.userService = userService;
+        this.uploadExecutor = uploadExecutor;
     }
 
     @Override
@@ -295,15 +302,14 @@ public class FolderServiceImpl implements FolderService {
             throws IOException {
         Folder rootFolder = null;
 
+        List<Map.Entry<MultipartFile, Folder>> uploadTasks = new ArrayList<>();
         for (int i = 0; i < files.size(); i++) {
             MultipartFile file = files.get(i);
             String relativePath = relativePaths.get(i);
-
             Folder currentParent = parentFolder;
 
             if (relativePath != null && !relativePath.isEmpty()) {
                 String[] parts = relativePath.split("/");
-
                 for (int j = 0; j < parts.length - 1; j++) {
                     String folderName = parts[j];
                     Folder existing = folderRepository.findByNameAndParentAndIsDeletedFalse(folderName, currentParent);
@@ -321,7 +327,26 @@ public class FolderServiceImpl implements FolderService {
                 }
             }
 
-            this.documentService.uploadNewFile(file, currentParent);
+            uploadTasks.add(Map.entry(file, currentParent));
+        }
+
+        List<CompletableFuture<Void>> futures = uploadTasks.stream()
+                .map(task -> CompletableFuture.runAsync(() -> {
+                    try {
+                        documentService.uploadNewFile(task.getKey(), task.getValue());
+                    } catch (IOException e) {
+                        throw new CompletionException(e);
+                    }
+                }, uploadExecutor))
+                .collect(Collectors.toList());
+
+        try {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof IOException io) {
+                throw io;
+            }
+            throw e;
         }
 
         return rootFolder;
