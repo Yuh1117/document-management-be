@@ -52,7 +52,8 @@ public class UserGroupController {
             params.put("page", "1");
         }
 
-        Page<UserGroup> pageUsers = this.userGroupService.getAllGroupsByUser(params, SecurityUtil.getCurrentUserFromThreadLocal());
+        Page<UserGroup> pageUsers = this.userGroupService.getAllGroupsByUser(params,
+                SecurityUtil.getCurrentUserFromThreadLocal());
         List<UserGroupDTO> users = pageUsers.getContent().stream()
                 .map(u -> this.userGroupService.convertUserGroupToUserGroupDTO(u)).collect(Collectors.toList());
 
@@ -67,27 +68,15 @@ public class UserGroupController {
     @GetMapping(path = "/secure/user-groups/{id}")
     @ApiMessage(key = "api.userGroup.detail", message = "Get group details")
     public ResponseEntity<UserGroup> detail(@PathVariable(value = "id") Integer id) {
-        UserGroup group = this.userGroupService.getGroupById(id);
-        if (group == null) {
-            throw new NotFoundException("error.group.notFound");
-        }
-
-        if (this.userGroupService.getMemberInGroup(group, SecurityUtil.getCurrentUserFromThreadLocal()) == null) {
-            throw new ForbiddenException("error.group.notInGroup");
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(group);
+        UserGroup group = resolveMemberGroup(id, SecurityUtil.getCurrentUserFromThreadLocal());
+        return ResponseEntity.ok(group);
     }
 
     @PatchMapping(path = "/secure/user-groups/{id}")
     @ApiMessage(key = "api.userGroup.update", message = "Update group")
-    public ResponseEntity<UserGroup> update(@PathVariable("id") Integer id,
-                                            @RequestBody UserGroupDTO groupReq) {
-
-        UserGroup group = this.userGroupService.getGroupById(id);
-        if (group == null) {
-            throw new NotFoundException("error.group.notFound");
-        }
+    public ResponseEntity<UserGroup> update(@PathVariable("id") Integer id, @RequestBody UserGroupDTO groupReq) {
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+        UserGroup group = resolveAdminGroup(id, currentUser);
 
         groupReq.setId(group.getId());
         GroupValidator.setCurrentEntity(group);
@@ -103,40 +92,23 @@ public class UserGroupController {
             throw new CustomValidationException(errorList);
         }
 
-        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
-        UserGroupMember member = this.userGroupService.getMemberInGroup(group, currentUser);
-        if (member == null) {
-            throw new ForbiddenException("error.group.notInGroup");
-        }
-
-        if (!this.userGroupService.isAdminGroup(member)) {
-            throw new ForbiddenException("error.group.noPermission");
-        }
-
         if (groupReq.getMembers() != null) {
-            boolean check = groupReq.getMembers().stream().anyMatch(m ->
-                    this.userGroupService.isOwnerGroup(group, this.userService.getUserByEmail(m.getEmail())));
+            boolean check = groupReq.getMembers().stream().anyMatch(
+                    m -> this.userGroupService.isOwnerGroup(group, this.userService.getUserByEmail(m.getEmail())));
             if (check) {
                 throw new ForbiddenException("error.group.cannotUpdateOwner");
             }
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(this.userGroupService.handleUpdateGroup(group, groupReq));
+        return ResponseEntity.ok(this.userGroupService.handleUpdateGroup(group, groupReq));
     }
 
     @PatchMapping(path = "/secure/user-groups/{id}/quit")
     @ApiMessage(key = "api.userGroup.leave", message = "Leave group")
     public ResponseEntity<Void> quitGroup(@PathVariable("id") Integer id) {
-        UserGroup group = this.userGroupService.getGroupById(id);
-        if (group == null) {
-            throw new NotFoundException("error.group.notFound");
-        }
-
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
-        UserGroupMember member = this.userGroupService.getMemberInGroup(group, currentUser);
-        if (member == null) {
-            throw new ForbiddenException("error.group.notInGroup");
-        }
+        UserGroupMember member = resolveMembership(id, currentUser);
+        UserGroup group = member.getGroup();
 
         if (this.userGroupService.isOwnerGroup(group, currentUser)) {
             throw new ForbiddenException("error.group.cannotLeave");
@@ -147,20 +119,11 @@ public class UserGroupController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-
     @DeleteMapping(path = "/secure/user-groups/{id}")
     @ApiMessage(key = "api.userGroup.delete", message = "Delete group")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
-        UserGroup group = this.userGroupService.getGroupById(id);
-        if (group == null) {
-            throw new NotFoundException("error.group.notFound");
-        }
-
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
-        UserGroupMember member = this.userGroupService.getMemberInGroup(group, currentUser);
-        if (member == null) {
-            throw new ForbiddenException("error.group.notInGroup");
-        }
+        UserGroup group = resolveMemberGroup(id, currentUser);
 
         if (!this.userGroupService.isOwnerGroup(group, currentUser)) {
             throw new ForbiddenException("error.group.cannotDeleteGroup");
@@ -168,5 +131,34 @@ public class UserGroupController {
 
         this.userGroupService.deleteGroupById(group.getId());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    private UserGroup resolveGroup(Integer id) {
+        UserGroup group = userGroupService.getGroupById(id);
+        if (group == null) {
+            throw new NotFoundException("error.group.notFound");
+        }
+        return group;
+    }
+
+    private UserGroupMember resolveMembership(Integer groupId, User user) {
+        UserGroup group = resolveGroup(groupId);
+        UserGroupMember member = userGroupService.getMemberInGroup(group, user);
+        if (member == null) {
+            throw new ForbiddenException("error.group.notInGroup");
+        }
+        return member;
+    }
+
+    private UserGroup resolveMemberGroup(Integer id, User user) {
+        return resolveMembership(id, user).getGroup();
+    }
+
+    private UserGroup resolveAdminGroup(Integer id, User user) {
+        UserGroupMember member = resolveMembership(id, user);
+        if (!userGroupService.isAdminGroup(member)) {
+            throw new ForbiddenException("error.group.noPermission");
+        }
+        return member.getGroup();
     }
 }

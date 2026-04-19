@@ -6,7 +6,6 @@ import com.vpgh.dms.model.entity.*;
 import com.vpgh.dms.repository.DocumentShareRepository;
 import com.vpgh.dms.repository.FolderShareRepository;
 import com.vpgh.dms.repository.UserRepository;
-import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.DocumentShareService;
 import com.vpgh.dms.service.EmailService;
 import com.vpgh.dms.service.UserGroupService;
@@ -22,17 +21,15 @@ public class DocumentShareServiceImpl implements DocumentShareService {
     private final DocumentShareRepository documentShareRepository;
     private final UserGroupService userGroupService;
     private final UserRepository userRepository;
-    private final DocumentService documentService;
     private final EmailService emailService;
     private final FolderShareRepository folderShareRepository;
 
     public DocumentShareServiceImpl(DocumentShareRepository documentShareRepository, UserGroupService userGroupService,
-                                    UserRepository userRepository, DocumentService documentService, EmailService emailService,
+                                    UserRepository userRepository, EmailService emailService,
                                     FolderShareRepository folderShareRepository) {
         this.documentShareRepository = documentShareRepository;
         this.userGroupService = userGroupService;
         this.userRepository = userRepository;
-        this.documentService = documentService;
         this.emailService = emailService;
         this.folderShareRepository = folderShareRepository;
     }
@@ -54,7 +51,7 @@ public class DocumentShareServiceImpl implements DocumentShareService {
 
     @Override
     public boolean hasDocumentPermission(User user, Document doc, ShareType required) {
-        if (this.documentService.isOwnerDocument(doc, user)) {
+        if (doc.getCreatedBy().getId().equals(user.getId())) {
             return true;
         }
 
@@ -75,7 +72,7 @@ public class DocumentShareServiceImpl implements DocumentShareService {
         for (ShareReq.UserShareDTO dto : userShareDTOS) {
             isNew = false;
             User user = this.userRepository.findByEmail(dto.getEmail());
-            if (this.documentService.isOwnerDocument(doc, user)) continue;
+            if (doc.getCreatedBy().getId().equals(user.getId())) continue;
 
             DocumentShare existing = this.documentShareRepository.findByDocumentAndUser(doc, user).orElse(null);
             if (existing != null) {

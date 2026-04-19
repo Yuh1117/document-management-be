@@ -26,7 +26,8 @@ public class FolderShareController {
     private final FolderShareService folderShareService;
     private final UserService userService;
 
-    public FolderShareController(FolderService folderService, FolderShareService folderShareService, UserService userService) {
+    public FolderShareController(FolderService folderService, FolderShareService folderShareService,
+            UserService userService) {
         this.folderService = folderService;
         this.folderShareService = folderShareService;
         this.userService = userService;
@@ -35,42 +36,22 @@ public class FolderShareController {
     @PostMapping("/secure/folders/share")
     @ApiMessage(key = "api.folderShare.create", message = "Create folder share")
     public ResponseEntity<List<FolderShare>> share(@Valid @RequestBody ShareReq shareReq) throws MessagingException {
-        Folder folder = folderService.getFolderById(shareReq.getFolderId());
-
-        if (!folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
-            throw new ForbiddenException("error.forbidden.noFolderSharePermission");
-        }
-
-        List<FolderShare> res = folderShareService.shareFolder(folder, shareReq.getShares());
-        return ResponseEntity.status(HttpStatus.CREATED).body(res);
+        Folder folder = resolveEditableFolder(shareReq.getFolderId());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(folderShareService.shareFolder(folder, shareReq.getShares()));
     }
 
     @GetMapping("/secure/folders/share/{id}")
     @ApiMessage(key = "api.folderShare.detail", message = "View folder share details")
     public ResponseEntity<List<FolderShare>> getShare(@PathVariable Integer id) {
-        Folder folder = folderService.getFolderById(id);
-        if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
-            throw new NotFoundException("error.folder.notFoundOrDeleted");
-        }
-
-        if (!folderShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
-            throw new ForbiddenException("error.forbidden.view");
-        }
-
+        Folder folder = resolveViewableFolder(id);
         return ResponseEntity.ok(folderShareService.getShares(folder));
     }
 
     @DeleteMapping("/secure/folders/share/{id}")
     @ApiMessage(key = "api.folderShare.delete", message = "Remove folder share permission")
     public ResponseEntity<Void> unshare(@PathVariable Integer id, @RequestBody List<Integer> request) {
-        Folder folder = folderService.getFolderById(id);
-        if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
-            throw new NotFoundException("error.folder.notFoundOrDeleted");
-        }
-
-        if (!folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
-            throw new ForbiddenException("error.forbidden.shareEdit");
-        }
+        Folder folder = resolveEditableFolder(id);
 
         List<User> users = userService.getAllByIds(request);
         if (users.isEmpty()) {
@@ -79,5 +60,27 @@ public class FolderShareController {
 
         folderShareService.removeShares(folder, users);
         return ResponseEntity.noContent().build();
+    }
+
+    private Folder resolveEditableFolder(Integer id) {
+        Folder folder = folderService.getFolderById(id);
+        if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
+            throw new NotFoundException("error.folder.notFoundOrDeleted");
+        }
+        if (!folderShareService.checkCanEdit(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
+            throw new ForbiddenException("error.forbidden.editFolder");
+        }
+        return folder;
+    }
+
+    private Folder resolveViewableFolder(Integer id) {
+        Folder folder = folderService.getFolderById(id);
+        if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
+            throw new NotFoundException("error.folder.notFoundOrDeleted");
+        }
+        if (!folderShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), folder)) {
+            throw new ForbiddenException("error.forbidden.viewFolder");
+        }
+        return folder;
     }
 }

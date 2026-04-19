@@ -3,6 +3,7 @@ package com.vpgh.dms.controller;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.DocumentVersion;
+import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.service.DocumentService;
 import com.vpgh.dms.service.DocumentShareService;
 import com.vpgh.dms.service.DocumentVersionService;
@@ -28,28 +29,21 @@ import java.util.Map;
 @RequestMapping("/api")
 public class DocumentVersionController {
     private final DocumentService documentService;
-    private final DocumentVersionService documentVersionService;
     private final DocumentShareService documentShareService;
+    private final DocumentVersionService documentVersionService;
 
-    public DocumentVersionController(DocumentService documentService, DocumentVersionService documentVersionService,
-                                     DocumentShareService documentShareService) {
+    public DocumentVersionController(DocumentService documentService, DocumentShareService documentShareService,
+            DocumentVersionService documentVersionService) {
         this.documentService = documentService;
-        this.documentVersionService = documentVersionService;
         this.documentShareService = documentShareService;
+        this.documentVersionService = documentVersionService;
     }
-
 
     @GetMapping(path = "/secure/documents/{id}/versions")
     @ApiMessage(key = "api.documentVersion.history", message = "View document version history")
-    public ResponseEntity<PaginationResDTO<List<DocumentVersion>>> detail(@PathVariable Integer id, @RequestParam Map<String, String> params) {
-        Document doc = this.documentService.getDocumentById(id);
-        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("error.document.notFoundOrDeleted");
-        }
-
-        if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("error.forbidden.viewDocument");
-        }
+    public ResponseEntity<PaginationResDTO<List<DocumentVersion>>> detail(@PathVariable Integer id,
+            @RequestParam Map<String, String> params) {
+        Document doc = resolveDocumentForView(id, SecurityUtil.getCurrentUserFromThreadLocal());
 
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
@@ -68,16 +62,9 @@ public class DocumentVersionController {
 
     @GetMapping(path = "/secure/documents/{documentId}/versions/{versionId}/download")
     public ResponseEntity<InputStreamResource> downloadVersion(@PathVariable Integer documentId,
-                                                               @PathVariable Integer versionId) {
+            @PathVariable Integer versionId) {
 
-        Document doc = this.documentService.getDocumentById(documentId);
-        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
-            throw new NotFoundException("error.document.notFoundOrDeleted");
-        }
-
-        if (!this.documentShareService.checkCanView(SecurityUtil.getCurrentUserFromThreadLocal(), doc)) {
-            throw new ForbiddenException("error.forbidden.downloadDocument");
-        }
+        resolveDocumentForView(documentId, SecurityUtil.getCurrentUserFromThreadLocal());
 
         DocumentVersion version = this.documentVersionService.getVersionById(versionId);
         if (version == null) {
@@ -91,6 +78,17 @@ public class DocumentVersionController {
                         "attachment; filename=\"" + URLEncoder.encode(version.getName(), StandardCharsets.UTF_8) + "\"")
                 .contentType(MediaType.parseMediaType(version.getMimeType()))
                 .body(new InputStreamResource(inputStream));
+    }
+
+    private Document resolveDocumentForView(Integer id, User user) {
+        Document doc = documentService.getDocumentById(id);
+        if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
+            throw new NotFoundException("error.document.notFoundOrDeleted");
+        }
+        if (!documentShareService.checkCanView(user, doc)) {
+            throw new ForbiddenException("error.forbidden.viewDocument");
+        }
+        return doc;
     }
 
 }

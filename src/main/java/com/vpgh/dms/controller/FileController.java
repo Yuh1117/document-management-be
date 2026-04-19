@@ -37,7 +37,8 @@ public class FileController {
     private final FileService fileService;
     private final FolderShareService folderShareService;
 
-    public FileController(FolderService folderService, DocumentService documentService, FileService fileService, FolderShareService folderShareService) {
+    public FileController(FolderService folderService, DocumentService documentService, FileService fileService,
+            FolderShareService folderShareService) {
         this.folderService = folderService;
         this.documentService = documentService;
         this.fileService = fileService;
@@ -103,7 +104,8 @@ public class FileController {
 
     @GetMapping(path = "/secure/files/advanced-search")
     @ApiMessage(key = "api.file.advancedSearch", message = "Advanced search")
-    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> advancedSearch(@RequestParam Map<String, String> params) {
+    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> advancedSearch(
+            @RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
             params.put("page", "1");
@@ -123,16 +125,9 @@ public class FileController {
     @GetMapping("/secure/files/folders/{id}")
     @ApiMessage(key = "api.file.inFolder", message = "Get files in folder")
     public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getFolderFiles(@PathVariable("id") Integer id,
-                                                                              @RequestParam Map<String, String> params) {
-        Folder folder = this.folderService.getFolderById(id);
-        if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
-            throw new NotFoundException("error.folder.notFoundOrDeleted");
-        }
-
+            @RequestParam Map<String, String> params) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
-        if (!this.folderShareService.checkCanView(currentUser, folder)) {
-            throw new ForbiddenException("error.forbidden.viewFolder");
-        }
+        resolveViewableFolder(id, currentUser);
 
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
@@ -152,7 +147,8 @@ public class FileController {
 
     @GetMapping(path = "/secure/files/shared")
     @ApiMessage(key = "api.file.shared", message = "Get shared files")
-    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getSharedFiles(@RequestParam Map<String, String> params) {
+    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getSharedFiles(
+            @RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
             params.put("page", "1");
@@ -171,7 +167,8 @@ public class FileController {
 
     @GetMapping(path = "/secure/files/recent")
     @ApiMessage(key = "api.file.recent", message = "Get recent files")
-    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getRecentFiles(@RequestParam Map<String, String> params) {
+    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getRecentFiles(
+            @RequestParam Map<String, String> params) {
         String page = params.get("page");
         if (page == null || page.isEmpty()) {
             params.put("page", "1");
@@ -233,6 +230,16 @@ public class FileController {
                 .body(stream);
     }
 
+    private void resolveViewableFolder(Integer id, User user) {
+        Folder folder = folderService.getFolderById(id);
+        if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
+            throw new NotFoundException("error.folder.notFoundOrDeleted");
+        }
+        if (!folderShareService.checkCanView(user, folder)) {
+            throw new ForbiddenException("error.forbidden.viewFolder");
+        }
+    }
+
     @DeleteMapping("/secure/files/permanent")
     @ApiMessage(key = "api.file.emptyTrash", message = "Empty trash")
     public ResponseEntity<Void> cleanTrash() {
@@ -245,7 +252,8 @@ public class FileController {
 
         List<Integer> folderIds = files.stream().filter(f -> "folder".equals(f.getType()) && f.getFolder() != null)
                 .map(f -> f.getFolder().getId()).toList();
-        List<Integer> documentIds = files.stream().filter(f -> "document".equals(f.getType()) && f.getDocument() != null)
+        List<Integer> documentIds = files.stream()
+                .filter(f -> "document".equals(f.getType()) && f.getDocument() != null)
                 .map(f -> f.getDocument().getId()).toList();
 
         List<Folder> folders = this.folderService.getFoldersByIds(folderIds);
