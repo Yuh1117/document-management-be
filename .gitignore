@@ -32,6 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 .env
-
-/src/main/resources/vncorenlp/
-/src/main/resources/stopwords/
+.env.prod
