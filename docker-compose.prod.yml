@@ -3,7 +3,8 @@ services:
     image: postgres:17
     container_name: dms-postgres
     env_file:
-      - .env
+      - .env.prod
+    restart: unless-stopped
     ports:
       - "5432:5432"
     volumes:
@@ -19,6 +20,7 @@ services:
   rabbitmq:
     image: rabbitmq:4.2-management
     container_name: dms-rabbitmq
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
       interval: 10s
@@ -35,6 +37,7 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
     container_name: dms-elasticsearch
+    restart: unless-stopped
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -58,6 +61,7 @@ services:
   kibana:
     image: docker.elastic.co/kibana/kibana:9.0.0
     container_name: dms-kibana
+    restart: unless-stopped
     ports:
       - "5601:5601"
     environment:
@@ -71,15 +75,14 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
+    image: dms-backend:latest
     container_name: dms-backend
-    volumes:
-      - .:/app
-      - m2-cache:/root/.m2
+    restart: unless-stopped
     ports:
       - "8080:8080"
     env_file:
-      - .env
+      - .env.prod
     depends_on:
       postgres:
         condition: service_healthy
@@ -92,23 +95,46 @@ services:
     networks:
       - dms-network
 
+  frontend:
+    build:
+      context: ../document-management-fe
+      dockerfile: Dockerfile.prod
+      args:
+        - VITE_GOOGLE_CLIENT_ID
+        - VITE_CHECK_ACCESS
+        - VITE_API_BASE_URL
+    image: dms-frontend:latest
+    container_name: dms-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    env_file:
+      - .env.prod
+    networks:
+      - dms-network
+
   processor:
     build:
       context: ../document-management-processor
-      dockerfile: Dockerfile
-    image: document-management-processor
+      dockerfile: Dockerfile.prod
+    image: dms-processor:latest
     container_name: dms-processor
+    restart: unless-stopped
     ports:
       - "8000:8000"
     volumes:
-      - ../document-management-processor:/app
       - hf-cache:/cache/huggingface
       - easyocr-cache:/root/.EasyOCR
-      - pip-cache:/root/.cache/pip
       - mlflow-data:/mlflow
     env_file:
-      - ../document-management-processor/.env
-    gpus: all
+      - ../document-management-processor/.env.prod
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -118,21 +144,25 @@ services:
       - dms-network
 
   worker:
-    image: document-management-processor
+    image: dms-processor:latest
     container_name: dms-worker
     restart: unless-stopped
     command: ["python", "-m", "app.worker"]
     ports:
       - "8001:8001"
     volumes:
-      - ../document-management-processor:/app
       - hf-cache:/cache/huggingface
       - easyocr-cache:/root/.EasyOCR
-      - pip-cache:/root/.cache/pip
       - mlflow-data:/mlflow:ro
     env_file:
-      - ../document-management-processor/.env
-    gpus: all
+      - ../document-management-processor/.env.prod
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -144,14 +174,13 @@ services:
       - dms-network
 
   register:
-    image: document-management-processor
+    image: dms-processor:latest
     container_name: dms-register
     command: ["python", "-m", "scripts.register_model"]
     volumes:
-      - ../document-management-processor:/app
       - mlflow-data:/mlflow
     env_file:
-      - ../document-management-processor/.env
+      - ../document-management-processor/.env.prod
     depends_on:
       mlflow:
         condition: service_started
@@ -163,6 +192,7 @@ services:
   prometheus:
     image: prom/prometheus:v3.2.1
     container_name: dms-prometheus
+    restart: unless-stopped
     ports:
       - "9090:9090"
     volumes:
@@ -174,11 +204,14 @@ services:
   grafana:
     image: grafana/grafana:11.6.0
     container_name: dms-grafana
+    restart: unless-stopped
     ports:
       - "3000:3000"
+    env_file:
+      - .env.prod
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
     volumes:
       - grafana-data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -189,6 +222,7 @@ services:
   mlflow:
     image: ghcr.io/mlflow/mlflow:v3.10.1
     container_name: dms-mlflow
+    restart: unless-stopped
     ports:
       - "5001:5001"
     command:
@@ -199,8 +233,6 @@ services:
         "0.0.0.0",
         "--port",
         "5001",
-        "--allowed-hosts",
-        "localhost,localhost:5001,127.0.0.1,127.0.0.1:5001,mlflow,mlflow:5001,host.docker.internal",
         "--backend-store-uri",
         "sqlite:///mlflow/mlflow.db",
         "--default-artifact-root",
@@ -215,10 +247,8 @@ volumes:
   postgres-data:
   rabbitmq-data:
   elasticsearch-data:
-  m2-cache:
   hf-cache:
   easyocr-cache:
-  pip-cache:
   prometheus-data:
   grafana-data:
   mlflow-data:

@@ -1,7 +1,15 @@
-# Maven/Gradle build
+# Maven build output
 target/
 build/
 out/
+
+# Env files
+.env*
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
 
 # IDE
 .vscode/
@@ -12,6 +20,13 @@ out/
 .git
 .gitignore
 
-# Cache
+# Monitoring config
+monitoring/
+
+# Docs
+*.md
+README*
+
+# Cache / OS
 *.log
 *.DS_Store

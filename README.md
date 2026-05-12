@@ -46,7 +46,7 @@ Data flow:
 
 ## Tech stack
 
-- Java 21
+- Java 25
 - Spring Boot 3.5
 - Maven
 - PostgreSQL
@@ -62,7 +62,7 @@ Data flow:
 
 ## Prerequisites
 
-- JDK 21
+- JDK 25
 - Maven 3.6+
 - PostgreSQL
 - Running RabbitMQ instance

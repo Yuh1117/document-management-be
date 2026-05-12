@@ -172,10 +172,17 @@ public class FileServiceImpl implements FileService {
         List<FileItemProjection> rows = fileRepository.findOwnedDocumentsByIdsAndFilters(user.getId(),
                 orderedDocIds, filters.mimeType(), filters.sizeBytes(), filters.sizeType());
         Map<Integer, FileItemProjection> rowMap = rows.stream().collect(Collectors.toMap(r -> r.getId(), r -> r));
+        Map<Integer, String> snippetMap = new HashMap<>();
+        for (ProcessorSearchResponse.ProcessorSearchHit hit : hits) {
+            Integer docId = parseDocumentId(hit.getDocumentId());
+            if (docId != null && hit.getSnippet() != null && !snippetMap.containsKey(docId)) {
+                snippetMap.put(docId, hit.getSnippet());
+            }
+        }
         List<FileItemDTO> content = orderedDocIds.stream()
                 .map(rowMap::get)
                 .filter(Objects::nonNull)
-                .map(this::mapToFileItemDTO)
+                .map(row -> mapToFileItemDTO(row, snippetMap.get(row.getId())))
                 .toList();
 
         return new PageImpl<>(content, pageable, response.getTotal());
@@ -246,6 +253,21 @@ public class FileServiceImpl implements FileService {
     }
 
     private FileItemDTO mapToFileItemDTO(FileItemProjection p) {
+        return mapToFileItemDTO(p, null);
+    }
+
+    private static Integer parseDocumentId(String rawDocumentId) {
+        if (rawDocumentId == null || rawDocumentId.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(rawDocumentId.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private FileItemDTO mapToFileItemDTO(FileItemProjection p, String snippet) {
         UserDTO createdBy = new UserDTO();
         createdBy.setId(p.getCreatedById());
         createdBy.setEmail(p.getCreatedByEmail());
@@ -274,6 +296,7 @@ public class FileServiceImpl implements FileService {
             d.setUpdatedAt(p.getUpdatedAt());
             d.setCreatedBy(createdBy);
             d.setDeleted(p.getIsDeleted());
+            d.setSnippet(snippet);
             dto.setDocument(d);
         }
 

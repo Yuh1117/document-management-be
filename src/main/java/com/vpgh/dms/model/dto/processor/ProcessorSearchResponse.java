@@ -48,6 +48,7 @@ public class ProcessorSearchResponse {
         @JsonProperty("document_id")
         private String documentId;
         private double score;
+        private String snippet;
 
         public String getDocumentId() {
             return documentId;
@@ -63,6 +64,14 @@ public class ProcessorSearchResponse {
 
         public void setScore(double score) {
             this.score = score;
+        }
+
+        public String getSnippet() {
+            return snippet;
+        }
+
+        public void setSnippet(String snippet) {
+            this.snippet = snippet;
         }
     }
 }

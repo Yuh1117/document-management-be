@@ -15,6 +15,7 @@ public class DocumentDTO {
     private String mimeType;
     private StorageType storageType;
     private Boolean isDeleted;
+    private String snippet;
     private UserDTO createdBy;
     private UserDTO updatedBy;
     private Instant createdAt;
@@ -130,6 +131,14 @@ public class DocumentDTO {
 
     public void setDeleted(Boolean deleted) {
         isDeleted = deleted;
+    }
+
+    public String getSnippet() {
+        return snippet;
+    }
+
+    public void setSnippet(String snippet) {
+        this.snippet = snippet;
     }
 
 }
