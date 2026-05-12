@@ -90,6 +90,8 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
+      processor:
+        condition: service_started
     networks:
       - dms-network
 
@@ -133,6 +135,11 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
     networks:
       - dms-network
 
@@ -156,6 +163,13 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
     networks:
       - dms-network
 
@@ -167,6 +181,9 @@ services:
       - mlflow-data:/mlflow
     env_file:
       - ../document-management-processor/.env.prod
+    depends_on:
+      mlflow:
+        condition: service_started
     networks:
       - dms-network
     profiles:

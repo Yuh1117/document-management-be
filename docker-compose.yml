@@ -10,6 +10,11 @@ services:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - dms-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:4.2-management
@@ -57,6 +62,9 @@ services:
       - "5601:5601"
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
     networks:
       - dms-network
 
@@ -72,6 +80,15 @@ services:
       - "8080:8080"
     env_file:
       - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      processor:
+        condition: service_started
     networks:
       - dms-network
 
@@ -92,6 +109,11 @@ services:
     env_file:
       - ../document-management-processor/.env
     gpus: all
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
     networks:
       - dms-network
 
@@ -111,6 +133,13 @@ services:
     env_file:
       - ../document-management-processor/.env
     gpus: all
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
     networks:
       - dms-network
 
@@ -123,6 +152,9 @@ services:
       - mlflow-data:/mlflow
     env_file:
       - ../document-management-processor/.env
+    depends_on:
+      mlflow:
+        condition: service_started
     networks:
       - dms-network
     profiles:
