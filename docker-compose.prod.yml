@@ -193,6 +193,10 @@ services:
     image: prom/prometheus:v3.2.1
     container_name: dms-prometheus
     restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=90d"
     ports:
       - "9090:9090"
     volumes:
