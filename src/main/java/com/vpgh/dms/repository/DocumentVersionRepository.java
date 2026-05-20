@@ -8,9 +8,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.List;
 
 public interface DocumentVersionRepository extends JpaRepository<DocumentVersion, Integer>, JpaSpecificationExecutor<DocumentVersion> {
     Integer countByDocument(Document document);
 
     Page<DocumentVersion> findAll(Specification<DocumentVersion> specification, Pageable pageable);
+
+    List<DocumentVersion> findByDocumentOrderByVersionNumberAsc(Document document);
 }

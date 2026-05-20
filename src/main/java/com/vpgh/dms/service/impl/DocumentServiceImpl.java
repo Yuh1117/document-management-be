@@ -48,6 +48,8 @@ public class DocumentServiceImpl implements DocumentService {
     private final ProcessorIndexService processorIndexService;
     @Value("${aws.bucket.name}")
     private String bucketName;
+    @Value("${document.version.max}")
+    private int maxVersions;
     private static final String ROOT_FOLDER_PREFIX = "root";
 
     public DocumentServiceImpl(S3Presigner s3Presigner, S3Client s3Client,
@@ -344,9 +346,23 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private void saveDocumentVersion(Document document) {
+        List<DocumentVersion> existingVersions = documentVersionRepository
+                .findByDocumentOrderByVersionNumberAsc(document);
+
+        if (existingVersions.size() >= maxVersions) {
+            DocumentVersion oldest = existingVersions.get(0);
+            String oldestKey = extractKeyFromPath(oldest.getFilePath());
+            s3Client.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(oldestKey)
+                    .build());
+            documentVersionRepository.delete(oldest);
+            existingVersions.remove(0);
+        }
+
         DocumentVersion version = new DocumentVersion();
         version.setName(document.getName());
-        version.setVersionNumber(documentVersionRepository.countByDocument(document) + 1);
+        version.setVersionNumber(existingVersions.size() + 1);
         version.setStoredFilename(document.getStoredFilename());
         version.setFilePath(document.getFilePath());
         version.setFileSize(document.getFileSize());
