@@ -4,6 +4,7 @@ public class WhiteListUtil {
 
     private static final String[] PUBLIC_WHITELIST = {
             "/api/login", "/api/signup", "/api/auth/google",
+            "/api/auth/refresh", "/api/auth/logout",
             "/dms-api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
     };
 

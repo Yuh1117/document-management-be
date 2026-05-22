@@ -20,8 +20,26 @@ public class JwtUtil {
     @Value("${jwt.token-validity-in-seconds}")
     public long tokenExpiration;
 
+    @Value("${jwt.refresh-token-validity-in-seconds}")
+    public long refreshTokenExpiration;
+
     public JwtUtil(JwtEncoder jwtEncoder) {
         this.jwtEncoder = jwtEncoder;
+    }
+
+    public String createRefreshToken(UserDTO user) {
+        Instant now = Instant.now();
+        Instant validity = now.plus(this.refreshTokenExpiration, ChronoUnit.SECONDS);
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuedAt(now)
+                .expiresAt(validity)
+                .subject(user.getEmail())
+                .claim("id", user.getId())
+                .build();
+
+        JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
+        return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
     }
 
     public String createToken(UserDTO user) {
@@ -32,8 +50,7 @@ public class JwtUtil {
                 "id", user.getId(),
                 "email", user.getEmail(),
                 "firstName", user.getFirstName(),
-                "lastName", user.getLastName()
-        );
+                "lastName", user.getLastName());
 
         // @formatter:off
         JwtClaimsSet claims = JwtClaimsSet.builder()

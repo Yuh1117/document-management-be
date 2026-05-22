@@ -15,6 +15,9 @@ import com.vpgh.dms.service.UserService;
 import com.vpgh.dms.util.JwtUtil;
 import com.vpgh.dms.util.SecurityUtil;
 import com.vpgh.dms.util.annotation.ApiMessage;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -23,10 +26,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
@@ -34,9 +41,12 @@ import java.util.Map;
 @RequestMapping("/api")
 public class AuthController {
 
+    private static final String REFRESH_TOKEN_COOKIE = "refresh_token";
+
     private final UserService userService;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final JwtUtil jwtUtil;
+    private final JwtDecoder jwtDecoder;
     private final RoleService roleService;
     @Value("${google.client-id}")
     private String clientId;
@@ -45,16 +55,46 @@ public class AuthController {
     @Value("${google.token-url}")
     private String googleTokenUrl;
 
-    public AuthController(UserService userService, AuthenticationManagerBuilder authenticationManagerBuilder, JwtUtil jwtUtil, RoleService roleService) {
+    public AuthController(UserService userService, AuthenticationManagerBuilder authenticationManagerBuilder,
+            JwtUtil jwtUtil, JwtDecoder jwtDecoder, RoleService roleService) {
         this.userService = userService;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.jwtUtil = jwtUtil;
+        this.jwtDecoder = jwtDecoder;
         this.roleService = roleService;
+    }
+
+    private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+        Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE, refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/api/auth");
+        cookie.setMaxAge((int) jwtUtil.refreshTokenExpiration);
+        response.addCookie(cookie);
+    }
+
+    private void clearRefreshTokenCookie(HttpServletResponse response) {
+        Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE, "");
+        cookie.setHttpOnly(true);
+        cookie.setPath("/api/auth");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+    }
+
+    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+        if (request.getCookies() == null)
+            return null;
+        return Arrays.stream(request.getCookies())
+                .filter(c -> REFRESH_TOKEN_COOKIE.equals(c.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
     }
 
     @PostMapping("/login")
     @ApiMessage(key = "api.auth.login", message = "Sign in")
-    public ResponseEntity<UserLoginResDTO> login(@RequestBody @Valid UserLoginReqDTO user) {
+    public ResponseEntity<UserLoginResDTO> login(@RequestBody @Valid UserLoginReqDTO user,
+            HttpServletResponse response) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                 user.getEmail(), user.getPassword());
         Authentication authentication = authenticationManagerBuilder.getObject()
@@ -64,12 +104,56 @@ public class AuthController {
         User currentUser = this.userService.getUserByEmail(user.getEmail());
         UserDTO userRes = this.userService.convertUserToUserDTO(currentUser);
 
-        String jwtToken = this.jwtUtil.createToken(userRes);
+        String accessToken = this.jwtUtil.createToken(userRes);
+        String refreshToken = this.jwtUtil.createRefreshToken(userRes);
+
+        setRefreshTokenCookie(response, refreshToken);
+
         UserLoginResDTO userLoginRes = new UserLoginResDTO();
         userLoginRes.setUser(userRes);
-        userLoginRes.setAccessToken(jwtToken);
+        userLoginRes.setAccessToken(accessToken);
 
         return ResponseEntity.status(HttpStatus.OK).body(userLoginRes);
+    }
+
+    @PostMapping("/auth/refresh")
+    @ApiMessage(key = "api.auth.refresh", message = "Refresh token")
+    public ResponseEntity<UserLoginResDTO> refresh(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = extractRefreshTokenFromCookie(request);
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        try {
+            Jwt jwt = jwtDecoder.decode(refreshToken);
+            String email = jwt.getSubject();
+
+            User currentUser = userService.getUserByEmail(email);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            UserDTO userRes = userService.convertUserToUserDTO(currentUser);
+            String newAccessToken = jwtUtil.createToken(userRes);
+            String newRefreshToken = jwtUtil.createRefreshToken(userRes);
+
+            setRefreshTokenCookie(response, newRefreshToken);
+
+            UserLoginResDTO userLoginRes = new UserLoginResDTO();
+            userLoginRes.setUser(userRes);
+            userLoginRes.setAccessToken(newAccessToken);
+
+            return ResponseEntity.ok(userLoginRes);
+        } catch (JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    @PostMapping("/auth/logout")
+    @ApiMessage(key = "api.auth.logout", message = "Logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        clearRefreshTokenCookie(response);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/signup")
@@ -84,7 +168,8 @@ public class AuthController {
 
         Role role = this.roleService.getRoleByName("ROLE_USER");
         nuser.setRole(role);
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertUserToUserDTO(this.userService.save(nuser)));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(this.userService.convertUserToUserDTO(this.userService.save(nuser)));
     }
 
     @GetMapping("/secure/profile")
@@ -97,7 +182,7 @@ public class AuthController {
 
     @PostMapping("/auth/google")
     @ApiMessage(key = "api.auth.google", message = "Sign in with Google")
-    public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> body, HttpServletResponse response) {
         try {
             String code = body.get("code");
 
@@ -120,8 +205,7 @@ public class AuthController {
 
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                     GoogleNetHttpTransport.newTrustedTransport(),
-                    GsonFactory.getDefaultInstance()
-            ).setAudience(Collections.singletonList(clientId)).build();
+                    GsonFactory.getDefaultInstance()).setAudience(Collections.singletonList(clientId)).build();
 
             GoogleIdToken idToken = verifier.verify(token);
 
@@ -136,16 +220,19 @@ public class AuthController {
                     return ResponseEntity.status(HttpStatus.OK).body(Map.of(
                             "email", email,
                             "firstName", firstName,
-                            "lastName", lastName
-                    ));
+                            "lastName", lastName));
                 }
 
                 try {
                     UserDTO userRes = this.userService.convertUserToUserDTO(user);
-                    String jwtToken = this.jwtUtil.createToken(userRes);
+                    String accessToken = this.jwtUtil.createToken(userRes);
+                    String refreshToken = this.jwtUtil.createRefreshToken(userRes);
+
+                    setRefreshTokenCookie(response, refreshToken);
+
                     UserLoginResDTO userLoginRes = new UserLoginResDTO();
                     userLoginRes.setUser(userRes);
-                    userLoginRes.setAccessToken(jwtToken);
+                    userLoginRes.setAccessToken(accessToken);
 
                     return ResponseEntity.status(HttpStatus.OK).body(userLoginRes);
                 } catch (Exception e) {
