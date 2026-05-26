@@ -3,7 +3,7 @@ services:
     image: postgres:17
     container_name: dms-postgres
     env_file:
-      - .env.prod
+      - .env
     restart: unless-stopped
     ports:
       - "5432:5432"
@@ -82,7 +82,7 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - .env.prod
+      - .env
     depends_on:
       postgres:
         condition: service_healthy
@@ -95,23 +95,23 @@ services:
     networks:
       - dms-network
 
-  frontend:
-    build:
-      context: ../document-management-fe
-      dockerfile: Dockerfile.prod
-      args:
-        - VITE_GOOGLE_CLIENT_ID
-        - VITE_CHECK_ACCESS
-        - VITE_API_BASE_URL
-    image: dms-frontend:latest
-    container_name: dms-frontend
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    env_file:
-      - .env.prod
-    networks:
-      - dms-network
+  # frontend:
+  #   build:
+  #     context: ../document-management-fe
+  #     dockerfile: Dockerfile.prod
+  #     args:
+  #       - VITE_GOOGLE_CLIENT_ID
+  #       - VITE_CHECK_ACCESS
+  #       - VITE_API_BASE_URL
+  #   image: dms-frontend:latest
+  #   container_name: dms-frontend
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - dms-network
 
   processor:
     build:
@@ -127,14 +127,7 @@ services:
       - easyocr-cache:/root/.EasyOCR
       - mlflow-data:/mlflow
     env_file:
-      - ../document-management-processor/.env.prod
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+      - ../document-management-processor/.env
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -155,14 +148,7 @@ services:
       - easyocr-cache:/root/.EasyOCR
       - mlflow-data:/mlflow:ro
     env_file:
-      - ../document-management-processor/.env.prod
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+      - ../document-management-processor/.env
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -180,7 +166,7 @@ services:
     volumes:
       - mlflow-data:/mlflow
     env_file:
-      - ../document-management-processor/.env.prod
+      - ../document-management-processor/.env
     depends_on:
       mlflow:
         condition: service_started
@@ -212,7 +198,7 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - .env.prod
+      - .env
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
