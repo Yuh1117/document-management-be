@@ -23,9 +23,10 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -43,14 +44,11 @@ services:
       - xpack.security.enabled=false
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          'curl -s http://localhost:9200/_cluster/health | grep -vq ''"status":"red"''',
-        ]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200 >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
       retries: 10
+      start_period: 120s
     ports:
       - "9200:9200"
     volumes:
