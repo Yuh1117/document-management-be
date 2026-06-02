@@ -175,6 +175,7 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setMimeType(doc.getMimeType());
         dto.setStorageType(doc.getStorageType());
         dto.setDeleted(doc.getDeleted());
+        dto.setProcessingStatus(doc.getProcessingStatus() != null ? doc.getProcessingStatus().name() : null);
         dto.setCreatedAt(doc.getCreatedAt());
         dto.setUpdatedAt(doc.getUpdatedAt());
         dto.setCreatedBy(this.userService.convertUserToUserDTO(doc.getCreatedBy()));
@@ -223,12 +224,12 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public Document findByNameAndFolderAndIsDeletedFalse(String name, Folder folder) {
-        return this.documentRepository.findByNameAndFolderAndIsDeletedFalse(name, folder).orElse(null);
+        return this.documentRepository.findFirstByNameAndFolderAndIsDeletedFalse(name, folder).orElse(null);
     }
 
     @Override
     public Document findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(String name, User createdBy) {
-        return this.documentRepository.findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(name, createdBy)
+        return this.documentRepository.findFirstByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(name, createdBy)
                 .orElse(null);
     }
 
@@ -387,11 +388,11 @@ public class DocumentServiceImpl implements DocumentService {
         String newName = originalName;
         int counter = 1;
         if (folder != null) {
-            while (this.documentRepository.findByNameAndFolderAndIsDeletedFalse(newName, folder).isPresent()) {
+            while (this.documentRepository.findFirstByNameAndFolderAndIsDeletedFalse(newName, folder).isPresent()) {
                 newName = baseName + " (" + counter++ + ")" + (extension.isEmpty() ? "" : "." + extension);
             }
         } else {
-            while (this.documentRepository.findByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(
+            while (this.documentRepository.findFirstByNameAndCreatedByAndFolderIsNullAndIsDeletedFalse(
                     newName, SecurityUtil.getCurrentUserFromThreadLocal()).isPresent()) {
                 newName = baseName + " (" + counter++ + ")" + (extension.isEmpty() ? "" : "." + extension);
             }
@@ -420,4 +421,5 @@ public class DocumentServiceImpl implements DocumentService {
     private String extractKeyFromPath(String s3Path) {
         return s3Path.replace("s3://" + bucketName + "/", "");
     }
+
 }

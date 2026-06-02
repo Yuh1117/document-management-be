@@ -292,6 +292,7 @@ public class FileServiceImpl implements FileService {
             d.setName(p.getName());
             d.setDescription(p.getDescription());
             d.setMimeType(p.getMimeType());
+            d.setProcessingStatus(p.getProcessingStatus());
             d.setCreatedAt(p.getCreatedAt());
             d.setUpdatedAt(p.getUpdatedAt());
             d.setCreatedBy(createdBy);
@@ -312,4 +313,5 @@ public class FileServiceImpl implements FileService {
             default -> null;
         };
     }
+
 }

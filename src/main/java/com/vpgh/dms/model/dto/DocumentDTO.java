@@ -16,6 +16,7 @@ public class DocumentDTO {
     private StorageType storageType;
     private Boolean isDeleted;
     private String snippet;
+    private String processingStatus;
     private UserDTO createdBy;
     private UserDTO updatedBy;
     private Instant createdAt;
@@ -139,6 +140,14 @@ public class DocumentDTO {
 
     public void setSnippet(String snippet) {
         this.snippet = snippet;
+    }
+
+    public String getProcessingStatus() {
+        return processingStatus;
+    }
+
+    public void setProcessingStatus(String processingStatus) {
+        this.processingStatus = processingStatus;
     }
 
 }

@@ -13,6 +13,8 @@ public interface FileItemProjection {
 
     String getMimeType();
 
+    String getProcessingStatus();
+
     Instant getCreatedAt();
 
     Instant getUpdatedAt();

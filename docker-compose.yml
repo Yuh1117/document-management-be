@@ -121,7 +121,7 @@ services:
     image: document-management-processor
     container_name: dms-worker
     restart: unless-stopped
-    command: ["python", "-m", "app.worker"]
+    command: ["watchfiles", "python -m app.worker", "/app"]
     ports:
       - "8001:8001"
     volumes:

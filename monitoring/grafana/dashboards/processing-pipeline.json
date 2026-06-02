@@ -27,7 +27,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "targets": [
         {
-          "expr": "round(sum(increase(documents_processed_total[$__range])) by (status))",
+          "expr": "ceil(sum(increase(documents_processed_total[$__range])) by (status))",
           "legendFormat": "{{status}}"
         }
       ]
@@ -52,7 +52,7 @@
       "gridPos": { "h": 8, "w": 6, "x": 12, "y": 8 },
       "targets": [
         {
-          "expr": "round(increase(validation_failures_total[$__range]))",
+          "expr": "ceil(increase(validation_failures_total[$__range]))",
           "legendFormat": "failures"
         }
       ],

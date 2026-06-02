@@ -17,7 +17,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   NULL as description, 'OWNER' as permission, NULL as mime_type,
+                   NULL as description, 'OWNER' as permission, NULL as mime_type, NULL as processingStatus,
                    0 as sortType
             FROM folders f
             JOIN users u ON f.created_by = u.id
@@ -34,7 +34,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description as description, 'OWNER' as permission,  d.mime_type as mime_type,
+                   d.description as description, 'OWNER' as permission,  d.mime_type as mime_type, d.processing_status as processingStatus,
                    1 as sortType
             FROM documents d
             JOIN users u ON d.created_by = u.id
@@ -82,7 +82,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   NULL as description, 'OWNER' as permission, NULL as mime_type,
+                   NULL as description, 'OWNER' as permission, NULL as mime_type, NULL as processingStatus,
                    0 as sortType
             FROM folders f
             JOIN users u ON f.created_by = u.id
@@ -96,7 +96,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description as description, 'OWNER' as permission, d.mime_type as mime_type,
+                   d.description as description, 'OWNER' as permission, d.mime_type as mime_type, d.processing_status as processingStatus,
                    1 as sortType
             FROM documents d
             JOIN users u ON d.created_by = u.id
@@ -131,7 +131,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   NULL as description, 'OWNER' as permission, NULL as mime_type
+                   NULL as description, 'OWNER' as permission, NULL as mime_type, NULL as processingStatus
             FROM folders f
             JOIN users u ON f.created_by = u.id
             WHERE f.created_by = :userId AND f.is_deleted = :deleted
@@ -141,7 +141,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description as description, 'OWNER' as permission,  d.mime_type as mime_type
+                   d.description as description, 'OWNER' as permission,  d.mime_type as mime_type, d.processing_status as processingStatus
             FROM documents d
             JOIN users u ON d.created_by = u.id
             WHERE d.created_by = :userId AND d.is_deleted = :deleted
@@ -173,6 +173,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                        WHEN f.created_by = :userId THEN 'OWNER'
                        ELSE fs.share_type
                    END as permission,
+                   NULL as processingStatus,
                    0 as sortType
             FROM folders f
             JOIN users u ON f.created_by = u.id
@@ -190,6 +191,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                        WHEN d.created_by = :userId THEN 'OWNER'
                        ELSE ds.share_type
                    END as permission,
+                   d.processing_status as processingStatus,
                    1 as sortType
             FROM documents d
             JOIN users u ON d.created_by = u.id
@@ -224,7 +226,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   NULL as description, fs.share_type as permission, NULL as mime_type,
+                   NULL as description, fs.share_type as permission, NULL as mime_type, NULL as processingStatus,
                    0 as sortType
             FROM folders f
             JOIN users u ON f.created_by = u.id
@@ -243,7 +245,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description as description, ds.share_type as permission, d.mime_type as mime_type,
+                   d.description as description, ds.share_type as permission, d.mime_type as mime_type, d.processing_status as processingStatus,
                    1 as sortType
             FROM documents d
             JOIN users u ON d.created_by = u.id
@@ -294,7 +296,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description as description, 'OWNER' as permission, d.mime_type as mime_type
+                   d.description as description, 'OWNER' as permission, d.mime_type as mime_type, d.processing_status as processingStatus
             FROM documents d
             JOIN users u ON d.created_by = u.id
             WHERE d.created_by = :userId
@@ -325,7 +327,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description AS description, 'OWNER' AS permission, d.mime_type AS mime_type
+                   d.description AS description, 'OWNER' AS permission, d.mime_type AS mime_type, d.processing_status AS processingStatus
             FROM documents d
             JOIN users u ON d.created_by = u.id
             WHERE d.created_by = :userId AND d.is_deleted = false

@@ -2,6 +2,7 @@ package com.vpgh.dms.controller;
 
 import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.dto.request.*;
+import com.vpgh.dms.model.dto.response.DocumentProcessingStatusRes;
 import com.vpgh.dms.model.entity.*;
 import com.vpgh.dms.service.*;
 import com.vpgh.dms.util.DataResponse;
@@ -324,6 +325,27 @@ public class DocumentController {
     public ResponseEntity<DocumentDTO> detail(@PathVariable Integer id) {
         Document doc = resolveDocumentForView(id, SecurityUtil.getCurrentUserFromThreadLocal());
         return ResponseEntity.ok(this.documentService.convertDocumentToDocumentDTO(doc));
+    }
+
+    @PostMapping(path = "/secure/documents/processing-status")
+    @ApiMessage(key = "api.document.processingStatus", message = "View document processing status")
+    public ResponseEntity<List<DocumentProcessingStatusRes>> getProcessingStatuses(@RequestBody List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return ResponseEntity.ok(List.of());
+        }
+
+        User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
+        List<Document> docs = documentService.getDocumentsByIds(ids).stream()
+                .filter(doc -> !doc.getDeleted() && documentShareService.checkCanView(currentUser, doc))
+                .toList();
+
+        List<DocumentProcessingStatusRes> statuses = docs.stream()
+                .map(doc -> new DocumentProcessingStatusRes(
+                        doc.getId(),
+                        doc.getProcessingStatus() != null ? doc.getProcessingStatus().name() : null))
+                .toList();
+
+        return ResponseEntity.ok(statuses);
     }
 
     @GetMapping(path = "/secure/documents/{id}/preview")

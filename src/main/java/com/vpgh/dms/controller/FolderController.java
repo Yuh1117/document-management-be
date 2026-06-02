@@ -106,7 +106,7 @@ public class FolderController {
         }
 
         List<MultipartFile> files = folderUploadReq.getFiles();
-        FolderUploadPlan plan = folderService.buildFolderStructure(parentFolder, folderUploadReq.getRelativePaths());
+        FolderUploadPlan plan = folderService.buildFolderStructure(parentFolder, folderUploadReq.getRelativePaths(), currentUser);
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (int i = 0; i < files.size(); i++) {

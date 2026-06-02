@@ -49,7 +49,7 @@ public interface FolderService {
 
     void zipFolderIterative(Folder rootFolder, ZipOutputStream zipOut) throws IOException;
 
-    FolderUploadPlan buildFolderStructure(Folder parentFolder, List<String> relativePaths);
+    FolderUploadPlan buildFolderStructure(Folder parentFolder, List<String> relativePaths, User currentUser);
 
     boolean isOwnerFolder(Folder folder, User user);
 

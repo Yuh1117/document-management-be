@@ -291,7 +291,7 @@ public class FolderServiceImpl implements FolderService {
     }
 
     @Override
-    public FolderUploadPlan buildFolderStructure(Folder parentFolder, List<String> relativePaths) {
+    public FolderUploadPlan buildFolderStructure(Folder parentFolder, List<String> relativePaths, User currentUser) {
         Folder rootFolder = null;
         List<Folder> targetFolders = new ArrayList<>();
 
@@ -302,7 +302,7 @@ public class FolderServiceImpl implements FolderService {
                 String[] parts = relativePath.split("/");
                 for (int j = 0; j < parts.length - 1; j++) {
                     String folderName = parts[j];
-                    Folder existing = folderRepository.findByNameAndParentAndIsDeletedFalse(folderName, currentParent);
+                    Folder existing = folderRepository.findFirstByNameAndParentAndIsDeletedFalseAndCreatedBy(folderName, currentParent, currentUser).orElse(null);
                     if (existing == null) {
                         Folder newFolder = new Folder();
                         newFolder.setName(folderName);
