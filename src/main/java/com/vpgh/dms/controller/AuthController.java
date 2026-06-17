@@ -43,6 +43,7 @@ import java.util.Map;
 public class AuthController {
 
     private static final String REFRESH_TOKEN_COOKIE = "refresh_token";
+    private static final String ACCESS_TOKEN_COOKIE = "access_token";
 
     private final UserService userService;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
@@ -63,6 +64,28 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
         this.jwtDecoder = jwtDecoder;
         this.roleService = roleService;
+    }
+
+    private void setAccessTokenCookie(HttpServletResponse response, String accessToken) {
+        ResponseCookie cookie = ResponseCookie.from(ACCESS_TOKEN_COOKIE, accessToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(jwtUtil.tokenExpiration)
+                .sameSite("None")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private void clearAccessTokenCookie(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from(ACCESS_TOKEN_COOKIE, "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(0)
+                .sameSite("None")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
@@ -114,6 +137,7 @@ public class AuthController {
         String refreshToken = this.jwtUtil.createRefreshToken(userRes);
 
         setRefreshTokenCookie(response, refreshToken);
+        setAccessTokenCookie(response, accessToken);
 
         UserLoginResDTO userLoginRes = new UserLoginResDTO();
         userLoginRes.setUser(userRes);
@@ -144,6 +168,7 @@ public class AuthController {
             String newRefreshToken = jwtUtil.createRefreshToken(userRes);
 
             setRefreshTokenCookie(response, newRefreshToken);
+            setAccessTokenCookie(response, newAccessToken);
 
             UserLoginResDTO userLoginRes = new UserLoginResDTO();
             userLoginRes.setUser(userRes);
@@ -159,6 +184,7 @@ public class AuthController {
     @ApiMessage(key = "api.auth.logout", message = "Logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
         clearRefreshTokenCookie(response);
+        clearAccessTokenCookie(response);
         return ResponseEntity.ok().build();
     }
 
@@ -235,6 +261,7 @@ public class AuthController {
                     String refreshToken = this.jwtUtil.createRefreshToken(userRes);
 
                     setRefreshTokenCookie(response, refreshToken);
+                    setAccessTokenCookie(response, accessToken);
 
                     UserLoginResDTO userLoginRes = new UserLoginResDTO();
                     userLoginRes.setUser(userRes);
