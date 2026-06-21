@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
@@ -335,8 +336,12 @@ public class DocumentController {
         }
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
-        List<Document> docs = documentService.getDocumentsByIds(ids).stream()
-                .filter(doc -> !doc.getDeleted() && documentShareService.checkCanView(currentUser, doc))
+        List<Document> candidates = documentService.getDocumentsByIds(ids).stream()
+                .filter(doc -> !doc.getDeleted())
+                .toList();
+        Set<Integer> viewableIds = documentShareService.getViewableDocumentIds(currentUser, candidates);
+        List<Document> docs = candidates.stream()
+                .filter(doc -> viewableIds.contains(doc.getId()))
                 .toList();
 
         List<DocumentProcessingStatusRes> statuses = docs.stream()
