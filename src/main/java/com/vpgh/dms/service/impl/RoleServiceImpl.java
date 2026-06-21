@@ -4,6 +4,7 @@ import com.vpgh.dms.model.dto.RoleDTO;
 import com.vpgh.dms.model.entity.Role;
 import com.vpgh.dms.repository.PermissionRepository;
 import com.vpgh.dms.repository.RoleRepository;
+import com.vpgh.dms.service.PermissionService;
 import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.specification.RoleSpecification;
 import com.vpgh.dms.util.PageSize;
@@ -23,10 +24,13 @@ public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final PermissionService permissionService;
 
-    public RoleServiceImpl(RoleRepository roleRepository, PermissionRepository permissionRepository) {
+    public RoleServiceImpl(RoleRepository roleRepository, PermissionRepository permissionRepository,
+            PermissionService permissionService) {
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
+        this.permissionService = permissionService;
     }
 
     @Override
@@ -70,7 +74,9 @@ public class RoleServiceImpl implements RoleService {
             List<Integer> ids = role.getPermissions().stream().map(p -> p.getId()).collect(Collectors.toList());
             role.setPermissions(new HashSet<>(this.permissionRepository.findByIdIn(ids)));
         }
-        return this.roleRepository.save(role);
+        Role saved = this.roleRepository.save(role);
+        this.permissionService.evictPermissionsCache();
+        return saved;
     }
 
     @Override
@@ -107,6 +113,7 @@ public class RoleServiceImpl implements RoleService {
             throw new DataIntegrityViolationException("");
         }
         this.roleRepository.deleteById(id);
+        this.permissionService.evictPermissionsCache();
     }
 
     @Override

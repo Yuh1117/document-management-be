@@ -27,7 +27,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                       (:parentId IS NULL AND f.parent_id IS NULL) OR
                       f.parent_id = :parentId
                   )
-               AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')))
+               AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')) ESCAPE '\\')
 
             UNION ALL
 
@@ -44,7 +44,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                       (:parentId IS NULL AND d.folder_id IS NULL) OR
                       d.folder_id = :parentId
                   )
-              AND (:keyword IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT(:keyword, '%')))
+              AND (:keyword IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT(:keyword, '%')) ESCAPE '\\')
 
             ORDER BY sortType ASC, name ASC
             """, countQuery = """
@@ -57,7 +57,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                       (:parentId IS NULL AND f.parent_id IS NULL) OR
                       f.parent_id = :parentId
                   )
-                  AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')))
+                  AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')) ESCAPE '\\')
 
                 UNION ALL
 
@@ -69,7 +69,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                       (:parentId IS NULL AND d.folder_id IS NULL) OR
                       d.folder_id = :parentId
                   )
-                  AND (:keyword IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT(:keyword, '%')))
+                  AND (:keyword IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT(:keyword, '%')) ESCAPE '\\')
             ) AS total
             """, nativeQuery = true)
     Page<FileItemProjection> findAllByUserAndParent(@Param("userId") Integer userId,
@@ -301,7 +301,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             JOIN users u ON d.created_by = u.id
             WHERE d.created_by = :userId
               AND d.is_deleted = false
-              AND (:keyword IS NULL OR :keyword = '' OR (d.name ILIKE '%' || :keyword || '%' OR (d.description IS NOT NULL AND d.description ILIKE '%' || :keyword || '%')))
+              AND (:keyword IS NULL OR :keyword = '' OR (d.name ILIKE '%' || :keyword || '%' ESCAPE '\\' OR (d.description IS NOT NULL AND d.description ILIKE '%' || :keyword || '%' ESCAPE '\\')))
               AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
               AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
                   OR (:sizeType = 'maxSize' AND d.file_size <= :size))
@@ -311,7 +311,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             FROM documents d
             WHERE d.created_by = :userId
               AND d.is_deleted = false
-              AND (:keyword IS NULL OR :keyword = '' OR (d.name ILIKE '%' || :keyword || '%' OR (d.description IS NOT NULL AND d.description ILIKE '%' || :keyword || '%')))
+              AND (:keyword IS NULL OR :keyword = '' OR (d.name ILIKE '%' || :keyword || '%' ESCAPE '\\' OR (d.description IS NOT NULL AND d.description ILIKE '%' || :keyword || '%' ESCAPE '\\')))
               AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
               AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
                 OR (:sizeType = 'maxSize' AND d.file_size <= :size))

@@ -16,7 +16,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,7 +43,7 @@ public class FileServiceImpl implements FileService {
                 pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
             }
 
-            keyword = params.get("kw");
+            keyword = escapeLikeKeyword(params.get("kw"));
         }
 
         Page<FileItemProjection> pageItem = fileRepository.findAllByUserAndParent(user.getId(), parentId, false,
@@ -60,15 +64,10 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public List<FileItemDTO> getAllTrashFiles(User user) {
-        Page<FileItemDTO> page = this.getTrashFiles(user, Map.of("page", "1"));
-        List<FileItemDTO> allItems = new ArrayList<>(page.getContent());
-
-        while (page.hasNext()) {
-            page = this.getTrashFiles(user, Map.of("page", String.valueOf(page.getNumber() + 2)));
-            allItems.addAll(page.getContent());
-        }
-
-        return allItems;
+        return fileRepository.findTrashFiles(user.getId(), Pageable.unpaged())
+                .stream()
+                .map(this::mapToFileItemDTO)
+                .toList();
     }
 
     @Override
@@ -213,7 +212,7 @@ public class FileServiceImpl implements FileService {
         }
 
         MimeSizeFilters filters = parseMimeSizeFilters(params);
-        String searchKeyword = (rawKeyword != null && !rawKeyword.isBlank()) ? rawKeyword.trim() : null;
+        String searchKeyword = escapeLikeKeyword(rawKeyword);
         Page<FileItemProjection> pageItem = fileRepository.findExactDocs(
                 user.getId(),
                 searchKeyword,
@@ -303,6 +302,15 @@ public class FileServiceImpl implements FileService {
 
         dto.setPermission(p.getPermission());
         return dto;
+    }
+
+    private static String escapeLikeKeyword(String raw) {
+        if (raw == null || raw.isBlank())
+            return null;
+        return raw.trim()
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
     }
 
     private static String mapMimeTypeStatic(String type) {

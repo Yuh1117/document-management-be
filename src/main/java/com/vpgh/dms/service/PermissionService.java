@@ -30,4 +30,6 @@ public interface PermissionService {
     List<Permission> saveAll(List<Permission> permissions);
 
     List<Permission> getPermissionsByRole(Role role);
+
+    void evictPermissionsCache();
 }

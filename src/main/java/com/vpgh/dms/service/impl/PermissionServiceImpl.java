@@ -7,6 +7,8 @@ import com.vpgh.dms.repository.PermissionRepository;
 import com.vpgh.dms.service.PermissionService;
 import com.vpgh.dms.service.specification.PermissionSpecification;
 import com.vpgh.dms.util.PageSize;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -108,7 +110,13 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     @Override
+    @Cacheable(value = "permissionsByRole", key = "#role.id")
     public List<Permission> getPermissionsByRole(Role role) {
         return this.permissionRepository.findAllByRoles(role);
+    }
+
+    @Override
+    @CacheEvict(value = "permissionsByRole", allEntries = true)
+    public void evictPermissionsCache() {
     }
 }
