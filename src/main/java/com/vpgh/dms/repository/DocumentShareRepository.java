@@ -13,9 +13,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 @Repository
-public interface DocumentShareRepository extends JpaRepository<DocumentShare, Integer> {
+public interface DocumentShareRepository extends JpaRepository<DocumentShare, UUID> {
     Optional<DocumentShare> findByDocumentAndUserAndShareType(Document document, User user, ShareType shareType);
 
     Optional<DocumentShare> findByDocumentAndGroupInAndShareType(Document document, List<UserGroup> groups, ShareType shareType);
@@ -31,7 +32,7 @@ public interface DocumentShareRepository extends JpaRepository<DocumentShare, In
     @Query("SELECT ds.document.id FROM DocumentShare ds " +
            "WHERE ds.document IN :docs " +
            "AND (ds.user = :user OR ds.group IN :groups)")
-    Set<Integer> findViewableDocumentIds(
+    Set<UUID> findViewableDocumentIds(
             @Param("docs") List<Document> docs,
             @Param("user") User user,
             @Param("groups") List<UserGroup> groups);

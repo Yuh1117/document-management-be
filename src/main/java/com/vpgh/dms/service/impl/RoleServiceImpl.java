@@ -39,12 +39,12 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public boolean existsById(Integer id) {
+    public boolean existsById(UUID id) {
         return this.roleRepository.existsById(id);
     }
 
     @Override
-    public Role getRoleById(Integer id) {
+    public Role getRoleById(UUID id) {
         Optional<Role> role = this.roleRepository.findById(id);
         return role.orElse(null);
     }
@@ -71,7 +71,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Role save(Role role) {
         if (role.getPermissions() != null) {
-            List<Integer> ids = role.getPermissions().stream().map(p -> p.getId()).collect(Collectors.toList());
+            List<UUID> ids = role.getPermissions().stream().map(p -> p.getId()).collect(Collectors.toList());
             role.setPermissions(new HashSet<>(this.permissionRepository.findByIdIn(ids)));
         }
         Role saved = this.roleRepository.save(role);
@@ -102,12 +102,12 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public boolean existsByNameAndIdNot(String name, Integer id) {
+    public boolean existsByNameAndIdNot(String name, UUID id) {
         return this.roleRepository.existsByNameAndIdNot(name, id);
     }
 
     @Override
-    public void deleteRoleById(Integer id) {
+    public void deleteRoleById(UUID id) {
         Role role = getRoleById(id);
         if (!role.getPermissions().isEmpty()) {
             throw new DataIntegrityViolationException("");

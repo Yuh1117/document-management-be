@@ -1,4 +1,5 @@
 package com.vpgh.dms.repository;
+import java.util.UUID;
 
 import com.vpgh.dms.model.entity.User;
 import org.springframework.data.domain.Page;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecificationExecutor<User> {
+public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificationExecutor<User> {
     User save(User user);
 
     boolean existsByEmail(String email);
@@ -21,13 +22,13 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
 
     Page<User> findAll(Specification<User> specification, Pageable pageable);
 
-    Optional<User> findById(Integer id);
+    Optional<User> findById(UUID id);
 
-    List<User> findByIdIn(List<Integer> ids);
+    List<User> findByIdIn(List<UUID> ids);
 
-    void deleteById(Integer id);
+    void deleteById(UUID id);
 
-    boolean existsByEmailAndIdNot(String email, Integer id);
+    boolean existsByEmailAndIdNot(String email, UUID id);
 
     long count();
 }

@@ -1,4 +1,5 @@
 package com.vpgh.dms.controller;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.request.SummaryFeedbackReq;
 import com.vpgh.dms.model.dto.response.SummaryFeedbackDocumentStatsRes;
@@ -26,7 +27,7 @@ public class SummaryFeedbackController {
 
     @PostMapping("/secure/documents/{id}/summary-feedback")
     public ResponseEntity<SummaryFeedbackRes> submitFeedback(
-            @PathVariable Integer id,
+            @PathVariable UUID id,
             @Valid @RequestBody SummaryFeedbackReq body) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         SummaryFeedback feedback = summaryFeedbackService.submitFeedback(id, currentUser.getId(), body);
@@ -42,7 +43,7 @@ public class SummaryFeedbackController {
     }
 
     @GetMapping("/secure/documents/{id}/summary-feedback")
-    public ResponseEntity<SummaryFeedbackDocumentStatsRes> getFeedbackForDocument(@PathVariable Integer id) {
+    public ResponseEntity<SummaryFeedbackDocumentStatsRes> getFeedbackForDocument(@PathVariable UUID id) {
         SummaryFeedbackDocumentStatsRes stats = summaryFeedbackService.getFeedbackStats(id);
         return ResponseEntity.ok(stats);
     }

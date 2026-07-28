@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.dto;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vpgh.dms.util.annotation.ValidUser;
@@ -12,7 +14,7 @@ import java.time.Instant;
 @ValidUser
 public class UserDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private Integer id;
+    private UUID id;
     @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "{validation.user.email.invalid}")
     @NotBlank(message = "{validation.user.email.notBlank}")
     private String email;
@@ -103,11 +105,11 @@ public class UserDTO {
         this.file = file;
     }
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 }

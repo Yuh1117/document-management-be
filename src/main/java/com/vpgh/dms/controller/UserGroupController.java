@@ -1,4 +1,5 @@
 package com.vpgh.dms.controller;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.UserGroupDTO;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
@@ -67,14 +68,14 @@ public class UserGroupController {
 
     @GetMapping(path = "/secure/user-groups/{id}")
     @ApiMessage(key = "api.userGroup.detail", message = "Get group details")
-    public ResponseEntity<UserGroup> detail(@PathVariable(value = "id") Integer id) {
+    public ResponseEntity<UserGroup> detail(@PathVariable(value = "id") UUID id) {
         UserGroup group = resolveMemberGroup(id, SecurityUtil.getCurrentUserFromThreadLocal());
         return ResponseEntity.ok(group);
     }
 
     @PatchMapping(path = "/secure/user-groups/{id}")
     @ApiMessage(key = "api.userGroup.update", message = "Update group")
-    public ResponseEntity<UserGroup> update(@PathVariable("id") Integer id, @RequestBody UserGroupDTO groupReq) {
+    public ResponseEntity<UserGroup> update(@PathVariable("id") UUID id, @RequestBody UserGroupDTO groupReq) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         UserGroup group = resolveAdminGroup(id, currentUser);
 
@@ -105,7 +106,7 @@ public class UserGroupController {
 
     @PatchMapping(path = "/secure/user-groups/{id}/quit")
     @ApiMessage(key = "api.userGroup.leave", message = "Leave group")
-    public ResponseEntity<Void> quitGroup(@PathVariable("id") Integer id) {
+    public ResponseEntity<Void> quitGroup(@PathVariable("id") UUID id) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         UserGroupMember member = resolveMembership(id, currentUser);
         UserGroup group = member.getGroup();
@@ -121,7 +122,7 @@ public class UserGroupController {
 
     @DeleteMapping(path = "/secure/user-groups/{id}")
     @ApiMessage(key = "api.userGroup.delete", message = "Delete group")
-    public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
+    public ResponseEntity<Void> delete(@PathVariable(value = "id") UUID id) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         UserGroup group = resolveMemberGroup(id, currentUser);
 
@@ -133,7 +134,7 @@ public class UserGroupController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    private UserGroup resolveGroup(Integer id) {
+    private UserGroup resolveGroup(UUID id) {
         UserGroup group = userGroupService.getGroupById(id);
         if (group == null) {
             throw new NotFoundException("error.group.notFound");
@@ -141,7 +142,7 @@ public class UserGroupController {
         return group;
     }
 
-    private UserGroupMember resolveMembership(Integer groupId, User user) {
+    private UserGroupMember resolveMembership(UUID groupId, User user) {
         UserGroup group = resolveGroup(groupId);
         UserGroupMember member = userGroupService.getMemberInGroup(group, user);
         if (member == null) {
@@ -150,11 +151,11 @@ public class UserGroupController {
         return member;
     }
 
-    private UserGroup resolveMemberGroup(Integer id, User user) {
+    private UserGroup resolveMemberGroup(UUID id, User user) {
         return resolveMembership(id, user).getGroup();
     }
 
-    private UserGroup resolveAdminGroup(Integer id, User user) {
+    private UserGroup resolveAdminGroup(UUID id, User user) {
         UserGroupMember member = resolveMembership(id, user);
         if (!userGroupService.isAdminGroup(member)) {
             throw new ForbiddenException("error.group.noPermission");

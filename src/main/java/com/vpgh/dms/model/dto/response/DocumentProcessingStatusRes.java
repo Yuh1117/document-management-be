@@ -1,19 +1,21 @@
 package com.vpgh.dms.model.dto.response;
 
+import java.util.UUID;
+
 public class DocumentProcessingStatusRes {
-    private Integer id;
+    private UUID id;
     private String processingStatus;
 
-    public DocumentProcessingStatusRes(Integer id, String processingStatus) {
+    public DocumentProcessingStatusRes(UUID id, String processingStatus) {
         this.id = id;
         this.processingStatus = processingStatus;
     }
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

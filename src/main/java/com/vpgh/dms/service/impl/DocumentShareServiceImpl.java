@@ -144,11 +144,11 @@ public class DocumentShareServiceImpl implements DocumentShareService {
     }
 
     @Override
-    public Set<Integer> getViewableDocumentIds(User user, List<Document> docs) {
+    public Set<UUID> getViewableDocumentIds(User user, List<Document> docs) {
         if (docs == null || docs.isEmpty())
             return Set.of();
 
-        Set<Integer> ownedIds = docs.stream()
+        Set<UUID> ownedIds = docs.stream()
                 .filter(d -> d.getCreatedBy().getId().equals(user.getId()))
                 .map(Document::getId)
                 .collect(Collectors.toSet());
@@ -161,10 +161,10 @@ public class DocumentShareServiceImpl implements DocumentShareService {
             return ownedIds;
 
         List<UserGroup> groups = this.userGroupService.getGroupsByUser(user);
-        Set<Integer> sharedIds = documentShareRepository.findViewableDocumentIds(nonOwned, user,
+        Set<UUID> sharedIds = documentShareRepository.findViewableDocumentIds(nonOwned, user,
                 groups.isEmpty() ? List.of() : groups);
 
-        Set<Integer> result = new HashSet<>(ownedIds);
+        Set<UUID> result = new HashSet<>(ownedIds);
         result.addAll(sharedIds);
         return result;
     }

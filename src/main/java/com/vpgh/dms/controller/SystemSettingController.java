@@ -1,4 +1,5 @@
 package com.vpgh.dms.controller;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.SystemSettingDTO;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
@@ -60,7 +61,7 @@ public class SystemSettingController {
 
     @GetMapping(path = "/admin/settings/{id}")
     @ApiMessage(key = "api.setting.detail", message = "Get setting details")
-    public ResponseEntity<SystemSetting> detail(@PathVariable(value = "id") Integer id) {
+    public ResponseEntity<SystemSetting> detail(@PathVariable(value = "id") UUID id) {
         SystemSetting setting = this.systemSettingService.getSettingById(id);
         if (setting == null) {
             throw new NotFoundException("error.setting.notFound");
@@ -72,7 +73,7 @@ public class SystemSettingController {
 
     @PatchMapping(path = "/admin/settings/{id}")
     @ApiMessage(key = "api.setting.update", message = "Update setting")
-    public ResponseEntity<SystemSetting> update(@PathVariable("id") Integer id,
+    public ResponseEntity<SystemSetting> update(@PathVariable("id") UUID id,
                                                 @RequestBody SystemSettingDTO reqSetting) {
 
         SystemSetting setting = this.systemSettingService.getSettingById(id);
@@ -98,7 +99,7 @@ public class SystemSettingController {
 
     @DeleteMapping(path = "/admin/settings/{id}")
     @ApiMessage(key = "api.setting.delete", message = "Delete setting")
-    public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
+    public ResponseEntity<Void> delete(@PathVariable(value = "id") UUID id) {
         SystemSetting setting = this.systemSettingService.getSettingById(id);
         if (setting == null) {
             throw new NotFoundException("error.setting.notFound");

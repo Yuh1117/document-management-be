@@ -1,19 +1,21 @@
 package com.vpgh.dms.model.dto.request;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotNull;
 
 public class SummaryFeedbackReq {
     @NotNull
-    private Integer summaryId;
+    private UUID summaryId;
     @NotNull
     private Boolean isHelpful;
     private String comment;
 
-    public Integer getSummaryId() {
+    public UUID getSummaryId() {
         return summaryId;
     }
 
-    public void setSummaryId(Integer summaryId) {
+    public void setSummaryId(UUID summaryId) {
         this.summaryId = summaryId;
     }
 

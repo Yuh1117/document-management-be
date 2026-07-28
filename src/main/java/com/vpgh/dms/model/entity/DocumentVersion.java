@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.entity;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
@@ -8,8 +10,8 @@ import jakarta.persistence.*;
 @Table(name = "document_versions")
 public class DocumentVersion extends TimestampedEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(nullable = false)
     private String name;
@@ -32,11 +34,11 @@ public class DocumentVersion extends TimestampedEntity {
     @JsonIgnore
     private Document document;
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

@@ -1,4 +1,5 @@
 package com.vpgh.dms.controller;
+import java.util.UUID;
 
 import java.util.Locale;
 
@@ -46,7 +47,7 @@ public class DocumentSummarizeController {
 
     @GetMapping(path = "/secure/documents/{id}/summarize")
     @ApiMessage(key = "api.document.summarize", message = "Summarize document")
-    public ResponseEntity<DocumentSummarizeRes> summarize(@PathVariable Integer id, Locale locale) {
+    public ResponseEntity<DocumentSummarizeRes> summarize(@PathVariable UUID id, Locale locale) {
         Document doc = resolveDocumentForView(id, SecurityUtil.getCurrentUserFromThreadLocal());
         DocumentSummary summary = this.documentSummarizeService.summarizeDocument(doc, locale.getLanguage());
 
@@ -71,7 +72,7 @@ public class DocumentSummarizeController {
         return ResponseEntity.ok(result);
     }
 
-    private Document resolveDocumentForView(Integer id, User user) {
+    private Document resolveDocumentForView(UUID id, User user) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("error.document.notFoundOrDeleted");

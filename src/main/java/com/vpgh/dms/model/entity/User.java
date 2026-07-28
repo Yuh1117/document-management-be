@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.entity;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vpgh.dms.model.TimestampedEntity;
@@ -14,8 +16,8 @@ import java.util.Set;
 @Table(name = "users")
 public class User extends TimestampedEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(unique = true, nullable = false)
     @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "{validation.user.email.invalid}")
@@ -104,11 +106,11 @@ public class User extends TimestampedEntity {
     @JsonIgnore
     private Set<DocumentTag> updatedTags;
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

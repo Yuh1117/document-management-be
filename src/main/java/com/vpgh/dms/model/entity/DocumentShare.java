@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.entity;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.vpgh.dms.model.FullAuditableEntity;
 import com.vpgh.dms.model.UserDTOSerializer;
@@ -10,8 +12,8 @@ import jakarta.persistence.*;
 @Table(name = "document_shares")
 public class DocumentShare extends FullAuditableEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Enumerated(EnumType.STRING)
     private ShareType shareType;
@@ -43,11 +45,11 @@ public class DocumentShare extends FullAuditableEntity {
         this.group = group;
     }
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

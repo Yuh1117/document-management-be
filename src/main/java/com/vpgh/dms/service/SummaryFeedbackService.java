@@ -1,4 +1,5 @@
 package com.vpgh.dms.service;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.request.SummaryFeedbackReq;
 import com.vpgh.dms.model.dto.response.SummaryFeedbackDocumentStatsRes;
@@ -9,9 +10,9 @@ import java.util.List;
 
 public interface SummaryFeedbackService {
 
-    SummaryFeedback submitFeedback(Integer documentId, Integer userId, SummaryFeedbackReq req);
+    SummaryFeedback submitFeedback(UUID documentId, UUID userId, SummaryFeedbackReq req);
 
-    SummaryFeedbackDocumentStatsRes getFeedbackStats(Integer documentId);
+    SummaryFeedbackDocumentStatsRes getFeedbackStats(UUID documentId);
 
     List<SummaryFeedbackModelStatsRes> getModelFeedbackStats();
 }

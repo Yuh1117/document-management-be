@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.entity;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.FullAuditableEntity;
 import com.vpgh.dms.model.constant.ProcessingStatus;
@@ -13,8 +15,8 @@ import java.util.Set;
 @Table(name = "documents")
 public class Document extends FullAuditableEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(nullable = false)
     @NotBlank(message = "{validation.document.name.notBlank}")
@@ -63,11 +65,11 @@ public class Document extends FullAuditableEntity {
     @JsonIgnore
     private Set<DocumentVersion> versions;
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

@@ -7,13 +7,14 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public interface PermissionService {
-    List<Permission> findPermissionsByIdIn(List<Integer> ids);
+    List<Permission> findPermissionsByIdIn(List<UUID> ids);
 
-    Permission getPermissionById(Integer id);
+    Permission getPermissionById(UUID id);
 
-    boolean existsByApiPathAndMethodAndIdNot(String apiPath, String method, Integer id);
+    boolean existsByApiPathAndMethodAndIdNot(String apiPath, String method, UUID id);
 
     Permission save(Permission permission);
 
@@ -23,7 +24,7 @@ public interface PermissionService {
 
     Permission handleUpdatePermission(Permission permission, PermissionDTO dto);
 
-    void deletePermissionById(Integer id);
+    void deletePermissionById(UUID id);
 
     long count();
 

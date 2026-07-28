@@ -1,4 +1,5 @@
 package com.vpgh.dms.controller;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.UserDTO;
 import com.vpgh.dms.util.exception.CustomValidationException;
@@ -61,7 +62,7 @@ public class UserController {
 
     @GetMapping(path = "/admin/users/{id}")
     @ApiMessage(key = "api.user.detail", message = "Get user details")
-    public ResponseEntity<UserDTO> detail(@PathVariable(value = "id") Integer id) {
+    public ResponseEntity<UserDTO> detail(@PathVariable(value = "id") UUID id) {
         User user = this.userService.getUserById(id);
         if (user == null) {
             throw new NotFoundException("error.user.notFound");
@@ -72,7 +73,7 @@ public class UserController {
 
     @PatchMapping(path = "/admin/users/{id}")
     @ApiMessage(key = "api.user.update", message = "Update user")
-    public ResponseEntity<UserDTO> update(@PathVariable(value = "id") Integer id,
+    public ResponseEntity<UserDTO> update(@PathVariable(value = "id") UUID id,
                                           @ModelAttribute UserDTO reqUser) {
 
         User user = this.userService.getUserById(id);
@@ -99,7 +100,7 @@ public class UserController {
 
     @DeleteMapping(path = "/admin/users/{id}")
     @ApiMessage(key = "api.user.delete", message = "Delete user")
-    public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
+    public ResponseEntity<Void> delete(@PathVariable(value = "id") UUID id) {
         User user = this.userService.getUserById(id);
         if (user == null) {
             throw new NotFoundException("error.user.notFound");

@@ -1,4 +1,5 @@
 package com.vpgh.dms.repository;
+import java.util.UUID;
 
 import com.vpgh.dms.model.entity.DocumentSummary;
 import com.vpgh.dms.model.entity.SummaryFeedback;
@@ -10,17 +11,17 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface SummaryFeedbackRepository extends JpaRepository<SummaryFeedback, Integer> {
+public interface SummaryFeedbackRepository extends JpaRepository<SummaryFeedback, UUID> {
 
     Optional<SummaryFeedback> findBySummaryAndUser(DocumentSummary summary, User user);
 
     List<SummaryFeedback> findBySummary(DocumentSummary summary);
 
     @Query("SELECT COUNT(f) FROM SummaryFeedback f WHERE f.summary.document.id = :docId AND f.isHelpful = true")
-    long countHelpfulByDocumentId(@Param("docId") Integer docId);
+    long countHelpfulByDocumentId(@Param("docId") UUID docId);
 
     @Query("SELECT COUNT(f) FROM SummaryFeedback f WHERE f.summary.document.id = :docId AND f.isHelpful = false")
-    long countNotHelpfulByDocumentId(@Param("docId") Integer docId);
+    long countNotHelpfulByDocumentId(@Param("docId") UUID docId);
 
     @Query("SELECT COUNT(f) FROM SummaryFeedback f WHERE f.summary.modelName = :modelName AND f.isHelpful = true")
     long countHelpfulByModelName(@Param("modelName") String modelName);

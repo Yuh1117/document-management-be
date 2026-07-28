@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.dto;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vpgh.dms.model.constant.MemberEnum;
@@ -11,7 +13,7 @@ import java.util.List;
 @ValidGroup
 public class UserGroupDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private Integer id;
+    private UUID id;
     @NotBlank(message = "{validation.userGroup.name.notBlank}")
     private String name;
     private String description;
@@ -19,15 +21,15 @@ public class UserGroupDTO {
 
     public static class MemberDTO {
         @JsonIgnore
-        private Integer id;
+        private UUID id;
         private String email;
         private MemberEnum role;
 
-        public Integer getId() {
+        public UUID getId() {
             return id;
         }
 
-        public void setId(Integer id) {
+        public void setId(UUID id) {
             this.id = id;
         }
 
@@ -48,11 +50,11 @@ public class UserGroupDTO {
         }
     }
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

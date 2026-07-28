@@ -1,7 +1,9 @@
 package com.vpgh.dms.model.dto.response;
 
+import java.util.UUID;
+
 public class DocumentSummarizeRes {
-    private Integer id;
+    private UUID id;
     private String summaryText;
     private String modelName;
     private String promptVersion;
@@ -9,18 +11,18 @@ public class DocumentSummarizeRes {
     public DocumentSummarizeRes() {
     }
 
-    public DocumentSummarizeRes(Integer id, String summaryText, String modelName, String promptVersion) {
+    public DocumentSummarizeRes(UUID id, String summaryText, String modelName, String promptVersion) {
         this.id = id;
         this.summaryText = summaryText;
         this.modelName = modelName;
         this.promptVersion = promptVersion;
     }
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.dto.request;
 
+import java.util.UUID;
+
 import com.vpgh.dms.model.constant.ShareType;
 import com.vpgh.dms.util.annotation.ValidShare;
 
@@ -7,8 +9,8 @@ import java.util.List;
 
 @ValidShare
 public class ShareReq {
-    private Integer documentId;
-    private Integer folderId;
+    private UUID documentId;
+    private UUID folderId;
     private List<UserShareDTO> shares;
 
     public static class UserShareDTO {
@@ -32,19 +34,19 @@ public class ShareReq {
         }
     }
 
-    public Integer getDocumentId() {
+    public UUID getDocumentId() {
         return documentId;
     }
 
-    public void setDocumentId(Integer documentId) {
+    public void setDocumentId(UUID documentId) {
         this.documentId = documentId;
     }
 
-    public Integer getFolderId() {
+    public UUID getFolderId() {
         return folderId;
     }
 
-    public void setFolderId(Integer folderId) {
+    public void setFolderId(UUID folderId) {
         this.folderId = folderId;
     }
 

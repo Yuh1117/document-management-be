@@ -1,4 +1,5 @@
 package com.vpgh.dms.controller;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.PermissionDTO;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
@@ -65,7 +66,7 @@ public class PermissionController {
 
     @GetMapping(path = "/admin/permissions/{id}")
     @ApiMessage(key = "api.permission.detail", message = "Get permission details")
-    public ResponseEntity<Permission> detail(@PathVariable(value = "id") Integer id) {
+    public ResponseEntity<Permission> detail(@PathVariable(value = "id") UUID id) {
         Permission permission = this.permissionService.getPermissionById(id);
         if (permission == null) {
             throw new NotFoundException("error.permission.notFound");
@@ -76,7 +77,7 @@ public class PermissionController {
 
     @PatchMapping(path = "/admin/permissions/{id}")
     @ApiMessage(key = "api.permission.update", message = "Update permission")
-    public ResponseEntity<Permission> update(@PathVariable("id") Integer id,
+    public ResponseEntity<Permission> update(@PathVariable("id") UUID id,
                                              @RequestBody PermissionDTO reqPermission) {
 
         Permission permission = this.permissionService.getPermissionById(id);
@@ -102,7 +103,7 @@ public class PermissionController {
 
     @DeleteMapping(path = "/admin/permissions/{id}")
     @ApiMessage(key = "api.permission.delete", message = "Delete permission")
-    public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
+    public ResponseEntity<Void> delete(@PathVariable(value = "id") UUID id) {
         Permission permission = this.permissionService.getPermissionById(id);
         if (permission == null) {
             throw new NotFoundException("error.permission.notFound");

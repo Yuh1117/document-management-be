@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +35,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public Page<FileItemDTO> getUserFiles(User user, Integer parentId, Map<String, String> params) {
+    public Page<FileItemDTO> getUserFiles(User user, boolean matchAll, Map<String, String> params) {
         Pageable pageable = Pageable.unpaged();
         String keyword = null;
         if (params != null) {
@@ -46,8 +47,8 @@ public class FileServiceImpl implements FileService {
             keyword = escapeLikeKeyword(params.get("kw"));
         }
 
-        Page<FileItemProjection> pageItem = fileRepository.findAllByUserAndParent(user.getId(), parentId, false,
-                keyword, pageable);
+        Page<FileItemProjection> pageItem = fileRepository.findAllByUserAndParent(user.getId(), null, matchAll,
+                false, keyword, pageable);
         return pageItem.map(this::mapToFileItemDTO);
     }
 
@@ -82,7 +83,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public Page<FileItemDTO> getFolderFiles(User user, Integer folderId, Map<String, String> params) {
+    public Page<FileItemDTO> getFolderFiles(User user, UUID folderId, Map<String, String> params) {
         Pageable pageable = Pageable.unpaged();
         if (params != null && params.containsKey("page")) {
             int page = Integer.parseInt(params.get("page"));
@@ -135,12 +136,12 @@ public class FileServiceImpl implements FileService {
             return new PageImpl<>(List.of(), PageRequest.of(page - 1, pageSize), 0);
         }
 
-        Integer folderId = null;
+        UUID folderId = null;
         String folderIdStr = params.get("folderId");
         if (folderIdStr != null && !folderIdStr.isBlank()) {
             try {
-                folderId = Integer.parseInt(folderIdStr.trim());
-            } catch (NumberFormatException ignored) {
+                folderId = UUID.fromString(folderIdStr.trim());
+            } catch (IllegalArgumentException ignored) {
             }
         }
 
@@ -150,11 +151,11 @@ public class FileServiceImpl implements FileService {
         List<ProcessorSearchResponse.ProcessorSearchHit> hits = response.getHits() != null ? response.getHits()
                 : List.of();
 
-        List<Integer> orderedDocIds = hits.stream()
+        List<UUID> orderedDocIds = hits.stream()
                 .map(hit -> {
                     try {
-                        return hit.getDocumentId() != null ? Integer.parseInt(hit.getDocumentId().trim()) : null;
-                    } catch (NumberFormatException e) {
+                        return hit.getDocumentId() != null ? UUID.fromString(hit.getDocumentId().trim()) : null;
+                    } catch (IllegalArgumentException e) {
                         return null;
                     }
                 })
@@ -170,10 +171,10 @@ public class FileServiceImpl implements FileService {
         MimeSizeFilters filters = parseMimeSizeFilters(params);
         List<FileItemProjection> rows = fileRepository.findOwnedDocumentsByIdsAndFilters(user.getId(),
                 orderedDocIds, filters.mimeType(), filters.sizeBytes(), filters.sizeType());
-        Map<Integer, FileItemProjection> rowMap = rows.stream().collect(Collectors.toMap(r -> r.getId(), r -> r));
-        Map<Integer, String> snippetMap = new HashMap<>();
+        Map<UUID, FileItemProjection> rowMap = rows.stream().collect(Collectors.toMap(r -> r.getId(), r -> r));
+        Map<UUID, String> snippetMap = new HashMap<>();
         for (ProcessorSearchResponse.ProcessorSearchHit hit : hits) {
-            Integer docId = parseDocumentId(hit.getDocumentId());
+            UUID docId = parseDocumentId(hit.getDocumentId());
             if (docId != null && hit.getSnippet() != null && !snippetMap.containsKey(docId)) {
                 snippetMap.put(docId, hit.getSnippet());
             }
@@ -255,13 +256,13 @@ public class FileServiceImpl implements FileService {
         return mapToFileItemDTO(p, null);
     }
 
-    private static Integer parseDocumentId(String rawDocumentId) {
+    private static UUID parseDocumentId(String rawDocumentId) {
         if (rawDocumentId == null || rawDocumentId.isBlank()) {
             return null;
         }
         try {
-            return Integer.parseInt(rawDocumentId.trim());
-        } catch (NumberFormatException e) {
+            return UUID.fromString(rawDocumentId.trim());
+        } catch (IllegalArgumentException e) {
             return null;
         }
     }

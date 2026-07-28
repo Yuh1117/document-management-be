@@ -1,4 +1,5 @@
 package com.vpgh.dms.repository;
+import java.util.UUID;
 
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.model.entity.UserGroup;
@@ -10,12 +11,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 
-public interface UserGroupRepository extends JpaRepository<UserGroup, Integer> {
-    boolean existsByNameAndCreatedByAndIdNot(String name, User createdBy, Integer id);
+public interface UserGroupRepository extends JpaRepository<UserGroup, UUID> {
+    boolean existsByNameAndCreatedByAndIdNot(String name, User createdBy, UUID id);
 
     Page<UserGroup> findAll(Specification<UserGroup> specification, Pageable pageable);
 
-    Optional<UserGroup> findById(Integer id);
+    Optional<UserGroup> findById(UUID id);
 
-    void deleteById(Integer id);
+    void deleteById(UUID id);
 }

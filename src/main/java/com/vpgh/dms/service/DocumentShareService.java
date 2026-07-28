@@ -10,6 +10,7 @@ import jakarta.mail.MessagingException;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 public interface DocumentShareService {
     List<DocumentShare> saveAll(List<DocumentShare> documentShare);
@@ -28,5 +29,5 @@ public interface DocumentShareService {
 
     List<DocumentShare> handleShareAfterUpload(Folder folder, Document document);
 
-    Set<Integer> getViewableDocumentIds(User user, List<Document> docs);
+    Set<UUID> getViewableDocumentIds(User user, List<Document> docs);
 }

@@ -1,4 +1,5 @@
 package com.vpgh.dms.service.impl;
+import java.util.UUID;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
@@ -123,23 +124,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUserById(Integer id) {
+    public User getUserById(UUID id) {
         Optional<User> user = this.userRepository.findById(id);
         return user.orElse(null);
     }
 
     @Override
-    public List<User> getAllByIds(List<Integer> ids) {
+    public List<User> getAllByIds(List<UUID> ids) {
         return this.userRepository.findByIdIn(ids);
     }
 
     @Override
-    public void deleteUserById(Integer id) {
+    public void deleteUserById(UUID id) {
         this.userRepository.deleteById(id);
     }
 
     @Override
-    public boolean existsByEmailAndIdNot(String email, Integer id) {
+    public boolean existsByEmailAndIdNot(String email, UUID id) {
         return this.userRepository.existsByEmailAndIdNot(email, id);
     }
 

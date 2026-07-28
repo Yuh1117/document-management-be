@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.dto;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vpgh.dms.util.annotation.ValidPermission;
 import jakarta.validation.constraints.NotNull;
@@ -7,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 @ValidPermission
 public class PermissionDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private Integer id;
+    private UUID id;
     @NotNull(message = "{validation.permission.name.notNull}")
     private String name;
     @NotNull(message = "{validation.permission.path.notNull}")
@@ -17,11 +19,11 @@ public class PermissionDTO {
     @NotNull(message = "{validation.permission.module.notNull}")
     private String module;
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

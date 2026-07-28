@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.entity;
 
+import java.util.UUID;
+
 import com.vpgh.dms.model.FullAuditableEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -8,8 +10,8 @@ import jakarta.validation.constraints.NotBlank;
 @Table(name = "system_settings")
 public class SystemSetting extends FullAuditableEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(nullable = false, name = "`key`", unique = true)
     @NotBlank(message = "{validation.setting.key.notBlank}")
@@ -23,11 +25,11 @@ public class SystemSetting extends FullAuditableEntity {
 
     }
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
