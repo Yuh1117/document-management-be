@@ -32,6 +32,31 @@ services:
     networks:
       - dms-network
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: dms-redis
+    command:
+      [
+        "redis-server",
+        "--save",
+        "",
+        "--appendonly",
+        "no",
+        "--maxmemory",
+        "256mb",
+        "--maxmemory-policy",
+        "allkeys-lru",
+      ]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "6379:6379"
+    networks:
+      - dms-network
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
     container_name: dms-elasticsearch
@@ -117,6 +142,8 @@ services:
     gpus: all
     depends_on:
       elasticsearch:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       mlflow:
         condition: service_started

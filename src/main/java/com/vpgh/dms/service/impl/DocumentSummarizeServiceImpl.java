@@ -1,5 +1,7 @@
 package com.vpgh.dms.service.impl;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
 import com.vpgh.dms.model.dto.processor.ProcessorSummarizeRequest;
@@ -42,5 +44,10 @@ public class DocumentSummarizeServiceImpl implements DocumentSummarizeService {
         summary.setCreatedBy(SecurityUtil.getCurrentUserFromThreadLocal());
 
         return documentSummarizeRepository.save(summary);
+    }
+
+    @Override
+    public DocumentSummary getLatestSummary(UUID documentId) {
+        return documentSummarizeRepository.findFirstByDocumentIdOrderByCreatedAtDesc(documentId).orElse(null);
     }
 }
