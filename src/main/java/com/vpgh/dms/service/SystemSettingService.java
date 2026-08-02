@@ -1,4 +1,5 @@
 package com.vpgh.dms.service;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.SystemSettingDTO;
 import com.vpgh.dms.model.entity.SystemSetting;
@@ -16,13 +17,13 @@ public interface SystemSettingService {
 
     SystemSetting handleCreateSetting(SystemSettingDTO dto);
 
-    boolean existsByKeyAndIdNot(String key, Integer id);
+    boolean existsByKeyAndIdNot(String key, UUID id);
 
-    SystemSetting getSettingById(Integer id);
+    SystemSetting getSettingById(UUID id);
 
     SystemSetting handleUpdateSetting(SystemSetting setting, SystemSettingDTO dto);
 
-    void deleteSettingById(Integer id);
+    void deleteSettingById(UUID id);
 
     long count();
 

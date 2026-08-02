@@ -9,6 +9,8 @@ import com.vpgh.dms.model.entity.User;
 import jakarta.mail.MessagingException;
 
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 public interface DocumentShareService {
     List<DocumentShare> saveAll(List<DocumentShare> documentShare);
@@ -26,4 +28,6 @@ public interface DocumentShareService {
     void removeShares(Document doc, List<User> users);
 
     List<DocumentShare> handleShareAfterUpload(Folder folder, Document document);
+
+    Set<UUID> getViewableDocumentIds(User user, List<Document> docs);
 }

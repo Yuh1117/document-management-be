@@ -1,5 +1,7 @@
 package com.vpgh.dms.controller;
 
+import java.util.UUID;
+
 import java.util.Locale;
 
 import org.springframework.http.ResponseEntity;
@@ -45,13 +47,29 @@ public class DocumentSummarizeController {
     }
 
     @GetMapping(path = "/secure/documents/{id}/summarize")
+    @ApiMessage(key = "api.document.summary.get", message = "Get document summary")
+    public ResponseEntity<DocumentSummarizeRes> getSummary(@PathVariable UUID id) {
+        Document doc = resolveDocumentForView(id, SecurityUtil.getCurrentUserFromThreadLocal());
+        DocumentSummary summary = this.documentSummarizeService.getLatestSummary(doc.getId());
+
+        return ResponseEntity.ok(toResponse(summary));
+    }
+
+    @PostMapping(path = "/secure/documents/{id}/summarize")
     @ApiMessage(key = "api.document.summarize", message = "Summarize document")
-    public ResponseEntity<DocumentSummarizeRes> summarize(@PathVariable Integer id, Locale locale) {
+    public ResponseEntity<DocumentSummarizeRes> summarize(@PathVariable UUID id, Locale locale) {
         Document doc = resolveDocumentForView(id, SecurityUtil.getCurrentUserFromThreadLocal());
         DocumentSummary summary = this.documentSummarizeService.summarizeDocument(doc, locale.getLanguage());
 
-        return ResponseEntity.ok(new DocumentSummarizeRes(summary.getId(), summary.getSummaryText(),
-                summary.getModelName(), summary.getPromptVersion()));
+        return ResponseEntity.ok(toResponse(summary));
+    }
+
+    private DocumentSummarizeRes toResponse(DocumentSummary summary) {
+        if (summary == null) {
+            return null;
+        }
+        return new DocumentSummarizeRes(summary.getId(), summary.getSummaryText(),
+                summary.getModelName(), summary.getPromptVersion());
     }
 
     @GetMapping(path = "/admin/documents/summarize/models")
@@ -71,7 +89,7 @@ public class DocumentSummarizeController {
         return ResponseEntity.ok(result);
     }
 
-    private Document resolveDocumentForView(Integer id, User user) {
+    private Document resolveDocumentForView(UUID id, User user) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("error.document.notFoundOrDeleted");

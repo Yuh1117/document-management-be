@@ -8,6 +8,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class DocumentProcessingResultConsumer {
@@ -22,7 +23,16 @@ public class DocumentProcessingResultConsumer {
 
     @RabbitListener(queues = "${rabbitmq.document.processing-result.queue}")
     public void handleProcessingResult(Map<String, Object> payload) {
-        Integer documentId = (Integer) payload.get("documentId");
+        Object rawDocumentId = payload.get("documentId");
+        UUID documentId = null;
+        if (rawDocumentId != null) {
+            try {
+                documentId = UUID.fromString(rawDocumentId.toString());
+            } catch (IllegalArgumentException e) {
+                logger.warn("Invalid documentId '{}' in processing result message", rawDocumentId);
+                return;
+            }
+        }
         String statusRaw = (String) payload.get("processingStatus");
 
         if (documentId == null || statusRaw == null) {

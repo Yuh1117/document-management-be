@@ -1,27 +1,29 @@
 package com.vpgh.dms.model.dto.response;
 
+import java.util.UUID;
+
 import java.time.Instant;
 
 public class SummaryFeedbackRes {
-    private Integer id;
-    private Integer documentId;
+    private UUID id;
+    private UUID documentId;
     private Boolean isHelpful;
     private String comment;
     private Instant createdAt;
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
-    public Integer getDocumentId() {
+    public UUID getDocumentId() {
         return documentId;
     }
 
-    public void setDocumentId(Integer documentId) {
+    public void setDocumentId(UUID documentId) {
         this.documentId = documentId;
     }
 

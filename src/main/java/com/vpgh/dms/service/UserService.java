@@ -1,4 +1,5 @@
 package com.vpgh.dms.service;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.UserDTO;
 import com.vpgh.dms.model.entity.User;
@@ -16,13 +17,13 @@ public interface UserService {
 
     Page<User> getAllUsers(Map<String, String> params);
 
-    User getUserById(Integer id);
+    User getUserById(UUID id);
 
-    List<User> getAllByIds(List<Integer> ids);
+    List<User> getAllByIds(List<UUID> ids);
 
-    void deleteUserById(Integer id);
+    void deleteUserById(UUID id);
 
-    boolean existsByEmailAndIdNot(String email, Integer id);
+    boolean existsByEmailAndIdNot(String email, UUID id);
 
     User handleCreateUser(UserDTO dto);
 

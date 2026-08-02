@@ -4,6 +4,7 @@ import com.vpgh.dms.model.dto.RoleDTO;
 import com.vpgh.dms.model.entity.Role;
 import com.vpgh.dms.repository.PermissionRepository;
 import com.vpgh.dms.repository.RoleRepository;
+import com.vpgh.dms.service.PermissionService;
 import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.service.specification.RoleSpecification;
 import com.vpgh.dms.util.PageSize;
@@ -23,10 +24,13 @@ public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final PermissionService permissionService;
 
-    public RoleServiceImpl(RoleRepository roleRepository, PermissionRepository permissionRepository) {
+    public RoleServiceImpl(RoleRepository roleRepository, PermissionRepository permissionRepository,
+            PermissionService permissionService) {
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
+        this.permissionService = permissionService;
     }
 
     @Override
@@ -35,12 +39,12 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public boolean existsById(Integer id) {
+    public boolean existsById(UUID id) {
         return this.roleRepository.existsById(id);
     }
 
     @Override
-    public Role getRoleById(Integer id) {
+    public Role getRoleById(UUID id) {
         Optional<Role> role = this.roleRepository.findById(id);
         return role.orElse(null);
     }
@@ -67,10 +71,12 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Role save(Role role) {
         if (role.getPermissions() != null) {
-            List<Integer> ids = role.getPermissions().stream().map(p -> p.getId()).collect(Collectors.toList());
+            List<UUID> ids = role.getPermissions().stream().map(p -> p.getId()).collect(Collectors.toList());
             role.setPermissions(new HashSet<>(this.permissionRepository.findByIdIn(ids)));
         }
-        return this.roleRepository.save(role);
+        Role saved = this.roleRepository.save(role);
+        this.permissionService.evictPermissionsCache();
+        return saved;
     }
 
     @Override
@@ -96,17 +102,18 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public boolean existsByNameAndIdNot(String name, Integer id) {
+    public boolean existsByNameAndIdNot(String name, UUID id) {
         return this.roleRepository.existsByNameAndIdNot(name, id);
     }
 
     @Override
-    public void deleteRoleById(Integer id) {
+    public void deleteRoleById(UUID id) {
         Role role = getRoleById(id);
         if (!role.getPermissions().isEmpty()) {
             throw new DataIntegrityViolationException("");
         }
         this.roleRepository.deleteById(id);
+        this.permissionService.evictPermissionsCache();
     }
 
     @Override

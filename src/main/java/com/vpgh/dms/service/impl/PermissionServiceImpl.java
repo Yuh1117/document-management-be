@@ -7,6 +7,8 @@ import com.vpgh.dms.repository.PermissionRepository;
 import com.vpgh.dms.service.PermissionService;
 import com.vpgh.dms.service.specification.PermissionSpecification;
 import com.vpgh.dms.util.PageSize;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class PermissionServiceImpl implements PermissionService {
@@ -29,18 +32,18 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     @Override
-    public List<Permission> findPermissionsByIdIn(List<Integer> ids) {
+    public List<Permission> findPermissionsByIdIn(List<UUID> ids) {
         return this.permissionRepository.findByIdIn(ids);
     }
 
     @Override
-    public Permission getPermissionById(Integer id) {
+    public Permission getPermissionById(UUID id) {
         Optional<Permission> permission = this.permissionRepository.findById(id);
         return permission.orElse(null);
     }
 
     @Override
-    public boolean existsByApiPathAndMethodAndIdNot(String apiPath, String method, Integer id) {
+    public boolean existsByApiPathAndMethodAndIdNot(String apiPath, String method, UUID id) {
         return this.permissionRepository.existsByApiPathAndMethodAndIdNot(apiPath, method, id);
     }
 
@@ -89,7 +92,7 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     @Override
-    public void deletePermissionById(Integer id) {
+    public void deletePermissionById(UUID id) {
         Permission permission = getPermissionById(id);
         if (!permission.getRoles().isEmpty()) {
             throw new DataIntegrityViolationException("");
@@ -108,7 +111,13 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     @Override
+    @Cacheable(value = "permissionsByRole", key = "#role.id")
     public List<Permission> getPermissionsByRole(Role role) {
         return this.permissionRepository.findAllByRoles(role);
+    }
+
+    @Override
+    @CacheEvict(value = "permissionsByRole", allEntries = true)
+    public void evictPermissionsCache() {
     }
 }

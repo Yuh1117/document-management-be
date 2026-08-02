@@ -1,9 +1,10 @@
 package com.vpgh.dms.model.dto.response;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public interface FileItemProjection {
-    Integer getId();
+    UUID getId();
 
     String getName();
 
@@ -19,7 +20,7 @@ public interface FileItemProjection {
 
     Instant getUpdatedAt();
 
-    Integer getCreatedById();
+    UUID getCreatedById();
 
     String getCreatedByEmail();
 

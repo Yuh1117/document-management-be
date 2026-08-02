@@ -1,4 +1,5 @@
 package com.vpgh.dms.repository;
+import java.util.UUID;
 
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.DocumentVersion;
@@ -10,7 +11,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 
-public interface DocumentVersionRepository extends JpaRepository<DocumentVersion, Integer>, JpaSpecificationExecutor<DocumentVersion> {
+public interface DocumentVersionRepository extends JpaRepository<DocumentVersion, UUID>, JpaSpecificationExecutor<DocumentVersion> {
     Integer countByDocument(Document document);
 
     Page<DocumentVersion> findAll(Specification<DocumentVersion> specification, Pageable pageable);

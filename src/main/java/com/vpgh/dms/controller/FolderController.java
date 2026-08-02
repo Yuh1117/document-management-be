@@ -1,4 +1,5 @@
 package com.vpgh.dms.controller;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.FolderDTO;
 import com.vpgh.dms.model.dto.request.CopyCutReq;
@@ -137,7 +138,7 @@ public class FolderController {
     }
 
     @GetMapping("/secure/folders/download/{id}")
-    public ResponseEntity<StreamingResponseBody> downloadFolder(@PathVariable Integer id) {
+    public ResponseEntity<StreamingResponseBody> downloadFolder(@PathVariable UUID id) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         Folder rootFolder = resolveViewableFolder(id, currentUser);
 
@@ -154,7 +155,7 @@ public class FolderController {
     }
 
     @PostMapping("/secure/folders/download/multiple")
-    public ResponseEntity<StreamingResponseBody> downloadMultiple(@RequestBody List<Integer> folderIds) {
+    public ResponseEntity<StreamingResponseBody> downloadMultiple(@RequestBody List<UUID> folderIds) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         List<Folder> folders = resolveViewableFolders(folderIds, currentUser);
 
@@ -174,7 +175,7 @@ public class FolderController {
 
     @PatchMapping(path = "/secure/folders/{id}")
     @ApiMessage(key = "api.folder.update", message = "Update folder")
-    public ResponseEntity<FolderDTO> update(@PathVariable Integer id, @RequestBody @Valid Folder request) {
+    public ResponseEntity<FolderDTO> update(@PathVariable UUID id, @RequestBody @Valid Folder request) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         Folder folder = resolveEditableFolder(id, currentUser);
 
@@ -196,7 +197,7 @@ public class FolderController {
 
     @PatchMapping(path = "/secure/folders")
     @ApiMessage(key = "api.folder.trash", message = "Move folder to trash")
-    public ResponseEntity<Void> softDelete(@RequestBody List<Integer> ids) {
+    public ResponseEntity<Void> softDelete(@RequestBody List<UUID> ids) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         List<Folder> folders = resolveOwnedActiveFolders(ids, currentUser);
 
@@ -208,7 +209,7 @@ public class FolderController {
 
     @PatchMapping(path = "/secure/folders/restore")
     @ApiMessage(key = "api.folder.restore", message = "Restore folder")
-    public ResponseEntity<List<FolderDTO>> restore(@RequestBody List<Integer> ids) {
+    public ResponseEntity<List<FolderDTO>> restore(@RequestBody List<UUID> ids) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         List<Folder> folders = resolveOwnedTrashedFolders(ids, currentUser);
 
@@ -221,7 +222,7 @@ public class FolderController {
 
     @DeleteMapping(path = "/secure/folders/permanent")
     @ApiMessage(key = "api.folder.permanentDelete", message = "Permanently delete folder")
-    public ResponseEntity<Void> hardDelete(@RequestBody List<Integer> ids) {
+    public ResponseEntity<Void> hardDelete(@RequestBody List<UUID> ids) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         List<Folder> folders = resolveOwnedTrashedFolders(ids, currentUser);
 
@@ -276,12 +277,12 @@ public class FolderController {
 
     @GetMapping(path = "/secure/folders/{id}")
     @ApiMessage(key = "api.folder.detail", message = "View folder details")
-    public ResponseEntity<FolderDTO> detail(@PathVariable Integer id) {
+    public ResponseEntity<FolderDTO> detail(@PathVariable UUID id) {
         Folder folder = resolveViewableFolder(id, SecurityUtil.getCurrentUserFromThreadLocal());
         return ResponseEntity.ok(this.folderService.convertFolderToFolderDTO(folder));
     }
 
-    private Folder resolveEditableFolder(Integer folderId, User user) {
+    private Folder resolveEditableFolder(UUID folderId, User user) {
         if (folderId == null)
             return null;
         Folder folder = folderService.getFolderById(folderId);
@@ -294,7 +295,7 @@ public class FolderController {
         return folder;
     }
 
-    private Folder resolveViewableFolder(Integer folderId, User user) {
+    private Folder resolveViewableFolder(UUID folderId, User user) {
         Folder folder = folderService.getFolderById(folderId);
         if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
             throw new NotFoundException("error.folder.notFoundOrDeleted");
@@ -305,7 +306,7 @@ public class FolderController {
         return folder;
     }
 
-    private Folder resolveTargetFolder(Integer folderId) {
+    private Folder resolveTargetFolder(UUID folderId) {
         if (folderId == null)
             return null;
         Folder folder = folderService.getFolderById(folderId);
@@ -315,36 +316,36 @@ public class FolderController {
         return folder;
     }
 
-    private List<Folder> resolveViewableFolders(List<Integer> ids, User user) {
+    private List<Folder> resolveViewableFolders(List<UUID> ids, User user) {
         List<Folder> folders = folderService.getFoldersByIds(ids);
-        Map<Integer, Folder> folderMap = folders.stream()
+        Map<UUID, Folder> folderMap = folders.stream()
                 .filter(f -> !f.getDeleted() && folderShareService.checkCanView(user, f))
                 .collect(Collectors.toMap(Folder::getId, f -> f));
-        List<Integer> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
+        List<UUID> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
         if (!notFoundIds.isEmpty()) {
             throw new NotFoundException("error.folder.idsSoftDeleted", notFoundIds);
         }
         return folders;
     }
 
-    private List<Folder> resolveOwnedActiveFolders(List<Integer> ids, User user) {
+    private List<Folder> resolveOwnedActiveFolders(List<UUID> ids, User user) {
         List<Folder> folders = folderService.getFoldersByIds(ids);
-        Map<Integer, Folder> folderMap = folders.stream()
+        Map<UUID, Folder> folderMap = folders.stream()
                 .filter(f -> !f.getDeleted() && folderService.isOwnerFolder(f, user))
                 .collect(Collectors.toMap(Folder::getId, f -> f));
-        List<Integer> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
+        List<UUID> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
         if (!notFoundIds.isEmpty()) {
             throw new NotFoundException("error.folder.idsSoftDeleted", notFoundIds);
         }
         return folders;
     }
 
-    private List<Folder> resolveOwnedTrashedFolders(List<Integer> ids, User user) {
+    private List<Folder> resolveOwnedTrashedFolders(List<UUID> ids, User user) {
         List<Folder> folders = folderService.getFoldersByIds(ids);
-        Map<Integer, Folder> folderMap = folders.stream()
+        Map<UUID, Folder> folderMap = folders.stream()
                 .filter(f -> f.getDeleted() && folderService.isOwnerFolder(f, user))
                 .collect(Collectors.toMap(Folder::getId, f -> f));
-        List<Integer> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
+        List<UUID> notFoundIds = ids.stream().filter(id -> !folderMap.containsKey(id)).toList();
         if (!notFoundIds.isEmpty()) {
             throw new NotFoundException("error.folder.idsNotSoftDeleted", notFoundIds);
         }

@@ -1,10 +1,12 @@
 package com.vpgh.dms.model.dto;
 
+import java.util.UUID;
+
 import java.time.Instant;
 import java.util.Set;
 
 public class FolderDTO {
-    private Integer id;
+    private UUID id;
     private String name;
     private Boolean inheritPermissions;
     private Boolean isDeleted;
@@ -16,11 +18,11 @@ public class FolderDTO {
     private Instant createdAt;
     private Instant updatedAt;
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

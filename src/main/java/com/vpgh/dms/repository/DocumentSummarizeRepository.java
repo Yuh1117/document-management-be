@@ -1,8 +1,12 @@
 package com.vpgh.dms.repository;
+import java.util.Optional;
+import java.util.UUID;
 
 import com.vpgh.dms.model.entity.DocumentSummary;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface DocumentSummarizeRepository extends JpaRepository<DocumentSummary, Integer> {
+public interface DocumentSummarizeRepository extends JpaRepository<DocumentSummary, UUID> {
+
+    Optional<DocumentSummary> findFirstByDocumentIdOrderByCreatedAtDesc(UUID documentId);
 
 }

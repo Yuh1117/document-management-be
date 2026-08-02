@@ -9,9 +9,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface FileRepository extends JpaRepository<Folder, Integer> {
+public interface FileRepository extends JpaRepository<Folder, UUID> {
 
     @Query(value = """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
@@ -23,11 +24,11 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             JOIN users u ON f.created_by = u.id
             WHERE f.created_by = :userId AND f.is_deleted = :deleted
                AND (
-                      :parentId = -1 OR
+                      :matchAll = true OR
                       (:parentId IS NULL AND f.parent_id IS NULL) OR
                       f.parent_id = :parentId
                   )
-               AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')))
+               AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')) ESCAPE '\\')
 
             UNION ALL
 
@@ -40,11 +41,11 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             JOIN users u ON d.created_by = u.id
             WHERE d.created_by = :userId AND d.is_deleted = :deleted
               AND (
-                      :parentId = -1 OR
+                      :matchAll = true OR
                       (:parentId IS NULL AND d.folder_id IS NULL) OR
                       d.folder_id = :parentId
                   )
-              AND (:keyword IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT(:keyword, '%')))
+              AND (:keyword IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT(:keyword, '%')) ESCAPE '\\')
 
             ORDER BY sortType ASC, name ASC
             """, countQuery = """
@@ -53,11 +54,11 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                 FROM folders f
                 WHERE f.created_by = :userId AND f.is_deleted = :deleted
                   AND (
-                      :parentId = -1 OR
+                      :matchAll = true OR
                       (:parentId IS NULL AND f.parent_id IS NULL) OR
                       f.parent_id = :parentId
                   )
-                  AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')))
+                  AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')) ESCAPE '\\')
 
                 UNION ALL
 
@@ -65,15 +66,16 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                 FROM documents d
                 WHERE d.created_by = :userId AND d.is_deleted = :deleted
                   AND (
-                      :parentId = -1 OR
+                      :matchAll = true OR
                       (:parentId IS NULL AND d.folder_id IS NULL) OR
                       d.folder_id = :parentId
                   )
-                  AND (:keyword IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT(:keyword, '%')))
+                  AND (:keyword IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT(:keyword, '%')) ESCAPE '\\')
             ) AS total
             """, nativeQuery = true)
-    Page<FileItemProjection> findAllByUserAndParent(@Param("userId") Integer userId,
-            @Param("parentId") Integer parentId,
+    Page<FileItemProjection> findAllByUserAndParent(@Param("userId") UUID userId,
+            @Param("parentId") UUID parentId,
+            @Param("matchAll") Boolean matchAll,
             @Param("deleted") Boolean deleted,
             @Param("keyword") String keyword,
             Pageable pageable);
@@ -125,7 +127,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                   ))
             ) AS total
             """, nativeQuery = true)
-    Page<FileItemProjection> findTrashFiles(@Param("userId") Integer userId, Pageable pageable);
+    Page<FileItemProjection> findTrashFiles(@Param("userId") UUID userId, Pageable pageable);
 
     @Query(value = """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
@@ -160,7 +162,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                 WHERE d.created_by = :userId AND d.is_deleted = :deleted
             ) AS total
             """, nativeQuery = true)
-    Page<FileItemProjection> findRecentFiles(@Param("userId") Integer userId,
+    Page<FileItemProjection> findRecentFiles(@Param("userId") UUID userId,
             @Param("deleted") Boolean deleted,
             Pageable pageable);
 
@@ -217,8 +219,8 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                       AND (d.created_by = :userId OR ds.user_id IS NOT NULL)
             ) AS total
             """, nativeQuery = true)
-    Page<FileItemProjection> findFolderFiles(@Param("userId") Integer userId,
-            @Param("folderId") Integer folderId,
+    Page<FileItemProjection> findFolderFiles(@Param("userId") UUID userId,
+            @Param("folderId") UUID folderId,
             @Param("deleted") Boolean deleted,
             Pageable pageable);
 
@@ -290,7 +292,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
                         )
                 ) AS total
             """, nativeQuery = true)
-    Page<FileItemProjection> findSharedFiles(@Param("userId") Integer userId, Pageable pageable);
+    Page<FileItemProjection> findSharedFiles(@Param("userId") UUID userId, Pageable pageable);
 
     @Query(value = """
             SELECT d.id AS id, d.name AS name, 'document' AS type,
@@ -301,7 +303,7 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             JOIN users u ON d.created_by = u.id
             WHERE d.created_by = :userId
               AND d.is_deleted = false
-              AND (:keyword IS NULL OR :keyword = '' OR (d.name ILIKE '%' || :keyword || '%' OR (d.description IS NOT NULL AND d.description ILIKE '%' || :keyword || '%')))
+              AND (:keyword IS NULL OR :keyword = '' OR (d.name ILIKE '%' || :keyword || '%' ESCAPE '\\' OR (d.description IS NOT NULL AND d.description ILIKE '%' || :keyword || '%' ESCAPE '\\')))
               AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
               AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
                   OR (:sizeType = 'maxSize' AND d.file_size <= :size))
@@ -311,12 +313,12 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
             FROM documents d
             WHERE d.created_by = :userId
               AND d.is_deleted = false
-              AND (:keyword IS NULL OR :keyword = '' OR (d.name ILIKE '%' || :keyword || '%' OR (d.description IS NOT NULL AND d.description ILIKE '%' || :keyword || '%')))
+              AND (:keyword IS NULL OR :keyword = '' OR (d.name ILIKE '%' || :keyword || '%' ESCAPE '\\' OR (d.description IS NOT NULL AND d.description ILIKE '%' || :keyword || '%' ESCAPE '\\')))
               AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
               AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
                 OR (:sizeType = 'maxSize' AND d.file_size <= :size))
             """, nativeQuery = true)
-    Page<FileItemProjection> findExactDocs(@Param("userId") Integer userId,
+    Page<FileItemProjection> findExactDocs(@Param("userId") UUID userId,
             @Param("keyword") String keyword,
             @Param("mimeType") String mimeType,
             @Param("size") Double size,
@@ -336,8 +338,8 @@ public interface FileRepository extends JpaRepository<Folder, Integer> {
               AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
                   OR (:sizeType = 'maxSize' AND d.file_size <= :size))
             """, nativeQuery = true)
-    List<FileItemProjection> findOwnedDocumentsByIdsAndFilters(@Param("userId") Integer userId,
-            @Param("ids") List<Integer> ids,
+    List<FileItemProjection> findOwnedDocumentsByIdsAndFilters(@Param("userId") UUID userId,
+            @Param("ids") List<UUID> ids,
             @Param("mimeType") String mimeType,
             @Param("size") Double size,
             @Param("sizeType") String sizeType);

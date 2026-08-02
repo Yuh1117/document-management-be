@@ -1,4 +1,5 @@
 package com.vpgh.dms.repository;
+import java.util.UUID;
 
 import com.vpgh.dms.model.entity.SystemSetting;
 import org.springframework.data.domain.Page;
@@ -10,18 +11,18 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface SystemSettingRepository extends JpaRepository<SystemSetting, Integer> {
+public interface SystemSettingRepository extends JpaRepository<SystemSetting, UUID> {
     SystemSetting findByKey(String key);
 
     Page<SystemSetting> findAll(Specification<SystemSetting> specification, Pageable pageable);
 
     SystemSetting save(SystemSetting setting);
 
-    boolean existsByKeyAndIdNot(String key, Integer id);
+    boolean existsByKeyAndIdNot(String key, UUID id);
 
-    Optional<SystemSetting> findById(Integer integer);
+    Optional<SystemSetting> findById(UUID UUID);
 
-    void deleteById(Integer id);
+    void deleteById(UUID id);
 
     long count();
 }

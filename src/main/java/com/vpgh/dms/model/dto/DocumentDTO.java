@@ -1,11 +1,13 @@
 package com.vpgh.dms.model.dto;
 
+import java.util.UUID;
+
 import com.vpgh.dms.model.constant.StorageType;
 
 import java.time.Instant;
 
 public class DocumentDTO {
-    private Integer id;
+    private UUID id;
     private String name;
     private String description;
     private String originalFilename;
@@ -54,11 +56,11 @@ public class DocumentDTO {
         this.updatedAt = updatedAt;
     }
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

@@ -1,4 +1,5 @@
 package com.vpgh.dms.service.impl;
+import java.util.UUID;
 
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.DocumentVersion;
@@ -38,7 +39,7 @@ public class DocumentVersionServiceImpl implements DocumentVersionService {
     }
 
     @Override
-    public DocumentVersion getVersionById(Integer id) {
+    public DocumentVersion getVersionById(UUID id) {
         return this.documentVersionRepository.findById(id).orElse(null);
     }
 }

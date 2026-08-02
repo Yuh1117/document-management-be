@@ -1,4 +1,5 @@
 package com.vpgh.dms.service;
+import java.util.UUID;
 
 import com.vpgh.dms.model.entity.Document;
 import com.vpgh.dms.model.entity.DocumentVersion;
@@ -9,5 +10,5 @@ import java.util.Map;
 public interface DocumentVersionService {
     Page<DocumentVersion> getVersionsByDocument(Map<String, String> params, Document doc);
 
-    DocumentVersion getVersionById(Integer id);
+    DocumentVersion getVersionById(UUID id);
 }

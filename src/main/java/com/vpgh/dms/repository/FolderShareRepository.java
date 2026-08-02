@@ -1,4 +1,5 @@
 package com.vpgh.dms.repository;
+import java.util.UUID;
 
 import com.vpgh.dms.model.constant.ShareType;
 import com.vpgh.dms.model.entity.Folder;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface FolderShareRepository extends JpaRepository<FolderShare, Integer> {
+public interface FolderShareRepository extends JpaRepository<FolderShare, UUID> {
     Optional<FolderShare> findByFolderAndUserAndShareType(Folder folder, User user, ShareType shareType);
 
     Optional<FolderShare> findByFolderAndGroupInAndShareType(Folder folder, List<UserGroup> groups, ShareType shareType);

@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.dto.request;
 
+import java.util.UUID;
+
 import com.vpgh.dms.util.annotation.ValidFolder;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -7,15 +9,15 @@ import java.util.List;
 
 @ValidFolder
 public class FolderUploadReq {
-    private Integer parentId;
+    private UUID parentId;
     private List<MultipartFile> files;
     private List<String> relativePaths;
 
-    public Integer getParentId() {
+    public UUID getParentId() {
         return parentId;
     }
 
-    public void setParentId(Integer parentId) {
+    public void setParentId(UUID parentId) {
         this.parentId = parentId;
     }
 

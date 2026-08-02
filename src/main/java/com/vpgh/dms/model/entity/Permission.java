@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.entity;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vpgh.dms.model.TimestampedEntity;
 import jakarta.persistence.*;
@@ -10,8 +12,8 @@ import java.util.Set;
 @Table(name = "permissions")
 public class Permission extends TimestampedEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(nullable = false)
     private String name;
@@ -37,11 +39,11 @@ public class Permission extends TimestampedEntity {
         this.module = module;
     }
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class DocumentShareServiceImpl implements DocumentShareService {
@@ -25,8 +26,8 @@ public class DocumentShareServiceImpl implements DocumentShareService {
     private final FolderShareRepository folderShareRepository;
 
     public DocumentShareServiceImpl(DocumentShareRepository documentShareRepository, UserGroupService userGroupService,
-                                    UserRepository userRepository, EmailService emailService,
-                                    FolderShareRepository folderShareRepository) {
+            UserRepository userRepository, EmailService emailService,
+            FolderShareRepository folderShareRepository) {
         this.documentShareRepository = documentShareRepository;
         this.userGroupService = userGroupService;
         this.userRepository = userRepository;
@@ -64,7 +65,8 @@ public class DocumentShareServiceImpl implements DocumentShareService {
     }
 
     @Override
-    public List<DocumentShare> shareDocument(Document doc, List<ShareReq.UserShareDTO> userShareDTOS) throws MessagingException {
+    public List<DocumentShare> shareDocument(Document doc, List<ShareReq.UserShareDTO> userShareDTOS)
+            throws MessagingException {
         List<DocumentShare> shares = new ArrayList<>();
         boolean isNew = false;
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
@@ -72,7 +74,8 @@ public class DocumentShareServiceImpl implements DocumentShareService {
         for (ShareReq.UserShareDTO dto : userShareDTOS) {
             isNew = false;
             User user = this.userRepository.findByEmail(dto.getEmail());
-            if (doc.getCreatedBy().getId().equals(user.getId())) continue;
+            if (doc.getCreatedBy().getId().equals(user.getId()))
+                continue;
 
             DocumentShare existing = this.documentShareRepository.findByDocumentAndUser(doc, user).orElse(null);
             if (existing != null) {
@@ -138,6 +141,32 @@ public class DocumentShareServiceImpl implements DocumentShareService {
             return this.documentShareRepository.saveAll(ds);
         }
         return null;
+    }
+
+    @Override
+    public Set<UUID> getViewableDocumentIds(User user, List<Document> docs) {
+        if (docs == null || docs.isEmpty())
+            return Set.of();
+
+        Set<UUID> ownedIds = docs.stream()
+                .filter(d -> d.getCreatedBy().getId().equals(user.getId()))
+                .map(Document::getId)
+                .collect(Collectors.toSet());
+
+        List<Document> nonOwned = docs.stream()
+                .filter(d -> !d.getCreatedBy().getId().equals(user.getId()))
+                .toList();
+
+        if (nonOwned.isEmpty())
+            return ownedIds;
+
+        List<UserGroup> groups = this.userGroupService.getGroupsByUser(user);
+        Set<UUID> sharedIds = documentShareRepository.findViewableDocumentIds(nonOwned, user,
+                groups.isEmpty() ? List.of() : groups);
+
+        Set<UUID> result = new HashSet<>(ownedIds);
+        result.addAll(sharedIds);
+        return result;
     }
 
     private boolean checkUserOrGroupPermission(User user, Document doc, ShareType permission) {

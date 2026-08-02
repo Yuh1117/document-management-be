@@ -1,5 +1,7 @@
 package com.vpgh.dms.controller;
 
+import java.util.UUID;
+
 import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.dto.request.*;
 import com.vpgh.dms.model.dto.response.DocumentProcessingStatusRes;
@@ -34,6 +36,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
@@ -193,7 +196,7 @@ public class DocumentController {
 
     @PatchMapping("/secure/documents/{id}")
     @ApiMessage(key = "api.document.update", message = "Update document")
-    public ResponseEntity<DocumentDTO> update(@PathVariable Integer id, @Valid @RequestBody Document request) {
+    public ResponseEntity<DocumentDTO> update(@PathVariable UUID id, @Valid @RequestBody Document request) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         Document doc = resolveDocumentForEdit(id, currentUser);
 
@@ -214,7 +217,7 @@ public class DocumentController {
     }
 
     @GetMapping(path = "/secure/documents/download/{id}")
-    public ResponseEntity<InputStreamResource> download(@PathVariable Integer id) {
+    public ResponseEntity<InputStreamResource> download(@PathVariable UUID id) {
         Document doc = resolveDocumentForView(id, SecurityUtil.getCurrentUserFromThreadLocal());
         InputStream inputStream = documentService.downloadFileStream(doc.getFilePath());
 
@@ -226,7 +229,7 @@ public class DocumentController {
     }
 
     @PostMapping("/secure/documents/download/multiple")
-    public ResponseEntity<StreamingResponseBody> downloadMultiple(@RequestBody List<Integer> ids) throws IOException {
+    public ResponseEntity<StreamingResponseBody> downloadMultiple(@RequestBody List<UUID> ids) throws IOException {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         List<Document> docs = resolveViewableDocuments(ids, currentUser);
 
@@ -251,7 +254,7 @@ public class DocumentController {
 
     @PatchMapping("/secure/documents")
     @ApiMessage(key = "api.document.trash", message = "Move document to trash")
-    public ResponseEntity<Void> softDelete(@RequestBody List<Integer> ids) {
+    public ResponseEntity<Void> softDelete(@RequestBody List<UUID> ids) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         List<Document> docs = resolveOwnedActiveDocuments(ids, currentUser);
 
@@ -264,7 +267,7 @@ public class DocumentController {
 
     @PatchMapping(path = "/secure/documents/restore")
     @ApiMessage(key = "api.document.restore", message = "Restore document")
-    public ResponseEntity<List<Document>> restore(@RequestBody List<Integer> ids) {
+    public ResponseEntity<List<Document>> restore(@RequestBody List<UUID> ids) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         List<Document> docs = resolveOwnedTrashedDocuments(ids, currentUser);
 
@@ -277,7 +280,7 @@ public class DocumentController {
 
     @DeleteMapping("/secure/documents/permanent")
     @ApiMessage(key = "api.document.permanentDelete", message = "Permanently delete document")
-    public ResponseEntity<Void> hardDelete(@RequestBody List<Integer> ids) {
+    public ResponseEntity<Void> hardDelete(@RequestBody List<UUID> ids) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         List<Document> docs = resolveOwnedTrashedDocuments(ids, currentUser);
 
@@ -322,21 +325,25 @@ public class DocumentController {
 
     @GetMapping(path = "/secure/documents/{id}")
     @ApiMessage(key = "api.document.detail", message = "View document details")
-    public ResponseEntity<DocumentDTO> detail(@PathVariable Integer id) {
+    public ResponseEntity<DocumentDTO> detail(@PathVariable UUID id) {
         Document doc = resolveDocumentForView(id, SecurityUtil.getCurrentUserFromThreadLocal());
         return ResponseEntity.ok(this.documentService.convertDocumentToDocumentDTO(doc));
     }
 
     @PostMapping(path = "/secure/documents/processing-status")
     @ApiMessage(key = "api.document.processingStatus", message = "View document processing status")
-    public ResponseEntity<List<DocumentProcessingStatusRes>> getProcessingStatuses(@RequestBody List<Integer> ids) {
+    public ResponseEntity<List<DocumentProcessingStatusRes>> getProcessingStatuses(@RequestBody List<UUID> ids) {
         if (ids == null || ids.isEmpty()) {
             return ResponseEntity.ok(List.of());
         }
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
-        List<Document> docs = documentService.getDocumentsByIds(ids).stream()
-                .filter(doc -> !doc.getDeleted() && documentShareService.checkCanView(currentUser, doc))
+        List<Document> candidates = documentService.getDocumentsByIds(ids).stream()
+                .filter(doc -> !doc.getDeleted())
+                .toList();
+        Set<UUID> viewableIds = documentShareService.getViewableDocumentIds(currentUser, candidates);
+        List<Document> docs = candidates.stream()
+                .filter(doc -> viewableIds.contains(doc.getId()))
                 .toList();
 
         List<DocumentProcessingStatusRes> statuses = docs.stream()
@@ -350,7 +357,7 @@ public class DocumentController {
 
     @GetMapping(path = "/secure/documents/{id}/preview")
     @ApiMessage(key = "api.document.view", message = "View document")
-    public ResponseEntity<InputStreamResource> preview(@PathVariable Integer id) {
+    public ResponseEntity<InputStreamResource> preview(@PathVariable UUID id) {
         Document doc = resolveDocumentForView(id, SecurityUtil.getCurrentUserFromThreadLocal());
         InputStream inputStream = documentService.downloadFileStream(doc.getFilePath());
 
@@ -414,7 +421,7 @@ public class DocumentController {
         return ResponseEntity.ok(new DataResponse<>(content));
     }
 
-    private Folder resolveUploadFolder(Integer folderId, User user) {
+    private Folder resolveUploadFolder(UUID folderId, User user) {
         if (folderId == null)
             return null;
         Folder folder = folderService.getFolderById(folderId);
@@ -427,7 +434,7 @@ public class DocumentController {
         return folder;
     }
 
-    private Folder resolveTargetFolder(Integer folderId) {
+    private Folder resolveTargetFolder(UUID folderId) {
         if (folderId == null)
             return null;
         Folder folder = folderService.getFolderById(folderId);
@@ -437,7 +444,7 @@ public class DocumentController {
         return folder;
     }
 
-    private Document resolveDocumentForView(Integer id, User user) {
+    private Document resolveDocumentForView(UUID id, User user) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("error.document.notFoundOrDeleted");
@@ -448,7 +455,7 @@ public class DocumentController {
         return doc;
     }
 
-    private Document resolveDocumentForEdit(Integer id, User user) {
+    private Document resolveDocumentForEdit(UUID id, User user) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("error.document.notFoundOrDeleted");
@@ -459,36 +466,36 @@ public class DocumentController {
         return doc;
     }
 
-    private List<Document> resolveViewableDocuments(List<Integer> ids, User user) {
+    private List<Document> resolveViewableDocuments(List<UUID> ids, User user) {
         List<Document> docs = documentService.getDocumentsByIds(ids);
-        Map<Integer, Document> docsMap = docs.stream()
+        Map<UUID, Document> docsMap = docs.stream()
                 .filter(doc -> !doc.getDeleted() && documentShareService.checkCanView(user, doc))
                 .collect(Collectors.toMap(Document::getId, doc -> doc));
-        List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
+        List<UUID> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
         if (!notFoundIds.isEmpty()) {
             throw new NotFoundException("error.document.idsSoftDeleted", notFoundIds);
         }
         return docs;
     }
 
-    private List<Document> resolveOwnedActiveDocuments(List<Integer> ids, User user) {
+    private List<Document> resolveOwnedActiveDocuments(List<UUID> ids, User user) {
         List<Document> docs = documentService.getDocumentsByIds(ids);
-        Map<Integer, Document> docsMap = docs.stream()
+        Map<UUID, Document> docsMap = docs.stream()
                 .filter(doc -> !doc.getDeleted() && documentService.isOwnerDocument(doc, user))
                 .collect(Collectors.toMap(Document::getId, doc -> doc));
-        List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
+        List<UUID> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
         if (!notFoundIds.isEmpty()) {
             throw new NotFoundException("error.document.idsSoftDeleted", notFoundIds);
         }
         return docs;
     }
 
-    private List<Document> resolveOwnedTrashedDocuments(List<Integer> ids, User user) {
+    private List<Document> resolveOwnedTrashedDocuments(List<UUID> ids, User user) {
         List<Document> docs = documentService.getDocumentsByIds(ids);
-        Map<Integer, Document> docsMap = docs.stream()
+        Map<UUID, Document> docsMap = docs.stream()
                 .filter(doc -> doc.getDeleted() && documentService.isOwnerDocument(doc, user))
                 .collect(Collectors.toMap(Document::getId, doc -> doc));
-        List<Integer> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
+        List<UUID> notFoundIds = ids.stream().filter(id -> !docsMap.containsKey(id)).toList();
         if (!notFoundIds.isEmpty()) {
             throw new NotFoundException("error.document.idsNotSoftDeleted", notFoundIds);
         }

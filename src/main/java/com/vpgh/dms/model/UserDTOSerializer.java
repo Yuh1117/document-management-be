@@ -28,7 +28,7 @@ public class UserDTOSerializer extends JsonSerializer<User> {
         UserDTO dto = this.userService.convertUserToUserDTO(user);
 
         gen.writeStartObject();
-        gen.writeNumberField("id", dto.getId());
+        gen.writeStringField("id", dto.getId() != null ? dto.getId().toString() : null);
         gen.writeStringField("email", dto.getEmail());
         gen.writeStringField("firstName", dto.getFirstName());
         gen.writeStringField("lastName", dto.getLastName());

@@ -1,4 +1,5 @@
 package com.vpgh.dms.service.impl;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.DocumentDTO;
 import com.vpgh.dms.model.constant.ProcessingStatus;
@@ -73,7 +74,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public void updateProcessingStatus(Integer documentId, ProcessingStatus status,
+    public void updateProcessingStatus(UUID documentId, ProcessingStatus status,
             String processingReport, String extractedText, String processingMetrics) {
         Document doc = this.documentRepository.findById(documentId).orElse(null);
         if (doc == null) {
@@ -195,13 +196,13 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public Document getDocumentById(Integer id) {
+    public Document getDocumentById(UUID id) {
         Optional<Document> document = this.documentRepository.findById(id);
         return document.orElse(null);
     }
 
     @Override
-    public List<Document> getDocumentsByIds(List<Integer> ids) {
+    public List<Document> getDocumentsByIds(List<UUID> ids) {
         return this.documentRepository.findByIdIn(ids);
     }
 
@@ -211,13 +212,13 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public boolean existsByNameAndFolderAndIsDeletedFalseAndIdNot(String name, Folder folder, Integer excludeId) {
+    public boolean existsByNameAndFolderAndIsDeletedFalseAndIdNot(String name, Folder folder, UUID excludeId) {
         return this.documentRepository.existsByNameAndFolderAndIsDeletedFalseAndIdNot(name, folder, excludeId);
     }
 
     @Override
     public boolean existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy,
-            Integer id) {
+            UUID id) {
         return this.documentRepository.existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(name, createdBy,
                 id);
     }

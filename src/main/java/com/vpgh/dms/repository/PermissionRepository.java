@@ -1,4 +1,5 @@
 package com.vpgh.dms.repository;
+import java.util.UUID;
 
 import com.vpgh.dms.model.entity.Permission;
 import com.vpgh.dms.model.entity.Role;
@@ -13,18 +14,18 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PermissionRepository extends JpaRepository<Permission, Integer>, JpaSpecificationExecutor<Permission> {
-    List<Permission> findByIdIn(List<Integer> id);
+public interface PermissionRepository extends JpaRepository<Permission, UUID>, JpaSpecificationExecutor<Permission> {
+    List<Permission> findByIdIn(List<UUID> id);
 
-    Optional<Permission> findById(Integer id);
+    Optional<Permission> findById(UUID id);
 
-    boolean existsByApiPathAndMethodAndIdNot(String apiPath, String method, Integer id);
+    boolean existsByApiPathAndMethodAndIdNot(String apiPath, String method, UUID id);
 
     Permission save(Permission permission);
 
     Page<Permission> findAll(Specification<Permission> specification, Pageable pageable);
 
-    void deleteById(Integer id);
+    void deleteById(UUID id);
 
     List<Permission> findAllByRoles(Role role);
 }

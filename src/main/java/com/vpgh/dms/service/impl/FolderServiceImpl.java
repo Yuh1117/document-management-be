@@ -1,4 +1,5 @@
 package com.vpgh.dms.service.impl;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.FolderDTO;
 import com.vpgh.dms.model.dto.SubFolderDTO;
@@ -42,24 +43,24 @@ public class FolderServiceImpl implements FolderService {
     }
 
     @Override
-    public Folder getFolderById(Integer id) {
+    public Folder getFolderById(UUID id) {
         Optional<Folder> folder = this.folderRepository.findById(id);
         return folder.orElse(null);
     }
 
     @Override
-    public List<Folder> getFoldersByIds(List<Integer> ids) {
+    public List<Folder> getFoldersByIds(List<UUID> ids) {
         return this.folderRepository.findByIdIn(ids);
     }
 
     @Override
-    public boolean existsByNameAndParentAndIsDeletedFalseAndIdNot(String name, Folder parent, Integer id) {
+    public boolean existsByNameAndParentAndIsDeletedFalseAndIdNot(String name, Folder parent, UUID id) {
         return this.folderRepository.existsByNameAndParentAndIsDeletedFalseAndIdNot(name, parent, id);
     }
 
     @Override
     public boolean existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy,
-            Integer id) {
+            UUID id) {
         return this.folderRepository.existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(name, createdBy,
                 id);
     }
@@ -151,7 +152,7 @@ public class FolderServiceImpl implements FolderService {
     public void copyFolder(Folder folder, Folder targetFolder) {
         Stack<Folder> stack = new Stack<>();
         stack.push(folder);
-        Map<Integer, Folder> copiedMap = new HashMap<>();
+        Map<UUID, Folder> copiedMap = new HashMap<>();
 
         Folder rootCopy = new Folder();
         rootCopy.setName(generateUniqueName(folder.getName(), targetFolder));
@@ -185,7 +186,7 @@ public class FolderServiceImpl implements FolderService {
     public void moveFolder(Folder folder, Folder targetFolder) {
         Stack<Folder> stack = new Stack<>();
         stack.push(folder);
-        Map<Integer, Folder> movedMap = new HashMap<>();
+        Map<UUID, Folder> movedMap = new HashMap<>();
 
         while (!stack.isEmpty()) {
             Folder currentFolder = stack.pop();

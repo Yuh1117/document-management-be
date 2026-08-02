@@ -1,4 +1,5 @@
 package com.vpgh.dms.service.impl;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.UserGroupDTO;
 import com.vpgh.dms.model.constant.MemberEnum;
@@ -42,7 +43,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     }
 
     @Override
-    public UserGroup getGroupById(Integer id) {
+    public UserGroup getGroupById(UUID id) {
         return this.userGroupRepository.findById(id).orElse(null);
     }
 
@@ -67,10 +68,10 @@ public class UserGroupServiceImpl implements UserGroupService {
         group.setDescription(dto.getDescription());
 
         if (dto.getMembers() != null) {
-            Map<Integer, UserGroupMember> existingMembersMap = group.getMembers().stream()
+            Map<UUID, UserGroupMember> existingMembersMap = group.getMembers().stream()
                     .collect(Collectors.toMap(m -> m.getUser().getId(), m -> m));
 
-            Map<Integer, UserGroupDTO.MemberDTO> requestedMembersMap = dto.getMembers().stream()
+            Map<UUID, UserGroupDTO.MemberDTO> requestedMembersMap = dto.getMembers().stream()
                     .map(m -> {
                         User user = this.userRepository.findByEmail(m.getEmail());
                         m.setId(user.getId());
@@ -78,8 +79,8 @@ public class UserGroupServiceImpl implements UserGroupService {
                     })
                     .collect(Collectors.toMap(UserGroupDTO.MemberDTO::getId, m -> m, (m1, m2) -> m1));
 
-            for (Map.Entry<Integer, UserGroupDTO.MemberDTO> entry : requestedMembersMap.entrySet()) {
-                Integer id = entry.getKey();
+            for (Map.Entry<UUID, UserGroupDTO.MemberDTO> entry : requestedMembersMap.entrySet()) {
+                UUID id = entry.getKey();
                 UserGroupDTO.MemberDTO memberDTO = entry.getValue();
                 User user = this.userRepository.findById(id).orElse(null);
 
@@ -96,7 +97,7 @@ public class UserGroupServiceImpl implements UserGroupService {
             }
 
             group.getMembers().removeIf(m -> {
-                Integer memberId = m.getUser().getId();
+                UUID memberId = m.getUser().getId();
                 return !requestedMembersMap.containsKey(memberId) && !memberId.equals(group.getCreatedBy().getId());
             });
         }
@@ -110,7 +111,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     }
 
     @Override
-    public boolean existsByNameAndCreatedByAndIdNot(String name, User createdBy, Integer id) {
+    public boolean existsByNameAndCreatedByAndIdNot(String name, User createdBy, UUID id) {
         return this.userGroupRepository.existsByNameAndCreatedByAndIdNot(name, createdBy, id);
     }
 
@@ -165,7 +166,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     }
 
     @Override
-    public void deleteGroupById(Integer id) {
+    public void deleteGroupById(UUID id) {
         this.userGroupRepository.deleteById(id);
     }
 

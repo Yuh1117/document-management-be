@@ -24,6 +24,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -54,7 +55,7 @@ public class FileController {
         }
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
-        Page<FileItemDTO> items = fileService.getUserFiles(currentUser, null, params);
+        Page<FileItemDTO> items = fileService.getUserFiles(currentUser, false, params);
         List<FileItemDTO> files = items.getContent();
 
         PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
@@ -92,7 +93,7 @@ public class FileController {
         }
 
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
-        Page<FileItemDTO> items = fileService.getUserFiles(currentUser, -1, params);
+        Page<FileItemDTO> items = fileService.getUserFiles(currentUser, true, params);
         List<FileItemDTO> files = items.getContent();
 
         PaginationResDTO<List<FileItemDTO>> res = new PaginationResDTO<>();
@@ -124,7 +125,7 @@ public class FileController {
 
     @GetMapping("/secure/files/folders/{id}")
     @ApiMessage(key = "api.file.inFolder", message = "Get files in folder")
-    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getFolderFiles(@PathVariable("id") Integer id,
+    public ResponseEntity<PaginationResDTO<List<FileItemDTO>>> getFolderFiles(@PathVariable("id") UUID id,
             @RequestParam Map<String, String> params) {
         User currentUser = SecurityUtil.getCurrentUserFromThreadLocal();
         resolveViewableFolder(id, currentUser);
@@ -186,21 +187,21 @@ public class FileController {
     }
 
     @PostMapping("/secure/files/download/multiple")
-    public ResponseEntity<StreamingResponseBody> downloadMixed(@RequestBody Map<String, List<Integer>> request) {
+    public ResponseEntity<StreamingResponseBody> downloadMixed(@RequestBody Map<String, List<UUID>> request) {
         List<Folder> folders = folderService.getFoldersByIds(request.get("folderIds"));
         List<Document> docs = documentService.getDocumentsByIds(request.get("documentIds"));
 
-        Map<Integer, Folder> folderMap = folders.stream()
+        Map<UUID, Folder> folderMap = folders.stream()
                 .filter(f -> !f.getDeleted())
                 .collect(Collectors.toMap(Folder::getId, f -> f));
-        Map<Integer, Document> docMap = docs.stream()
+        Map<UUID, Document> docMap = docs.stream()
                 .filter(d -> !d.getDeleted())
                 .collect(Collectors.toMap(Document::getId, d -> d));
 
-        List<Integer> notFoundFolders = request.get("folderIds").stream()
+        List<UUID> notFoundFolders = request.get("folderIds").stream()
                 .filter(id -> !folderMap.containsKey(id))
                 .toList();
-        List<Integer> notFoundDocs = request.get("documentIds").stream()
+        List<UUID> notFoundDocs = request.get("documentIds").stream()
                 .filter(id -> !docMap.containsKey(id))
                 .toList();
 
@@ -230,7 +231,7 @@ public class FileController {
                 .body(stream);
     }
 
-    private void resolveViewableFolder(Integer id, User user) {
+    private void resolveViewableFolder(UUID id, User user) {
         Folder folder = folderService.getFolderById(id);
         if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
             throw new NotFoundException("error.folder.notFoundOrDeleted");
@@ -250,9 +251,9 @@ public class FileController {
             throw new NotFoundException("error.trash.empty");
         }
 
-        List<Integer> folderIds = files.stream().filter(f -> "folder".equals(f.getType()) && f.getFolder() != null)
+        List<UUID> folderIds = files.stream().filter(f -> "folder".equals(f.getType()) && f.getFolder() != null)
                 .map(f -> f.getFolder().getId()).toList();
-        List<Integer> documentIds = files.stream()
+        List<UUID> documentIds = files.stream()
                 .filter(f -> "document".equals(f.getType()) && f.getDocument() != null)
                 .map(f -> f.getDocument().getId()).toList();
 

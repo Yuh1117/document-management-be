@@ -1,4 +1,5 @@
 package com.vpgh.dms.service;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.UserGroupDTO;
 import com.vpgh.dms.model.entity.User;
@@ -12,7 +13,7 @@ import java.util.Map;
 public interface UserGroupService {
     UserGroup save(UserGroup group);
 
-    UserGroup getGroupById(Integer id);
+    UserGroup getGroupById(UUID id);
 
     UserGroup handleCreateGroup(UserGroupDTO dto);
 
@@ -20,7 +21,7 @@ public interface UserGroupService {
 
     List<UserGroup> getGroupsByUser(User user);
 
-    boolean existsByNameAndCreatedByAndIdNot(String name, User createdBy, Integer id);
+    boolean existsByNameAndCreatedByAndIdNot(String name, User createdBy, UUID id);
 
     Page<UserGroup> getAllGroups(Map<String, String> params);
 
@@ -28,7 +29,7 @@ public interface UserGroupService {
 
     UserGroupDTO convertUserGroupToUserGroupDTO(UserGroup group);
 
-    void deleteGroupById(Integer id);
+    void deleteGroupById(UUID id);
 
     UserGroupMember getMemberInGroup(UserGroup group, User user);
 

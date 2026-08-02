@@ -1,4 +1,5 @@
 package com.vpgh.dms.service.impl;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.SystemSettingDTO;
 import com.vpgh.dms.model.entity.SystemSetting;
@@ -67,12 +68,12 @@ public class SystemSettingServiceImpl implements SystemSettingService {
     }
 
     @Override
-    public boolean existsByKeyAndIdNot(String key, Integer id) {
+    public boolean existsByKeyAndIdNot(String key, UUID id) {
         return this.systemSettingRepository.existsByKeyAndIdNot(key, id);
     }
 
     @Override
-    public SystemSetting getSettingById(Integer id) {
+    public SystemSetting getSettingById(UUID id) {
         Optional<SystemSetting> setting = this.systemSettingRepository.findById(id);
         return setting.orElse(null);
     }
@@ -86,7 +87,7 @@ public class SystemSettingServiceImpl implements SystemSettingService {
     }
 
     @Override
-    public void deleteSettingById(Integer id) {
+    public void deleteSettingById(UUID id) {
         this.systemSettingRepository.deleteById(id);
     }
 

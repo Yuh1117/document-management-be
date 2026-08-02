@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.dto;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vpgh.dms.model.entity.Permission;
 import com.vpgh.dms.util.annotation.ValidRole;
@@ -10,18 +12,18 @@ import java.util.List;
 @ValidRole
 public class RoleDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private Integer id;
+    private UUID id;
     @NotBlank(message = "{validation.role.name.notBlank}")
     private String name;
     private String description;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private List<Permission> permissions;
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

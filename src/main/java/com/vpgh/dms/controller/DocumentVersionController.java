@@ -1,4 +1,5 @@
 package com.vpgh.dms.controller;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
 import com.vpgh.dms.model.entity.Document;
@@ -41,7 +42,7 @@ public class DocumentVersionController {
 
     @GetMapping(path = "/secure/documents/{id}/versions")
     @ApiMessage(key = "api.documentVersion.history", message = "View document version history")
-    public ResponseEntity<PaginationResDTO<List<DocumentVersion>>> detail(@PathVariable Integer id,
+    public ResponseEntity<PaginationResDTO<List<DocumentVersion>>> detail(@PathVariable UUID id,
             @RequestParam Map<String, String> params) {
         Document doc = resolveDocumentForView(id, SecurityUtil.getCurrentUserFromThreadLocal());
 
@@ -61,8 +62,8 @@ public class DocumentVersionController {
     }
 
     @GetMapping(path = "/secure/documents/{documentId}/versions/{versionId}/download")
-    public ResponseEntity<InputStreamResource> downloadVersion(@PathVariable Integer documentId,
-            @PathVariable Integer versionId) {
+    public ResponseEntity<InputStreamResource> downloadVersion(@PathVariable UUID documentId,
+            @PathVariable UUID versionId) {
 
         resolveDocumentForView(documentId, SecurityUtil.getCurrentUserFromThreadLocal());
 
@@ -80,7 +81,7 @@ public class DocumentVersionController {
                 .body(new InputStreamResource(inputStream));
     }
 
-    private Document resolveDocumentForView(Integer id, User user) {
+    private Document resolveDocumentForView(UUID id, User user) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("error.document.notFoundOrDeleted");

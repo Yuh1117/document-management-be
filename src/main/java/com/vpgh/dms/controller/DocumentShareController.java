@@ -1,4 +1,5 @@
 package com.vpgh.dms.controller;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.request.ShareReq;
 import com.vpgh.dms.model.entity.Document;
@@ -44,14 +45,14 @@ public class DocumentShareController {
 
     @GetMapping(path = "/secure/documents/share/{id}")
     @ApiMessage(key = "api.documentShare.detail", message = "View share details")
-    public ResponseEntity<List<DocumentShare>> getShare(@PathVariable("id") Integer id) {
+    public ResponseEntity<List<DocumentShare>> getShare(@PathVariable("id") UUID id) {
         Document doc = resolveDocumentForView(id, SecurityUtil.getCurrentUserFromThreadLocal());
         return ResponseEntity.ok(this.documentShareService.getShares(doc));
     }
 
     @DeleteMapping("/secure/documents/share/{id}")
     @ApiMessage(key = "api.documentShare.delete", message = "Remove share permission")
-    public ResponseEntity<Void> unshare(@PathVariable Integer id, @RequestBody List<Integer> request) {
+    public ResponseEntity<Void> unshare(@PathVariable UUID id, @RequestBody List<UUID> request) {
         Document doc = resolveDocumentForEdit(id, SecurityUtil.getCurrentUserFromThreadLocal());
 
         List<User> users = this.userService.getAllByIds(request);
@@ -63,7 +64,7 @@ public class DocumentShareController {
         return ResponseEntity.noContent().build();
     }
 
-    private Document resolveDocumentForView(Integer id, User user) {
+    private Document resolveDocumentForView(UUID id, User user) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("error.document.notFoundOrDeleted");
@@ -74,7 +75,7 @@ public class DocumentShareController {
         return doc;
     }
 
-    private Document resolveDocumentForEdit(Integer id, User user) {
+    private Document resolveDocumentForEdit(UUID id, User user) {
         Document doc = documentService.getDocumentById(id);
         if (doc == null || Boolean.TRUE.equals(doc.getDeleted())) {
             throw new NotFoundException("error.document.notFoundOrDeleted");

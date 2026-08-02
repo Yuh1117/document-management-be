@@ -1,4 +1,5 @@
 package com.vpgh.dms.controller;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.request.ShareReq;
 import com.vpgh.dms.model.entity.Folder;
@@ -43,14 +44,14 @@ public class FolderShareController {
 
     @GetMapping("/secure/folders/share/{id}")
     @ApiMessage(key = "api.folderShare.detail", message = "View folder share details")
-    public ResponseEntity<List<FolderShare>> getShare(@PathVariable Integer id) {
+    public ResponseEntity<List<FolderShare>> getShare(@PathVariable UUID id) {
         Folder folder = resolveViewableFolder(id);
         return ResponseEntity.ok(folderShareService.getShares(folder));
     }
 
     @DeleteMapping("/secure/folders/share/{id}")
     @ApiMessage(key = "api.folderShare.delete", message = "Remove folder share permission")
-    public ResponseEntity<Void> unshare(@PathVariable Integer id, @RequestBody List<Integer> request) {
+    public ResponseEntity<Void> unshare(@PathVariable UUID id, @RequestBody List<UUID> request) {
         Folder folder = resolveEditableFolder(id);
 
         List<User> users = userService.getAllByIds(request);
@@ -62,7 +63,7 @@ public class FolderShareController {
         return ResponseEntity.noContent().build();
     }
 
-    private Folder resolveEditableFolder(Integer id) {
+    private Folder resolveEditableFolder(UUID id) {
         Folder folder = folderService.getFolderById(id);
         if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
             throw new NotFoundException("error.folder.notFoundOrDeleted");
@@ -73,7 +74,7 @@ public class FolderShareController {
         return folder;
     }
 
-    private Folder resolveViewableFolder(Integer id) {
+    private Folder resolveViewableFolder(UUID id) {
         Folder folder = folderService.getFolderById(id);
         if (folder == null || Boolean.TRUE.equals(folder.getDeleted())) {
             throw new NotFoundException("error.folder.notFoundOrDeleted");

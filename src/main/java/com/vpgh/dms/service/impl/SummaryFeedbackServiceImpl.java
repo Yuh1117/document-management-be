@@ -1,4 +1,5 @@
 package com.vpgh.dms.service.impl;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.request.SummaryFeedbackReq;
 import com.vpgh.dms.model.dto.response.SummaryFeedbackDocumentStatsRes;
@@ -45,7 +46,7 @@ public class SummaryFeedbackServiceImpl implements SummaryFeedbackService {
 
     @Override
     @Transactional
-    public SummaryFeedback submitFeedback(Integer documentId, Integer userId, SummaryFeedbackReq req) {
+    public SummaryFeedback submitFeedback(UUID documentId, UUID userId, SummaryFeedbackReq req) {
         Document doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new NotFoundException("error.document.notFoundOrDeleted"));
         if (Boolean.TRUE.equals(doc.getDeleted())) {
@@ -79,7 +80,7 @@ public class SummaryFeedbackServiceImpl implements SummaryFeedbackService {
 
     @Override
     @Transactional(readOnly = true)
-    public SummaryFeedbackDocumentStatsRes getFeedbackStats(Integer documentId) {
+    public SummaryFeedbackDocumentStatsRes getFeedbackStats(UUID documentId) {
         Document doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new NotFoundException("error.document.notFoundOrDeleted"));
         if (Boolean.TRUE.equals(doc.getDeleted())) {

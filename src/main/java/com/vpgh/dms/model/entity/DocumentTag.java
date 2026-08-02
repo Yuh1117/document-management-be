@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.entity;
 
+import java.util.UUID;
+
 import com.vpgh.dms.model.FullAuditableEntity;
 import jakarta.persistence.*;
 
@@ -9,18 +11,18 @@ import java.util.Set;
 @Table(name = "document_tags")
 public class DocumentTag extends FullAuditableEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     private String name;
     private String color;
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "tags")
     private Set<Document> documents;
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

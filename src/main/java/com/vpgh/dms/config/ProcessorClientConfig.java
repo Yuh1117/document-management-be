@@ -19,6 +19,7 @@ public class ProcessorClientConfig {
         return restClientBuilder
                 .baseUrl(properties.getBaseUrl().replaceAll("/$", ""))
                 .requestFactory(factory)
+                .defaultHeader("X-API-Key", properties.getApiKey())
                 .build();
     }
 }

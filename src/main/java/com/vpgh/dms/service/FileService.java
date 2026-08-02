@@ -6,9 +6,10 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public interface FileService {
-    Page<FileItemDTO> getUserFiles(User user, Integer parentId, Map<String, String> params);
+    Page<FileItemDTO> getUserFiles(User user, boolean matchAll, Map<String, String> params);
 
     Page<FileItemDTO> getTrashFiles(User user, Map<String, String> params);
 
@@ -16,7 +17,7 @@ public interface FileService {
 
     Page<FileItemDTO> getRecentFiles(User user, Map<String, String> params);
 
-    Page<FileItemDTO> getFolderFiles(User user, Integer folderId, Map<String, String> params);
+    Page<FileItemDTO> getFolderFiles(User user, UUID folderId, Map<String, String> params);
 
     Page<FileItemDTO> getSharedFiles(User user, Map<String, String> params);
 

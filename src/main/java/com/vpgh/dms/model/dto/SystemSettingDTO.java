@@ -1,5 +1,7 @@
 package com.vpgh.dms.model.dto;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vpgh.dms.util.annotation.ValidSetting;
 import jakarta.validation.constraints.NotBlank;
@@ -7,18 +9,18 @@ import jakarta.validation.constraints.NotBlank;
 @ValidSetting
 public class SystemSettingDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private Integer id;
+    private UUID id;
     @NotBlank(message = "{validation.setting.key.notBlank}")
     private String key;
     @NotBlank(message = "{validation.setting.value.notBlank}")
     private String value;
     private String description;
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

@@ -1,4 +1,5 @@
 package com.vpgh.dms.service;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.FolderDTO;
 import com.vpgh.dms.model.dto.SubFolderDTO;
@@ -13,13 +14,13 @@ import java.util.zip.ZipOutputStream;
 
 @Service
 public interface FolderService {
-    Folder getFolderById(Integer id);
+    Folder getFolderById(UUID id);
 
-    List<Folder> getFoldersByIds(List<Integer> ids);
+    List<Folder> getFoldersByIds(List<UUID> ids);
 
-    boolean existsByNameAndParentAndIsDeletedFalseAndIdNot(String name, Folder parent, Integer id);
+    boolean existsByNameAndParentAndIsDeletedFalseAndIdNot(String name, Folder parent, UUID id);
 
-    boolean existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, Integer id);
+    boolean existsByNameAndCreatedByAndParentIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, UUID id);
 
     Folder save(Folder folder);
 

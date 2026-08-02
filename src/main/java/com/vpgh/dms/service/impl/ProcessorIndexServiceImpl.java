@@ -1,4 +1,5 @@
 package com.vpgh.dms.service.impl;
+import java.util.UUID;
 
 import com.vpgh.dms.service.ProcessorIndexService;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,7 +19,7 @@ public class ProcessorIndexServiceImpl implements ProcessorIndexService {
 
     @Override
     @Async
-    public void deleteIndex(Integer docId) {
+    public void deleteIndex(UUID docId) {
         try {
             processorRestClient.delete()
                     .uri("/index/{docId}", docId)

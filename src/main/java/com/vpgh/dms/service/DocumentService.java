@@ -1,4 +1,5 @@
 package com.vpgh.dms.service;
+import java.util.UUID;
 
 import com.vpgh.dms.model.constant.ProcessingStatus;
 import com.vpgh.dms.model.dto.DocumentDTO;
@@ -30,17 +31,17 @@ public interface DocumentService {
 
     Document getDocumentByStoredFilename(String storedFileName);
 
-    Document getDocumentById(Integer id);
+    Document getDocumentById(UUID id);
 
     void hardDelete(Document doc);
 
-    List<Document> getDocumentsByIds(List<Integer> ids);
+    List<Document> getDocumentsByIds(List<UUID> ids);
 
     List<Document> getAllDocumentsInFolders(List<Folder> folders);
 
-    boolean existsByNameAndFolderAndIsDeletedFalseAndIdNot(String name, Folder folder, Integer excludeId);
+    boolean existsByNameAndFolderAndIsDeletedFalseAndIdNot(String name, Folder folder, UUID excludeId);
 
-    boolean existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, Integer id);
+    boolean existsByNameAndCreatedByAndFolderIsNullAndIsDeletedFalseAndIdNot(String name, User createdBy, UUID id);
 
     Document findByNameAndFolderAndIsDeletedFalse(String name, Folder folder);
 
@@ -58,7 +59,7 @@ public interface DocumentService {
 
     boolean isOwnerDocument(Document doc, User user);
 
-    void updateProcessingStatus(Integer documentId, ProcessingStatus status,
+    void updateProcessingStatus(UUID documentId, ProcessingStatus status,
             String processingReport, String extractedText, String processingMetrics);
 
 }

@@ -32,6 +32,31 @@ services:
     networks:
       - dms-network
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: dms-redis
+    command:
+      [
+        "redis-server",
+        "--save",
+        "",
+        "--appendonly",
+        "no",
+        "--maxmemory",
+        "256mb",
+        "--maxmemory-policy",
+        "allkeys-lru",
+      ]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "6379:6379"
+    networks:
+      - dms-network
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
     container_name: dms-elasticsearch
@@ -67,6 +92,8 @@ services:
         condition: service_healthy
     networks:
       - dms-network
+    profiles:
+      - observability
 
   backend:
     build:
@@ -80,6 +107,10 @@ services:
       - "8080:8080"
     env_file:
       - .env
+    environment:
+      - MAVEN_OPTS=-Xmx256m
+      - JAVA_TOOL_OPTIONS=-Xmx512m -XX:MaxMetaspaceSize=256m -XX:+UseSerialGC
+    mem_limit: 1g
     depends_on:
       postgres:
         condition: service_healthy
@@ -111,6 +142,8 @@ services:
     gpus: all
     depends_on:
       elasticsearch:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       mlflow:
         condition: service_started
@@ -174,6 +207,8 @@ services:
       - prometheus-data:/prometheus
     networks:
       - dms-network
+    profiles:
+      - observability
 
   grafana:
     image: grafana/grafana:11.6.0
@@ -189,6 +224,8 @@ services:
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     networks:
       - dms-network
+    profiles:
+      - observability
 
   mlflow:
     image: ghcr.io/mlflow/mlflow:v3.10.1

@@ -1,16 +1,18 @@
 package com.vpgh.dms.model.dto.response;
 
+import java.util.UUID;
+
 public class SummaryFeedbackDocumentStatsRes {
-    private Integer documentId;
+    private UUID documentId;
     private long helpfulCount;
     private long notHelpfulCount;
     private long totalCount;
 
-    public Integer getDocumentId() {
+    public UUID getDocumentId() {
         return documentId;
     }
 
-    public void setDocumentId(Integer documentId) {
+    public void setDocumentId(UUID documentId) {
         this.documentId = documentId;
     }
 

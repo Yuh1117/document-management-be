@@ -1,4 +1,5 @@
 package com.vpgh.dms.controller;
+import java.util.UUID;
 
 import com.vpgh.dms.model.dto.RoleDTO;
 import com.vpgh.dms.model.dto.response.PaginationResDTO;
@@ -59,7 +60,7 @@ public class RoleController {
 
     @GetMapping(path = "/admin/roles/{id}")
     @ApiMessage(key = "api.role.detail", message = "Get role details")
-    public ResponseEntity<Role> detail(@PathVariable(value = "id") Integer id) {
+    public ResponseEntity<Role> detail(@PathVariable(value = "id") UUID id) {
         Role role = this.roleService.getRoleById(id);
         if (role == null) {
             throw new NotFoundException("error.role.notFound");
@@ -70,7 +71,7 @@ public class RoleController {
 
     @PatchMapping(path = "/admin/roles/{id}")
     @ApiMessage(key = "api.role.update", message = "Update role")
-    public ResponseEntity<Role> update(@PathVariable("id") Integer id,
+    public ResponseEntity<Role> update(@PathVariable("id") UUID id,
                                        @RequestBody RoleDTO reqRole) {
 
         Role role = this.roleService.getRoleById(id);
@@ -97,7 +98,7 @@ public class RoleController {
 
     @DeleteMapping(path = "/admin/roles/{id}")
     @ApiMessage(key = "api.role.delete", message = "Delete role")
-    public ResponseEntity<Void> delete(@PathVariable(value = "id") Integer id) {
+    public ResponseEntity<Void> delete(@PathVariable(value = "id") UUID id) {
         Role role = this.roleService.getRoleById(id);
         if (role == null) {
             throw new NotFoundException("error.role.notFound");
