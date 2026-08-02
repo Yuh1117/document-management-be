@@ -67,6 +67,8 @@ services:
         condition: service_healthy
     networks:
       - dms-network
+    profiles:
+      - observability
 
   backend:
     build:
@@ -80,6 +82,10 @@ services:
       - "8080:8080"
     env_file:
       - .env
+    environment:
+      - MAVEN_OPTS=-Xmx256m
+      - JAVA_TOOL_OPTIONS=-Xmx512m -XX:MaxMetaspaceSize=256m -XX:+UseSerialGC
+    mem_limit: 1g
     depends_on:
       postgres:
         condition: service_healthy
@@ -174,6 +180,8 @@ services:
       - prometheus-data:/prometheus
     networks:
       - dms-network
+    profiles:
+      - observability
 
   grafana:
     image: grafana/grafana:11.6.0
@@ -189,6 +197,8 @@ services:
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     networks:
       - dms-network
+    profiles:
+      - observability
 
   mlflow:
     image: ghcr.io/mlflow/mlflow:v3.10.1
