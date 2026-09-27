@@ -139,7 +139,7 @@ services:
       - mlflow-data:/mlflow
     env_file:
       - ../document-management-processor/.env
-    gpus: all
+    # gpus: all
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -165,7 +165,7 @@ services:
       - mlflow-data:/mlflow:ro
     env_file:
       - ../document-management-processor/.env
-    gpus: all
+    # gpus: all
     depends_on:
       rabbitmq:
         condition: service_healthy
