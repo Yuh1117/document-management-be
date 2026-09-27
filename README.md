@@ -52,7 +52,7 @@ Data flow:
 
 - Java 25
 - Spring Boot 3.5
-- Maven
+- Gradle
 - PostgreSQL
 - Flyway
 - Spring Security + OAuth2 Resource Server (JWT)
@@ -160,6 +160,38 @@ Documents uploaded before the migration keep working from AWS S3
 in R2 and tagged `storage_type = 'CLOUDFLARE_R2'`. The `document-management-processor`
 service also reads these same `R2_*` variables to download files for OCR/indexing —
 keep both `.env` files in sync.
+
+### Build tool: migrated from Maven to Gradle
+
+This project **used to build with Maven** (`pom.xml`, `mvnw`/`mvnw.cmd`). It now
+builds with [Gradle](https://gradle.org/) (Kotlin DSL, `build.gradle.kts`) instead —
+all dependencies and the Spring Boot plugin were carried over 1:1, only the build
+tool changed, not the application code.
+
+The Gradle Wrapper (`gradlew`/`gradlew.bat`) is pinned to **Gradle 9.1.0**, since
+older Gradle versions (8.x) fail to start on JDK 25. Use the wrapper, not a
+globally installed `gradle`, so everyone builds with the same version:
+
+```bash
+./gradlew clean build
+./gradlew bootRun
+./gradlew test
+```
+
+Command equivalents:
+
+| Maven (old) | Gradle (new) |
+|---|---|
+| `mvn clean package` | `./gradlew clean build` |
+| `mvn spring-boot:run` | `./gradlew bootRun` |
+| `mvn test` | `./gradlew test` |
+| `mvn -DskipTests package` | `./gradlew build -x test` |
+
+`Dockerfile` and `Dockerfile.prod` were updated accordingly to run `./gradlew`
+instead of `mvn`, and the build output moved from `target/*.jar` to
+`build/libs/*.jar`. Flyway no longer has a standalone CLI task (`mvn flyway:migrate`
+had no Gradle plugin equivalent added) — migrations still run automatically on
+application startup.
 
 ## Docker Compose
 
