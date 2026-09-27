@@ -31,7 +31,7 @@ public class FolderServiceImpl implements FolderService {
     private final DocumentRepository documentRepository;
     private final DocumentService documentService;
     private final UserService userService;
-    @Value("${aws.bucket.name}")
+    @Value("${r2.bucket-name}")
     private String bucketName;
 
     public FolderServiceImpl(FolderRepository folderRepository, DocumentRepository documentRepository,

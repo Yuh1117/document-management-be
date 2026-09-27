@@ -1,9 +1,11 @@
-FROM maven:3.9-eclipse-temurin-25 AS build
+FROM eclipse-temurin:25-jdk AS build
 
 WORKDIR /app
 
-COPY pom.xml ./
+COPY gradlew ./
+COPY gradle ./gradle
+COPY build.gradle.kts settings.gradle.kts ./
 
-RUN mvn dependency:resolve
+RUN ./gradlew dependencies --no-daemon -q
 
-CMD ["mvn", "spring-boot:run"]
+CMD ["./gradlew", "bootRun", "--no-daemon"]

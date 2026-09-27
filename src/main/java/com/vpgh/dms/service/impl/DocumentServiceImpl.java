@@ -47,7 +47,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final S3Presigner s3Presigner;
     private final DocumentQueueService documentQueueService;
     private final ProcessorIndexService processorIndexService;
-    @Value("${aws.bucket.name}")
+    @Value("${r2.bucket-name}")
     private String bucketName;
     @Value("${document.version.max}")
     private int maxVersions;
@@ -331,7 +331,7 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setMimeType(file.getContentType());
         byte[] fileBytes = Files.readAllBytes(tempFile.toPath());
         doc.setFileHash(DigestUtils.md5DigestAsHex(fileBytes));
-        doc.setStorageType(StorageType.AWS_S3);
+        doc.setStorageType(StorageType.CLOUDFLARE_R2);
         doc.setFolder(folder);
         doc.setProcessingReport(null);
 

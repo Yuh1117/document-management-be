@@ -6,20 +6,26 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.core.checksums.RequestChecksumCalculation;
+import software.amazon.awssdk.core.checksums.ResponseChecksumValidation;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
+import java.net.URI;
+
 @Configuration
 public class S3Configuration {
-    @Value("${cloud.aws.credentials.access-key}")
+    @Value("${r2.access-key}")
     private String accessKey;
 
-    @Value("${cloud.aws.credentials.secret-key}")
+    @Value("${r2.secret-key}")
     private String secretKey;
 
-    @Value("${cloud.aws.region.static}")
+    @Value("${r2.region}")
     private String region;
 
+    @Value("${r2.endpoint}")
+    private String endpoint;
 
     @Bean
     public S3Client s3Client() {
@@ -27,7 +33,11 @@ public class S3Configuration {
 
         return S3Client.builder()
                 .region(Region.of(region))
+                .endpointOverride(URI.create(endpoint))
                 .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))
+                .serviceConfiguration(r2ServiceConfiguration())
+                .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED)
+                .responseChecksumValidation(ResponseChecksumValidation.WHEN_REQUIRED)
                 .build();
     }
 
@@ -37,7 +47,15 @@ public class S3Configuration {
 
         return S3Presigner.builder()
                 .region(Region.of(region))
+                .endpointOverride(URI.create(endpoint))
                 .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))
+                .serviceConfiguration(r2ServiceConfiguration())
+                .build();
+    }
+
+    private software.amazon.awssdk.services.s3.S3Configuration r2ServiceConfiguration() {
+        return software.amazon.awssdk.services.s3.S3Configuration.builder()
+                .pathStyleAccessEnabled(true)
                 .build();
     }
 }

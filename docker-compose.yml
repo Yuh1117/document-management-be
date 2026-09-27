@@ -54,6 +54,8 @@ services:
       retries: 5
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
     networks:
       - dms-network
 
@@ -139,7 +141,7 @@ services:
       - mlflow-data:/mlflow
     env_file:
       - ../document-management-processor/.env
-    gpus: all
+    # gpus: all
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -165,7 +167,7 @@ services:
       - mlflow-data:/mlflow:ro
     env_file:
       - ../document-management-processor/.env
-    gpus: all
+    # gpus: all
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -254,6 +256,7 @@ services:
 
 volumes:
   postgres-data:
+  redis-data:
   rabbitmq-data:
   elasticsearch-data:
   m2-cache:

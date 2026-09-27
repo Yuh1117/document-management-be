@@ -21,7 +21,7 @@ import java.util.Arrays;
 @Configuration
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfiguration {
-    @Value("${cors-allowedOrigins}")
+    @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
     @Bean
