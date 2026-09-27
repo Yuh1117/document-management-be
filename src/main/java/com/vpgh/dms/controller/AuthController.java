@@ -18,6 +18,8 @@ import com.vpgh.dms.util.annotation.ApiMessage;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.ResponseCookie;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +52,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final JwtDecoder jwtDecoder;
     private final RoleService roleService;
+    private final MessageSource messageSource;
     @Value("${google.client-id}")
     private String clientId;
     @Value("${google.client-secret}")
@@ -58,12 +61,13 @@ public class AuthController {
     private String googleTokenUrl;
 
     public AuthController(UserService userService, AuthenticationManagerBuilder authenticationManagerBuilder,
-            JwtUtil jwtUtil, JwtDecoder jwtDecoder, RoleService roleService) {
+            JwtUtil jwtUtil, JwtDecoder jwtDecoder, RoleService roleService, MessageSource messageSource) {
         this.userService = userService;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.jwtUtil = jwtUtil;
         this.jwtDecoder = jwtDecoder;
         this.roleService = roleService;
+        this.messageSource = messageSource;
     }
 
     private void setAccessTokenCookie(HttpServletResponse response, String accessToken) {
@@ -269,7 +273,8 @@ public class AuthController {
 
                     return ResponseEntity.status(HttpStatus.OK).body(userLoginRes);
                 } catch (Exception e) {
-                    return ResponseEntity.status(500).body("Lỗi khi tạo JWT");
+                    return ResponseEntity.status(500).body(
+                            messageSource.getMessage("error.auth.jwtCreationFailed", null, LocaleContextHolder.getLocale()));
                 }
 
             } else {

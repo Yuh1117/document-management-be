@@ -9,6 +9,8 @@ import com.vpgh.dms.repository.UserRepository;
 import com.vpgh.dms.service.*;
 import com.vpgh.dms.util.SecurityUtil;
 import jakarta.mail.MessagingException;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,7 @@ public class FolderShareServiceImpl implements FolderShareService {
     private final FolderService folderService;
     private final DocumentService documentService;
     private final EmailService emailService;
+    private final MessageSource messageSource;
 
 
     public FolderShareServiceImpl(FolderShareRepository folderShareRepository,
@@ -31,7 +34,8 @@ public class FolderShareServiceImpl implements FolderShareService {
                                   UserGroupService userGroupService,
                                   FolderService folderService,
                                   DocumentService documentService,
-                                  EmailService emailService) {
+                                  EmailService emailService,
+                                  MessageSource messageSource) {
         this.folderShareRepository = folderShareRepository;
         this.userRepository = userRepository;
         this.documentShareRepository = documentShareRepository;
@@ -39,6 +43,7 @@ public class FolderShareServiceImpl implements FolderShareService {
         this.folderService = folderService;
         this.documentService = documentService;
         this.emailService = emailService;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -122,7 +127,9 @@ public class FolderShareServiceImpl implements FolderShareService {
                     variables.put("fileName", allFolders.getFirst().getName());
                     variables.put("type", "folder");
 
-                    this.emailService.sendHtmlEmail(user.getEmail(), "Bạn được chia sẻ một thư mục", variables);
+                    this.emailService.sendHtmlEmail(user.getEmail(),
+                            messageSource.getMessage("email.folderShare.subject", null, LocaleContextHolder.getLocale()),
+                            variables);
                 }
 
             }

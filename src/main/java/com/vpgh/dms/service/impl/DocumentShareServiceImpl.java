@@ -11,6 +11,8 @@ import com.vpgh.dms.service.EmailService;
 import com.vpgh.dms.service.UserGroupService;
 import com.vpgh.dms.util.SecurityUtil;
 import jakarta.mail.MessagingException;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,15 +26,17 @@ public class DocumentShareServiceImpl implements DocumentShareService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final FolderShareRepository folderShareRepository;
+    private final MessageSource messageSource;
 
     public DocumentShareServiceImpl(DocumentShareRepository documentShareRepository, UserGroupService userGroupService,
             UserRepository userRepository, EmailService emailService,
-            FolderShareRepository folderShareRepository) {
+            FolderShareRepository folderShareRepository, MessageSource messageSource) {
         this.documentShareRepository = documentShareRepository;
         this.userGroupService = userGroupService;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.folderShareRepository = folderShareRepository;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -96,7 +100,9 @@ public class DocumentShareServiceImpl implements DocumentShareService {
                 variables.put("fileName", doc.getName());
                 variables.put("type", "file");
 
-                this.emailService.sendHtmlEmail(user.getEmail(), "Bạn được chia sẻ một tài liệu", variables);
+                this.emailService.sendHtmlEmail(user.getEmail(),
+                        messageSource.getMessage("email.documentShare.subject", null, LocaleContextHolder.getLocale()),
+                        variables);
             }
         }
 

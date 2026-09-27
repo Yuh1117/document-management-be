@@ -5,6 +5,7 @@ import com.vpgh.dms.service.SystemSettingService;
 import com.vpgh.dms.util.annotation.ValidFile;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.springframework.context.MessageSource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -12,9 +13,11 @@ import java.util.List;
 public class FileValidator implements ConstraintValidator<ValidFile, FileUploadReq> {
 
     private final SystemSettingService systemSettingService;
+    private final MessageSource messageSource;
 
-    public FileValidator(SystemSettingService systemSettingService) {
+    public FileValidator(SystemSettingService systemSettingService, MessageSource messageSource) {
         this.systemSettingService = systemSettingService;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -25,9 +28,7 @@ public class FileValidator implements ConstraintValidator<ValidFile, FileUploadR
 
         List<MultipartFile> files = fileUploadReq.getFiles();
         if (files == null || files.isEmpty()) {
-            context.buildConstraintViolationWithTemplate("Phải chọn ít nhất một file để upload.")
-                    .addPropertyNode("files")
-                    .addConstraintViolation();
+            ValidationMessages.reject(context, messageSource, "files", "validation.file.atLeastOne");
             return false;
         } else {
             List<String> allowedTypes = List.of(this.systemSettingService.getSettingByKey("allowedFileType").getValue().split(";"));
@@ -37,16 +38,14 @@ public class FileValidator implements ConstraintValidator<ValidFile, FileUploadR
                 MultipartFile file = files.get(i);
 
                 if (!allowedTypes.contains(file.getContentType())) {
-                    context.buildConstraintViolationWithTemplate("Loại file không hợp lệ: " + file.getOriginalFilename())
-                            .addPropertyNode("file " + (i + 1))
-                            .addConstraintViolation();
+                    ValidationMessages.reject(context, messageSource, "file " + (i + 1),
+                            "validation.file.type.invalid", file.getOriginalFilename());
                     valid = false;
                 }
 
                 if (file.getSize() > maxSize) {
-                    context.buildConstraintViolationWithTemplate("Kích thước vượt quá giới hạn: " + file.getOriginalFilename())
-                            .addPropertyNode("file " + (i + 1))
-                            .addConstraintViolation();
+                    ValidationMessages.reject(context, messageSource, "file " + (i + 1),
+                            "validation.file.size.exceeded", file.getOriginalFilename());
                     valid = false;
                 }
             }

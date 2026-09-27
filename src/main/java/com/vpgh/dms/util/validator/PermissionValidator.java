@@ -5,13 +5,16 @@ import com.vpgh.dms.service.PermissionService;
 import com.vpgh.dms.util.annotation.ValidPermission;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.springframework.context.MessageSource;
 
 public class PermissionValidator implements ConstraintValidator<ValidPermission, PermissionDTO> {
 
     private final PermissionService permissionService;
+    private final MessageSource messageSource;
 
-    public PermissionValidator(PermissionService permissionService) {
+    public PermissionValidator(PermissionService permissionService, MessageSource messageSource) {
         this.permissionService = permissionService;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -26,12 +29,8 @@ public class PermissionValidator implements ConstraintValidator<ValidPermission,
             boolean exist = this.permissionService.existsByApiPathAndMethodAndIdNot(permission.getApiPath(),
                     permission.getMethod(), permission.getId());
             if (exist) {
-                context.buildConstraintViolationWithTemplate("Quyền đã tồn tại!")
-                        .addPropertyNode("apiPath")
-                        .addConstraintViolation();
-                context.buildConstraintViolationWithTemplate("Quyền đã tồn tại!")
-                        .addPropertyNode("method")
-                        .addConstraintViolation();
+                ValidationMessages.reject(context, messageSource, "apiPath", "validation.permission.unique");
+                ValidationMessages.reject(context, messageSource, "method", "validation.permission.unique");
                 valid = false;
             }
         }

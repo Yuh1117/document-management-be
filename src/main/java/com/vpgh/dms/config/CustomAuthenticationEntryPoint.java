@@ -6,6 +6,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
@@ -19,6 +21,8 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     private final AuthenticationEntryPoint delegate = new BearerTokenAuthenticationEntryPoint();
     @Autowired
     private ObjectMapper mapper;
+    @Autowired
+    private MessageSource messageSource;
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
@@ -31,7 +35,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         res.setStatusCode(HttpStatus.UNAUTHORIZED.value());
         res.setMessage(authException.getCause() != null ?
                 authException.getCause().getMessage() : authException.getMessage());
-        res.setError("Token không hợp lệ");
+        res.setError(messageSource.getMessage("error.auth.invalidToken", null, LocaleContextHolder.getLocale()));
 
         mapper.writeValue(response.getWriter(), res);
     }

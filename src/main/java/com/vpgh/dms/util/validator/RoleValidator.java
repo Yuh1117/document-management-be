@@ -7,16 +7,19 @@ import com.vpgh.dms.service.RoleService;
 import com.vpgh.dms.util.annotation.ValidRole;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
 @Component
 public class RoleValidator implements ConstraintValidator<ValidRole, RoleDTO> {
     private final RoleService roleService;
     private final PermissionService permissionService;
+    private final MessageSource messageSource;
 
-    public RoleValidator(RoleService roleService, PermissionService permissionService) {
+    public RoleValidator(RoleService roleService, PermissionService permissionService, MessageSource messageSource) {
         this.roleService = roleService;
         this.permissionService = permissionService;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -28,9 +31,7 @@ public class RoleValidator implements ConstraintValidator<ValidRole, RoleDTO> {
         if (role.getName() != null && !role.getName().trim().isEmpty()) {
             boolean existName = this.roleService.existsByNameAndIdNot(role.getName(), role.getId());
             if (existName) {
-                context.buildConstraintViolationWithTemplate("Tên đã tồn tại!")
-                        .addPropertyNode("name")
-                        .addConstraintViolation();
+                ValidationMessages.reject(context, messageSource, "name", "validation.role.name.unique");
                 valid = false;
             }
         }
@@ -38,9 +39,8 @@ public class RoleValidator implements ConstraintValidator<ValidRole, RoleDTO> {
         if (role.getPermissions() != null) {
             for (Permission p : role.getPermissions()) {
                 if (this.permissionService.getPermissionById(p.getId()) == null) {
-                    context.buildConstraintViolationWithTemplate("Không có quyền nào với id " + p.getId())
-                            .addPropertyNode("permissions")
-                            .addConstraintViolation();
+                    ValidationMessages.reject(context, messageSource, "permissions",
+                            "validation.role.permission.notFound", p.getId());
                     valid = false;
                     break;
                 }
