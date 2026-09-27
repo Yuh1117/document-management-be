@@ -1,6 +1,6 @@
 # Document Management System (Backend)
 
-A Spring Boot-based backend for a Document Management System (DMS). This project provides document and folder management, user authentication/authorization (JWT + Google OAuth), file storage (Cloudinary / AWS S3), RabbitMQ integration, and REST APIs with OpenAPI documentation.
+A Spring Boot-based backend for a Document Management System (DMS). This project provides document and folder management, user authentication/authorization (JWT + Google OAuth), file storage (Cloudinary / Cloudflare R2), RabbitMQ integration, and REST APIs with OpenAPI documentation.
 
 ## System overview
 
@@ -14,7 +14,7 @@ This repository is one of three services that make up the DMS:
 
 Data flow:
 1. The frontend calls the backend REST API to upload/manage documents.
-2. The backend stores files in S3/Cloudinary, persists metadata in PostgreSQL, and publishes document events to RabbitMQ.
+2. The backend stores files in Cloudflare R2/Cloudinary, persists metadata in PostgreSQL, and publishes document events to RabbitMQ.
 3. The processor consumes RabbitMQ events, runs OCR/parsing, chunking, generates embeddings, and indexes content into Elasticsearch.
 4. Search and summarization requests from the frontend are proxied through the backend to the processor service, authenticated with a shared API key (`dms.processor.api-key`).
 
@@ -38,7 +38,7 @@ Data flow:
 - RESTful APIs for document and folder management (CRUD, versioning, copy/move, sharing)
 - Authentication and authorization (Spring Security + JWT, Google OAuth)
 - Role, permission, and user group management
-- File storage integrations: Cloudinary and AWS S3
+- File storage integrations: Cloudinary and Cloudflare R2 (via the S3-compatible API) — migrated from AWS S3, see [File storage](#configuration)
 - RabbitMQ publisher — triggers processor pipeline on document upload
 - Proxies search, summarization, and model management requests to the processor service
 - Summary feedback collection
@@ -58,7 +58,7 @@ Data flow:
 - Spring Security + OAuth2 Resource Server (JWT)
 - Spring AMQP (RabbitMQ)
 - Spring WebFlux (WebClient — processor communication)
-- Cloudinary + AWS SDK (S3)
+- Cloudinary + AWS SDK for Java v2 (S3 client, pointed at Cloudflare R2)
 - iText Core (PDF)
 - Spring Mail + Thymeleaf (email templates)
 - Google API Client (Google OAuth)
@@ -118,13 +118,49 @@ Primary configuration lives in `src/main/resources/application.properties`, whic
 imports a `.env` file via `spring.config.import`. Read that file for the
 authoritative list of properties and their defaults.
 
-Two things are easy to get wrong: the RabbitMQ, AWS, and processor keys are
+Two things are easy to get wrong: the RabbitMQ, storage, and processor keys are
 **custom properties**, not the Spring Boot defaults — `rabbitmq.host` rather than
-`spring.rabbitmq.host`, and `cloud.aws.credentials.*` rather than `aws.s3.*`. And
+`spring.rabbitmq.host`, and `r2.access-key` rather than `aws.s3.*`. And
 `dms.processor.api-key` must match the processor's `PROCESSOR_API_KEY`, or every
 search and summarize call will be rejected.
 
 Do not commit secrets to source control. Use environment variables or a secrets manager in production.
+
+### File storage: migrated from AWS S3 to Cloudflare R2
+
+This project **used to store documents in AWS S3**. It now stores them in
+[Cloudflare R2](https://developers.cloudflare.com/r2/) instead, accessed
+through the same AWS SDK for Java v2 `S3Client`/`S3Presigner` since R2 exposes
+an S3-compatible API — only the client configuration changed, not the
+upload/download/copy/presign logic in `DocumentServiceImpl`.
+
+`S3Configuration` (`config/S3Configuration.java`) points the client at R2 by:
+overriding the endpoint, forcing path-style addressing, setting region to
+`auto`, and relaxing checksum validation to `WHEN_REQUIRED` — R2 doesn't
+support the newer AWS SDK default checksum behavior, and leaving it on will
+cause uploads to fail.
+
+Required `.env` values (bound via the `r2.*` properties in
+`application.properties`):
+
+| Variable | Description |
+|---|---|
+| `R2_ACCESS_KEY` / `R2_SECRET_KEY` | R2 API token credentials, created in the Cloudflare dashboard (**not** AWS IAM keys) |
+| `R2_REGION` | Always `auto` for R2 |
+| `R2_BUCKET_NAME` | Target R2 bucket name |
+| `R2_ENDPOINT` | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
+
+These replace the old `AWS_S3_ACCESS_KEY` / `AWS_S3_SECRET_KEY` / `AWS_S3_REGION`
+/ `AWS_S3_BUCKET_NAME` variables and the `cloud.aws.*` / `aws.bucket.name`
+properties from the S3 setup.
+
+R2 doesn't support S3 object versioning, ACLs, tagging, or bucket policies —
+this project doesn't rely on any of those, so it was a drop-in replacement.
+Documents uploaded before the migration keep working from AWS S3
+(`storage_type = 'AWS_S3'`); documents uploaded after the migration are stored
+in R2 and tagged `storage_type = 'CLOUDFLARE_R2'`. The `document-management-processor`
+service also reads these same `R2_*` variables to download files for OCR/indexing —
+keep both `.env` files in sync.
 
 ## Docker Compose
 
