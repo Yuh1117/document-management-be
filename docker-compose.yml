@@ -54,6 +54,8 @@ services:
       retries: 5
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
     networks:
       - dms-network
 
@@ -254,6 +256,7 @@ services:
 
 volumes:
   postgres-data:
+  redis-data:
   rabbitmq-data:
   elasticsearch-data:
   m2-cache:
