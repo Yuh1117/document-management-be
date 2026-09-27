@@ -67,17 +67,16 @@ Data flow:
 ## Prerequisites
 
 - JDK 25
-- Maven 3.6+
+- JDK 25 (the bundled Gradle wrapper handles the rest)
 - PostgreSQL
 - Running RabbitMQ instance
 - Running processor service (for search/summarization)
 - (Optional) Docker and docker-compose for containerized local services
 
-Verify Java and Maven are available:
+Verify Java is available:
 
 ```bash
 java -version
-mvn -v
 ```
 
 ## Quick start
@@ -89,21 +88,21 @@ git clone <repo-url>
 cd document-management-be
 ```
 
-2. Configure `src/main/resources/application.properties` (or use environment variables). See [Configuration](#configuration) for required values.
+2. Configure `src/main/resources/application.yml` (or use environment variables). See [Configuration](#configuration) for required values.
 
 3. Prepare a PostgreSQL database and set the DB connection properties.
 
 4. Build and run:
 
 ```bash
-mvn clean package
-java -jar target/dms-0.0.1-SNAPSHOT.jar
+./gradlew clean build
+java -jar build/libs/dms-0.0.1-SNAPSHOT.jar
 ```
 
-Or run with Maven for development:
+Or run with Gradle for development:
 
 ```bash
-mvn spring-boot:run
+./gradlew bootRun
 ```
 
 5. API docs are available at:
@@ -114,7 +113,7 @@ http://localhost:8080/swagger-ui/index.html
 
 ## Configuration
 
-Primary configuration lives in `src/main/resources/application.properties`, which
+Primary configuration lives in `src/main/resources/application.yml`, which
 imports a `.env` file via `spring.config.import`. Read that file for the
 authoritative list of properties and their defaults.
 
@@ -141,7 +140,7 @@ support the newer AWS SDK default checksum behavior, and leaving it on will
 cause uploads to fail.
 
 Required `.env` values (bound via the `r2.*` properties in
-`application.properties`):
+`application.yml`):
 
 | Variable | Description |
 |---|---|
@@ -199,7 +198,7 @@ The `processor` and `worker` services request `gpus: all`. Remove that key from
 Prometheus scrapes only the `worker:8001` target, and the provisioned Grafana
 dashboard (`monitoring/grafana/dashboards/processing-pipeline.json`) covers the
 document-processing pipeline. The backend itself exposes no metrics endpoint —
-there is no Actuator or Micrometer dependency in `pom.xml`.
+there is no Actuator or Micrometer dependency in `build.gradle.kts`.
 
 `docker-compose.prod.yml` mirrors the same topology with two differences: Kibana,
 Prometheus and Grafana are **not** profile-gated and start with the default stack,
@@ -213,21 +212,20 @@ Flyway migrations are stored in `src/main/resources/db/migration`:
 
 Flyway runs automatically on startup. To migrate manually:
 
-```bash
-mvn -Dflyway.configFiles=src/main/resources/application.properties flyway:migrate
-```
+Flyway does not have a Gradle CLI task configured in this project; it runs as
+part of the Spring Boot application startup (`./gradlew bootRun`).
 
 ## Running tests & building
 
 ```bash
 # Run tests
-mvn test
+./gradlew test
 
 # Build runnable JAR
-mvn clean package
+./gradlew clean build
 
 # Skip tests
-mvn -DskipTests package
+./gradlew build -x test
 ```
 
 ## Development notes
