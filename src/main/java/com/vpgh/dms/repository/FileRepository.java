@@ -112,7 +112,7 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
             SELECT COUNT(*) FROM (
                 SELECT f.id
                 FROM folders f
-                WHERE f.created_by = :userId AND f.is_deleted = :deleted
+                WHERE f.created_by = :userId AND f.is_deleted = true
                   AND (f.parent_id IS NULL OR EXISTS (
                     SELECT 1 FROM folders p WHERE p.id = f.parent_id AND p.is_deleted = false
                   ))
@@ -121,7 +121,7 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
 
                 SELECT d.id
                 FROM documents d
-                WHERE d.created_by = :userId AND d.is_deleted = :deleted
+                WHERE d.created_by = :userId AND d.is_deleted = true
                   AND (d.folder_id IS NULL OR EXISTS (
                     SELECT 1 FROM folders p WHERE p.id = d.folder_id AND p.is_deleted = false
                   ))

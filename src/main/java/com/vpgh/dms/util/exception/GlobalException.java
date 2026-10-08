@@ -1,9 +1,13 @@
 package com.vpgh.dms.util.exception;
 
 import com.vpgh.dms.util.DataResponse;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,6 +24,8 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalException {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalException.class);
 
     private final MessageSource messageSource;
 
@@ -96,7 +102,13 @@ public class GlobalException {
     }
 
     @ExceptionHandler(value = Exception.class)
-    public ResponseEntity<DataResponse<Object>> handleAllException(Exception ex) {
+    public ResponseEntity<DataResponse<Object>> handleAllException(Exception ex, HttpServletResponse response) {
+        String contentType = response.getContentType();
+        if (contentType != null && contentType.startsWith(MediaType.TEXT_EVENT_STREAM_VALUE)) {
+            log.warn("Event stream request failed after the response had started: {}", ex.toString());
+            return null;
+        }
+
         DataResponse<Object> errorResponse = new DataResponse<>();
         errorResponse.setContent(resolveMessage(ex));
 
