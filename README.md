@@ -17,6 +17,7 @@ Data flow:
 2. The backend stores files in Cloudflare R2/Cloudinary, persists metadata in PostgreSQL, and publishes document events to RabbitMQ.
 3. The processor consumes RabbitMQ events, runs OCR/parsing, chunking, generates embeddings, and indexes content into Elasticsearch.
 4. Search and summarization requests from the frontend are proxied through the backend to the processor service, authenticated with a shared API key (`dms.processor.api-key`).
+5. Question answering (RAG): the backend adds the caller's id and their trashed document ids to the question, forwards it to the processor and relays the answer back as a Server-Sent Events stream.
 
 > This repository also owns `docker-compose.yml`, which orchestrates **all three
 > services** plus their infrastructure. See [Docker Compose](#docker-compose).
@@ -41,6 +42,7 @@ Data flow:
 - File storage integrations: Cloudinary and Cloudflare R2 (via the S3-compatible API) — migrated from AWS S3, see [File storage](#configuration)
 - RabbitMQ publisher — triggers processor pipeline on document upload
 - Proxies search, summarization, and model management requests to the processor service
+- Streaming question answering over a user's own documents (RAG), proxied from the processor as Server-Sent Events
 - Summary feedback collection
 - Email notifications (Spring Mail + Thymeleaf templates)
 - Internationalization (EN/VI)
@@ -220,12 +222,13 @@ docker compose --profile tools run --rm register
 | redis | 6379 | Embedding cache used by the processor |
 | elasticsearch | 9200 | |
 | mlflow | 5001 | Backed by SQLite in the `mlflow-data` volume |
+| ollama | 11434 | Local LLM used for summarization and question answering; models live in the `ollama-data` volume |
 | kibana | 5601 | `observability` profile |
 | prometheus | 9090 | `observability` profile |
 | grafana | 3000 | `observability` profile; default login `admin` / `admin` |
 
-The `processor` and `worker` services request `gpus: all`. Remove that key from
-`docker-compose.yml` if you are running without an NVIDIA runtime.
+The `processor` and `worker` services run on CPU: their `gpus: all` lines are
+commented out in `docker-compose.yml`. Uncomment them if you have an NVIDIA runtime.
 
 Prometheus scrapes only the `worker:8001` target, and the provisioned Grafana
 dashboard (`monitoring/grafana/dashboards/processing-pipeline.json`) covers the
