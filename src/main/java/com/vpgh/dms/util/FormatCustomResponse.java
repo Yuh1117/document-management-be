@@ -3,6 +3,7 @@ package com.vpgh.dms.util;
 import com.vpgh.dms.util.annotation.ApiMessage;
 import com.vpgh.dms.util.context.ApiMessageContext;
 import jakarta.servlet.http.HttpServletResponse;
+import org.reactivestreams.Publisher;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -29,7 +30,8 @@ public class FormatCustomResponse implements ResponseBodyAdvice<Object> {
     public boolean supports(MethodParameter returnType, Class converterType) {
         Class<?> paramType = returnType.getParameterType();
 
-        if (paramType == byte[].class || Resource.class.isAssignableFrom(paramType)) {
+        if (paramType == byte[].class || Resource.class.isAssignableFrom(paramType)
+                || Publisher.class.isAssignableFrom(paramType)) {
             return false;
         }
 
