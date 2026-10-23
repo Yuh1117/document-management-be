@@ -5,6 +5,7 @@ import com.vpgh.dms.service.SystemSettingService;
 import com.vpgh.dms.util.annotation.ValidFolder;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.springframework.context.MessageSource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -12,9 +13,11 @@ import java.util.List;
 public class FolderValidator implements ConstraintValidator<ValidFolder, FolderUploadReq> {
 
     private final SystemSettingService systemSettingService;
+    private final MessageSource messageSource;
 
-    public FolderValidator(SystemSettingService systemSettingService) {
+    public FolderValidator(SystemSettingService systemSettingService, MessageSource messageSource) {
         this.systemSettingService = systemSettingService;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -33,16 +36,14 @@ public class FolderValidator implements ConstraintValidator<ValidFolder, FolderU
                 MultipartFile file = files.get(i);
 
                 if (!allowedTypes.contains(file.getContentType())) {
-                    context.buildConstraintViolationWithTemplate("Loại file không hợp lệ: " + file.getOriginalFilename())
-                            .addPropertyNode("file " + (i + 1))
-                            .addConstraintViolation();
+                    ValidationMessages.reject(context, messageSource, "file " + (i + 1),
+                            "validation.file.type.invalid", file.getOriginalFilename());
                     valid = false;
                 }
 
                 if (file.getSize() > maxSize) {
-                    context.buildConstraintViolationWithTemplate("Kích thước vượt quá giới hạn: " + file.getOriginalFilename())
-                            .addPropertyNode("file " + (i + 1))
-                            .addConstraintViolation();
+                    ValidationMessages.reject(context, messageSource, "file " + (i + 1),
+                            "validation.file.size.exceeded", file.getOriginalFilename());
                     valid = false;
                 }
             }
