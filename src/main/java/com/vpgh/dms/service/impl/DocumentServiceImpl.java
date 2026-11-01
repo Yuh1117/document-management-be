@@ -1,4 +1,5 @@
 package com.vpgh.dms.service.impl;
+
 import java.util.UUID;
 
 import com.vpgh.dms.model.dto.DocumentDTO;
@@ -98,10 +99,15 @@ public class DocumentServiceImpl implements DocumentService {
         String originalExt = FilenameUtils.getExtension(doc.getName());
         String baseName = FilenameUtils.getBaseName(name);
         String newName = baseName + "." + originalExt;
+        boolean renamed = !newName.equals(doc.getName());
 
         doc.setName(newName);
         doc.setDescription(description);
-        return this.documentRepository.save(doc);
+        Document saved = this.documentRepository.save(doc);
+        if (renamed) {
+            processorIndexService.renameIndex(saved.getId(), newName);
+        }
+        return saved;
     }
 
     @Override
@@ -280,10 +286,14 @@ public class DocumentServiceImpl implements DocumentService {
         if (!Objects.equals(doc.getFolder(), targetFolder)) {
             newName = generateUniqueName(doc.getName(), targetFolder);
         }
+        boolean renamed = !newName.equals(doc.getName());
         doc.setFolder(targetFolder);
         doc.setName(newName);
 
         this.documentRepository.save(doc);
+        if (renamed) {
+            processorIndexService.renameIndex(doc.getId(), newName);
+        }
     }
 
     @Override
