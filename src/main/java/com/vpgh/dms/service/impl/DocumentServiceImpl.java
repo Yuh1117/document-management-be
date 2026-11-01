@@ -277,7 +277,13 @@ public class DocumentServiceImpl implements DocumentService {
         copy.setStorageType(doc.getStorageType());
         copy.setFolder(targetFolder);
 
-        this.documentRepository.save(copy);
+        copy.setProcessingStatus(doc.getProcessingStatus());
+        copy.setProcessingReport(doc.getProcessingReport());
+        copy.setExtractedText(doc.getExtractedText());
+        copy.setProcessingMetrics(doc.getProcessingMetrics());
+
+        Document saved = this.documentRepository.save(copy);
+        processorIndexService.copyIndex(doc.getId(), saved);
     }
 
     @Override
