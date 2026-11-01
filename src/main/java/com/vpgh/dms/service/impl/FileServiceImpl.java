@@ -6,6 +6,7 @@ import com.vpgh.dms.model.dto.processor.ProcessorSearchResponse;
 import com.vpgh.dms.model.dto.response.FileItemDTO;
 import com.vpgh.dms.model.dto.response.FileItemProjection;
 import com.vpgh.dms.model.entity.User;
+import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.repository.FileRepository;
 import com.vpgh.dms.service.FileService;
 import com.vpgh.dms.service.ProcessorSearchService;
@@ -28,10 +29,13 @@ import java.util.stream.Collectors;
 public class FileServiceImpl implements FileService {
     private final FileRepository fileRepository;
     private final ProcessorSearchService processorSearchService;
+    private final DocumentRepository documentRepository;
 
-    public FileServiceImpl(FileRepository fileRepository, ProcessorSearchService processorSearchService) {
+    public FileServiceImpl(FileRepository fileRepository, ProcessorSearchService processorSearchService,
+            DocumentRepository documentRepository) {
         this.fileRepository = fileRepository;
         this.processorSearchService = processorSearchService;
+        this.documentRepository = documentRepository;
     }
 
     @Override
@@ -142,7 +146,8 @@ public class FileServiceImpl implements FileService {
                 pageSize, mode,
                 filters.mimeType(),
                 "minSize".equals(filters.sizeType()) ? sizeBytes : null,
-                "maxSize".equals(filters.sizeType()) ? sizeBytes : null);
+                "maxSize".equals(filters.sizeType()) ? sizeBytes : null,
+                documentRepository.findDeletedDocumentIdsByOwner(user.getId()));
         ProcessorSearchResponse response = processorSearchService.search(request);
         List<ProcessorSearchResponse.ProcessorSearchHit> hits = response.getHits() != null ? response.getHits()
                 : List.of();
