@@ -334,14 +334,8 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
             JOIN users u ON d.created_by = u.id
             WHERE d.created_by = :userId AND d.is_deleted = false
               AND d.id IN (:ids)
-              AND (:mimeType IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
-              AND (:sizeType IS NULL OR (:sizeType = 'minSize' AND d.file_size >= :size)
-                  OR (:sizeType = 'maxSize' AND d.file_size <= :size))
             """, nativeQuery = true)
-    List<FileItemProjection> findOwnedDocumentsByIdsAndFilters(@Param("userId") UUID userId,
-            @Param("ids") List<UUID> ids,
-            @Param("mimeType") String mimeType,
-            @Param("size") Double size,
-            @Param("sizeType") String sizeType);
+    List<FileItemProjection> findOwnedDocumentsByIds(@Param("userId") UUID userId,
+            @Param("ids") List<UUID> ids);
 
 }

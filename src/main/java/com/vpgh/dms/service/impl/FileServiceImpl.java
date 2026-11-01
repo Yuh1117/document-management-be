@@ -136,29 +136,19 @@ public class FileServiceImpl implements FileService {
             return new PageImpl<>(List.of(), PageRequest.of(page - 1, pageSize), 0);
         }
 
-        UUID folderId = null;
-        String folderIdStr = params.get("folderId");
-        if (folderIdStr != null && !folderIdStr.isBlank()) {
-            try {
-                folderId = UUID.fromString(folderIdStr.trim());
-            } catch (IllegalArgumentException ignored) {
-            }
-        }
-
-        ProcessorSearchRequest request = new ProcessorSearchRequest(searchKeyword, user.getId(), folderId, page,
-                pageSize, mode);
+        MimeSizeFilters filters = parseMimeSizeFilters(params);
+        Long sizeBytes = filters.sizeBytes() != null ? filters.sizeBytes().longValue() : null;
+        ProcessorSearchRequest request = new ProcessorSearchRequest(searchKeyword, user.getId(), page,
+                pageSize, mode,
+                filters.mimeType(),
+                "minSize".equals(filters.sizeType()) ? sizeBytes : null,
+                "maxSize".equals(filters.sizeType()) ? sizeBytes : null);
         ProcessorSearchResponse response = processorSearchService.search(request);
         List<ProcessorSearchResponse.ProcessorSearchHit> hits = response.getHits() != null ? response.getHits()
                 : List.of();
 
         List<UUID> orderedDocIds = hits.stream()
-                .map(hit -> {
-                    try {
-                        return hit.getDocumentId() != null ? UUID.fromString(hit.getDocumentId().trim()) : null;
-                    } catch (IllegalArgumentException e) {
-                        return null;
-                    }
-                })
+                .map(hit -> parseDocumentId(hit.getDocumentId()))
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
@@ -168,9 +158,7 @@ public class FileServiceImpl implements FileService {
             return new PageImpl<>(List.of(), pageable, response.getTotal());
         }
 
-        MimeSizeFilters filters = parseMimeSizeFilters(params);
-        List<FileItemProjection> rows = fileRepository.findOwnedDocumentsByIdsAndFilters(user.getId(),
-                orderedDocIds, filters.mimeType(), filters.sizeBytes(), filters.sizeType());
+        List<FileItemProjection> rows = fileRepository.findOwnedDocumentsByIds(user.getId(), orderedDocIds);
         Map<UUID, FileItemProjection> rowMap = rows.stream().collect(Collectors.toMap(r -> r.getId(), r -> r));
         Map<UUID, String> snippetMap = new HashMap<>();
         for (ProcessorSearchResponse.ProcessorSearchHit hit : hits) {
@@ -240,13 +228,15 @@ public class FileServiceImpl implements FileService {
         String sizeType = null;
         String sizeTypeStr = params.get("sizeType");
         if (sizeTypeStr != null && !sizeTypeStr.isBlank()) {
-            sizeType = sizeTypeStr.trim();
             String sizeStr = params.get("size");
             if (sizeStr != null && !sizeStr.isBlank()) {
                 try {
                     sizeBytes = Double.parseDouble(sizeStr.trim()) * 1024 * 1024;
                 } catch (NumberFormatException ignored) {
                 }
+            }
+            if (sizeBytes != null) {
+                sizeType = sizeTypeStr.trim();
             }
         }
         return new MimeSizeFilters(mimeType, sizeBytes, sizeType);

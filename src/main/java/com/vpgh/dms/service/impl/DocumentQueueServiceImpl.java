@@ -32,6 +32,7 @@ public class DocumentQueueServiceImpl implements DocumentQueueService {
         payload.put("doc_id", doc.getId());
         payload.put("file_url", doc.getFilePath());
         payload.put("file_type", doc.getMimeType());
+        payload.put("file_size", doc.getFileSize() != null ? doc.getFileSize().longValue() : null);
         payload.put("name", doc.getName());
         payload.put("owner_id", doc.getCreatedBy() != null ? doc.getCreatedBy().getId() : null);
 
