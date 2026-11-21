@@ -129,7 +129,7 @@ services:
   #   container_name: dms-frontend
   #   restart: unless-stopped
   #   ports:
-  #     - "80:5173"
+  #     - "80:3000"
   #   env_file:
   #     - .env
   #   networks:
