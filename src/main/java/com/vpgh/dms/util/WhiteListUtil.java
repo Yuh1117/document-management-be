@@ -9,7 +9,7 @@ public class WhiteListUtil {
     };
 
     private static final String[] AUTHENTICATED_WHITELIST = {
-            "/api/secure/profile", "/api/secure/check-permissions"
+            "/api/secure/profile", "/api/secure/profile/password", "/api/secure/check-permissions"
     };
 
     public static String[] getPublicWhitelist() {

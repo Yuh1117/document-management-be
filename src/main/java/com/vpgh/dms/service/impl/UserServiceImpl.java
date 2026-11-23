@@ -4,6 +4,10 @@ import java.util.UUID;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.vpgh.dms.model.dto.UserDTO;
+import com.vpgh.dms.model.dto.request.ChangePasswordReq;
+import com.vpgh.dms.model.dto.request.ProfileUpdateReq;
+import com.vpgh.dms.util.exception.BadRequestException;
+import org.springframework.web.multipart.MultipartFile;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.UserRepository;
 import com.vpgh.dms.service.RoleService;
@@ -77,6 +81,47 @@ public class UserServiceImpl implements UserService {
         user.setFile(dto.getFile());
         user.setRole(this.roleService.getRoleById(dto.getRole().getId()));
         return save(user);
+    }
+
+    private static final long MAX_AVATAR_BYTES = 5L * 1024 * 1024;
+
+    // Saved through the repository directly: save() re-encodes the password and would corrupt it.
+    @Override
+    public User updateProfile(User user, ProfileUpdateReq req) {
+        user.setFirstName(req.getFirstName().trim());
+        user.setLastName(req.getLastName().trim());
+
+        MultipartFile file = req.getFile();
+        if (file != null && !file.isEmpty()) {
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new BadRequestException("error.profile.avatarInvalidType");
+            }
+            if (file.getSize() > MAX_AVATAR_BYTES) {
+                throw new BadRequestException("error.profile.avatarTooLarge");
+            }
+            try {
+                Map res = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap("folder", "dms"));
+                user.setAvatar(res.get("secure_url").toString());
+            } catch (IOException ex) {
+                Logger.getLogger(UserServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
+                throw new BadRequestException("error.profile.avatarUploadFailed");
+            }
+        }
+
+        return this.userRepository.save(user);
+    }
+
+    @Override
+    public void changePassword(User user, ChangePasswordReq req) {
+        if (!this.passwordEncoder.matches(req.getCurrentPassword(), user.getPassword())) {
+            throw new BadRequestException("error.profile.wrongPassword");
+        }
+        if (this.passwordEncoder.matches(req.getNewPassword(), user.getPassword())) {
+            throw new BadRequestException("error.profile.samePassword");
+        }
+        user.setPassword(this.passwordEncoder.encode(req.getNewPassword()));
+        this.userRepository.save(user);
     }
 
     @Override

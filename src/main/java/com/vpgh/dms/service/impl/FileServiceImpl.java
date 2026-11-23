@@ -17,11 +17,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -51,8 +56,10 @@ public class FileServiceImpl implements FileService {
             keyword = escapeLikeKeyword(params.get("kw"));
         }
 
-        Page<FileItemProjection> pageItem = fileRepository.findAllByUserAndParent(user.getId(), null, matchAll,
-                false, keyword, pageable);
+        BrowseOptions o = parseBrowseOptions(params);
+        Page<FileItemProjection> pageItem = fileRepository.findAllByUserAndParent(o.includeFolders(),
+                o.includeDocuments(), o.mimeType(), o.updatedFrom(), o.sortBy(), o.sortDir(),
+                user.getId(), null, matchAll, false, keyword, pageable);
         return pageItem.map(this::mapToFileItemDTO);
     }
 
@@ -94,7 +101,10 @@ public class FileServiceImpl implements FileService {
             pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
         }
 
-        Page<FileItemProjection> pageItem = fileRepository.findFolderFiles(user.getId(), folderId, false, pageable);
+        BrowseOptions o = parseBrowseOptions(params);
+        Page<FileItemProjection> pageItem = fileRepository.findFolderFiles(o.includeFolders(),
+                o.includeDocuments(), o.mimeType(), o.updatedFrom(), o.sortBy(), o.sortDir(),
+                user.getId(), folderId, false, pageable);
         return pageItem.map(this::mapToFileItemDTO);
     }
 
@@ -105,7 +115,10 @@ public class FileServiceImpl implements FileService {
             int page = Integer.parseInt(params.get("page"));
             pageable = PageRequest.of(page - 1, PageSize.FOLDER_PAGE_SIZE.getSize());
         }
-        Page<FileItemProjection> pageItem = fileRepository.findSharedFiles(user.getId(), pageable);
+        BrowseOptions o = parseBrowseOptions(params);
+        Page<FileItemProjection> pageItem = fileRepository.findSharedFiles(o.includeFolders(),
+                o.includeDocuments(), o.mimeType(), o.updatedFrom(), o.sortBy(), o.sortDir(),
+                user.getId(), pageable);
         return pageItem.map(this::mapToFileItemDTO);
     }
 
@@ -247,6 +260,50 @@ public class FileServiceImpl implements FileService {
         return new MimeSizeFilters(mimeType, sizeBytes, sizeType);
     }
 
+    private record BrowseOptions(boolean includeFolders, boolean includeDocuments, String mimeType,
+            Instant updatedFrom, String sortBy, String sortDir) {
+    }
+
+    private static final Set<String> SORT_FIELDS = Set.of("name", "updatedAt", "size");
+
+    /**
+     * Parses the quick filter / sort params shared by the my-files, folder and shared views:
+     * type (folder|pdf|word|image), modified (today|7d|30d|365d), sortBy (name|updatedAt|size), sortDir (asc|desc).
+     */
+    private static BrowseOptions parseBrowseOptions(Map<String, String> params) {
+        Map<String, String> p = params != null ? params : Map.of();
+
+        String type = trimToNull(p.get("type"));
+        boolean includeFolders = type == null || "folder".equals(type);
+        boolean includeDocuments = type == null || !"folder".equals(type);
+        String mimeType = type != null && includeDocuments ? mapMimeTypeStatic(type) : null;
+
+        Instant updatedFrom = Instant.EPOCH;
+        String modified = trimToNull(p.get("modified"));
+        if (modified != null) {
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+            updatedFrom = switch (modified) {
+                case "today" -> now.truncatedTo(ChronoUnit.DAYS).toInstant();
+                case "7d" -> now.minusDays(7).toInstant();
+                case "30d" -> now.minusDays(30).toInstant();
+                case "365d" -> now.minusDays(365).toInstant();
+                default -> Instant.EPOCH;
+            };
+        }
+
+        String sortBy = trimToNull(p.get("sortBy"));
+        if (sortBy == null || !SORT_FIELDS.contains(sortBy)) {
+            sortBy = "name";
+        }
+        String sortDir = "desc".equalsIgnoreCase(trimToNull(p.get("sortDir"))) ? "desc" : "asc";
+
+        return new BrowseOptions(includeFolders, includeDocuments, mimeType, updatedFrom, sortBy, sortDir);
+    }
+
+    private static String trimToNull(String raw) {
+        return raw == null || raw.isBlank() ? null : raw.trim();
+    }
+
     private FileItemDTO mapToFileItemDTO(FileItemProjection p) {
         return mapToFileItemDTO(p, null);
     }
@@ -287,6 +344,7 @@ public class FileServiceImpl implements FileService {
             d.setName(p.getName());
             d.setDescription(p.getDescription());
             d.setMimeType(p.getMimeType());
+            d.setFileSize(p.getFileSize());
             d.setProcessingStatus(p.getProcessingStatus());
             d.setCreatedAt(p.getCreatedAt());
             d.setUpdatedAt(p.getUpdatedAt());

@@ -49,7 +49,8 @@ public class GlobalException {
             UniqueConstraintException.class,
             UsernameNotFoundException.class,
             NotFoundException.class,
-            FileException.class})
+            FileException.class,
+            BadRequestException.class})
     public ResponseEntity<DataResponse<String>> handleException(Exception ex) {
         DataResponse<String> errorResponse = new DataResponse<>();
         errorResponse.setContent(resolveMessage(ex));

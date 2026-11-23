@@ -125,24 +125,24 @@ services:
     networks:
       - dms-network
 
-  ollama:
-    image: ollama/ollama:latest
-    container_name: dms-ollama
-    restart: unless-stopped
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama-data:/root/.ollama
-    # Uncomment for NVIDIA GPU:
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
-    networks:
-      - dms-network
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: dms-ollama
+  #   restart: unless-stopped
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-data:/root/.ollama
+  #   # Uncomment for NVIDIA GPU:
+  #   # deploy:
+  #   #   resources:
+  #   #     reservations:
+  #   #       devices:
+  #   #         - driver: nvidia
+  #   #           count: all
+  #   #           capabilities: [gpu]
+  #   networks:
+  #     - dms-network
 
   processor:
     build:
@@ -200,7 +200,7 @@ services:
   register:
     image: document-management-processor
     container_name: dms-register
-    command: ["python", "-m", "scripts.register_model"]
+    entrypoint: ["python", "-m", "scripts.register_model"]
     volumes:
       - ../document-management-processor:/app
       - mlflow-data:/mlflow

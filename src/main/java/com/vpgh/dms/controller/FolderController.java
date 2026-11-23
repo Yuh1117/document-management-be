@@ -4,6 +4,7 @@ import java.util.UUID;
 import com.vpgh.dms.model.dto.FolderDTO;
 import com.vpgh.dms.model.dto.request.CopyCutReq;
 import com.vpgh.dms.model.dto.request.FolderUploadReq;
+import com.vpgh.dms.model.dto.response.FolderPathRes;
 import com.vpgh.dms.model.dto.response.FolderUploadPlan;
 import com.vpgh.dms.model.entity.Folder;
 import com.vpgh.dms.model.entity.User;
@@ -28,6 +29,9 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -280,6 +284,32 @@ public class FolderController {
     public ResponseEntity<FolderDTO> detail(@PathVariable UUID id) {
         Folder folder = resolveViewableFolder(id, SecurityUtil.getCurrentUserFromThreadLocal());
         return ResponseEntity.ok(this.folderService.convertFolderToFolderDTO(folder));
+    }
+
+    @GetMapping(path = "/secure/folders/{id}/path")
+    @ApiMessage(key = "api.folder.path", message = "Get folder path")
+    public ResponseEntity<FolderPathRes> path(@PathVariable UUID id) {
+        User user = SecurityUtil.getCurrentUserFromThreadLocal();
+        Folder folder = resolveViewableFolder(id, user);
+
+        List<FolderPathRes.Item> items = new ArrayList<>();
+        Set<UUID> visited = new HashSet<>();
+        Folder top = folder;
+        Folder current = folder;
+        while (current != null && visited.add(current.getId())) {
+            items.add(new FolderPathRes.Item(current.getId(), current.getName()));
+            top = current;
+            Folder parent = current.getParent();
+            if (parent == null || Boolean.TRUE.equals(parent.getDeleted())
+                    || !folderShareService.checkCanView(user, parent)) {
+                break;
+            }
+            current = parent;
+        }
+        Collections.reverse(items);
+
+        boolean ownRoot = top.getParent() == null && this.folderService.isOwnerFolder(top, user);
+        return ResponseEntity.ok(new FolderPathRes(ownRoot ? "my-files" : "shared", items));
     }
 
     private Folder resolveEditableFolder(UUID folderId, User user) {
