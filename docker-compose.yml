@@ -125,7 +125,6 @@ services:
     networks:
       - dms-network
 
-  # Disabled: OpenAI is the main provider. Note RAG still calls Ollama.
   # ollama:
   #   image: ollama/ollama:latest
   #   container_name: dms-ollama

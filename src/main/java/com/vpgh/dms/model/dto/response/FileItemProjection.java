@@ -33,4 +33,6 @@ public interface FileItemProjection {
 
     String getPermission();
 
+    Double getFileSize();
+
 }

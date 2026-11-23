@@ -8,17 +8,40 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 @Repository
 public interface FileRepository extends JpaRepository<Folder, UUID> {
 
-    @Query(value = """
+    String BROWSE_FOLDER_FILTER = """
+             AND :includeFolders = true
+             AND COALESCE(f.updated_at, f.created_at, :updatedFrom) >= :updatedFrom
+            """;
+
+    String BROWSE_DOCUMENT_FILTER = """
+             AND :includeDocuments = true
+             AND (CAST(:mimeType AS text) IS NULL OR d.mime_type LIKE CAST(:mimeType AS text))
+             AND COALESCE(d.updated_at, d.created_at, :updatedFrom) >= :updatedFrom
+            """;
+
+    String BROWSE_ORDER = """
+            ORDER BY t.sortType ASC,
+                CASE WHEN :sortBy = 'name' AND :sortDir = 'asc' THEN LOWER(t.name) END ASC,
+                CASE WHEN :sortBy = 'name' AND :sortDir = 'desc' THEN LOWER(t.name) END DESC,
+                CASE WHEN :sortBy = 'updatedAt' AND :sortDir = 'asc' THEN COALESCE(t.updatedAt, t.createdAt) END ASC,
+                CASE WHEN :sortBy = 'updatedAt' AND :sortDir = 'desc' THEN COALESCE(t.updatedAt, t.createdAt) END DESC,
+                CASE WHEN :sortBy = 'size' AND :sortDir = 'asc' THEN t.fileSize END ASC,
+                CASE WHEN :sortBy = 'size' AND :sortDir = 'desc' THEN t.fileSize END DESC,
+                LOWER(t.name) ASC, t.id ASC
+            """;
+
+    @Query(value = "SELECT * FROM (" + """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   NULL as description, 'OWNER' as permission, NULL as mime_type, NULL as processingStatus,
+                   NULL as description, 'OWNER' as permission, NULL as mime_type, NULL as processingStatus, NULL as fileSize,
                    0 as sortType
             FROM folders f
             JOIN users u ON f.created_by = u.id
@@ -29,13 +52,15 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
                       f.parent_id = :parentId
                   )
                AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')) ESCAPE '\\')
+            """ + BROWSE_FOLDER_FILTER + """
+
 
             UNION ALL
 
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description as description, 'OWNER' as permission,  d.mime_type as mime_type, d.processing_status as processingStatus,
+                   d.description as description, 'OWNER' as permission,  d.mime_type as mime_type, d.processing_status as processingStatus, d.file_size as fileSize,
                    1 as sortType
             FROM documents d
             JOIN users u ON d.created_by = u.id
@@ -46,9 +71,7 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
                       d.folder_id = :parentId
                   )
               AND (:keyword IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT(:keyword, '%')) ESCAPE '\\')
-
-            ORDER BY sortType ASC, name ASC
-            """, countQuery = """
+            """ + BROWSE_DOCUMENT_FILTER + ") t " + BROWSE_ORDER, countQuery = """
             SELECT COUNT(*) FROM (
                 SELECT f.id
                 FROM folders f
@@ -59,6 +82,8 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
                       f.parent_id = :parentId
                   )
                   AND (:keyword IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT(:keyword, '%')) ESCAPE '\\')
+                """ + BROWSE_FOLDER_FILTER + """
+
 
                 UNION ALL
 
@@ -71,9 +96,16 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
                       d.folder_id = :parentId
                   )
                   AND (:keyword IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT(:keyword, '%')) ESCAPE '\\')
+                """ + BROWSE_DOCUMENT_FILTER + """
             ) AS total
             """, nativeQuery = true)
-    Page<FileItemProjection> findAllByUserAndParent(@Param("userId") UUID userId,
+    Page<FileItemProjection> findAllByUserAndParent(@Param("includeFolders") Boolean includeFolders,
+            @Param("includeDocuments") Boolean includeDocuments,
+            @Param("mimeType") String mimeType,
+            @Param("updatedFrom") Instant updatedFrom,
+            @Param("sortBy") String sortBy,
+            @Param("sortDir") String sortDir,
+            @Param("userId") UUID userId,
             @Param("parentId") UUID parentId,
             @Param("matchAll") Boolean matchAll,
             @Param("deleted") Boolean deleted,
@@ -84,7 +116,7 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   NULL as description, 'OWNER' as permission, NULL as mime_type, NULL as processingStatus,
+                   NULL as description, 'OWNER' as permission, NULL as mime_type, NULL as processingStatus, NULL as fileSize,
                    0 as sortType
             FROM folders f
             JOIN users u ON f.created_by = u.id
@@ -98,7 +130,7 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description as description, 'OWNER' as permission, d.mime_type as mime_type, d.processing_status as processingStatus,
+                   d.description as description, 'OWNER' as permission, d.mime_type as mime_type, d.processing_status as processingStatus, d.file_size as fileSize,
                    1 as sortType
             FROM documents d
             JOIN users u ON d.created_by = u.id
@@ -133,7 +165,7 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   NULL as description, 'OWNER' as permission, NULL as mime_type, NULL as processingStatus
+                   NULL as description, 'OWNER' as permission, NULL as mime_type, NULL as processingStatus, NULL as fileSize
             FROM folders f
             JOIN users u ON f.created_by = u.id
             WHERE f.created_by = :userId AND f.is_deleted = :deleted
@@ -143,7 +175,7 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description as description, 'OWNER' as permission,  d.mime_type as mime_type, d.processing_status as processingStatus
+                   d.description as description, 'OWNER' as permission,  d.mime_type as mime_type, d.processing_status as processingStatus, d.file_size as fileSize
             FROM documents d
             JOIN users u ON d.created_by = u.id
             WHERE d.created_by = :userId AND d.is_deleted = :deleted
@@ -166,7 +198,7 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
             @Param("deleted") Boolean deleted,
             Pageable pageable);
 
-    @Query(value = """
+    @Query(value = "SELECT * FROM (" + """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,  NULL as mime_type,
@@ -175,13 +207,15 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
                        WHEN f.created_by = :userId THEN 'OWNER'
                        ELSE fs.share_type
                    END as permission,
-                   NULL as processingStatus,
+                   NULL as processingStatus, NULL as fileSize,
                    0 as sortType
             FROM folders f
             JOIN users u ON f.created_by = u.id
             LEFT JOIN folder_shares fs ON f.id = fs.folder_id AND fs.user_id = :userId
             WHERE f.is_deleted = :deleted AND f.parent_id = :folderId
                 AND (f.created_by = :userId OR fs.user_id IS NOT NULL)
+            """ + BROWSE_FOLDER_FILTER + """
+
 
             UNION ALL
 
@@ -193,22 +227,22 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
                        WHEN d.created_by = :userId THEN 'OWNER'
                        ELSE ds.share_type
                    END as permission,
-                   d.processing_status as processingStatus,
+                   d.processing_status as processingStatus, d.file_size as fileSize,
                    1 as sortType
             FROM documents d
             JOIN users u ON d.created_by = u.id
             LEFT JOIN document_shares ds ON d.id = ds.document_id AND ds.user_id = :userId
             WHERE d.is_deleted = :deleted AND d.folder_id = :folderId
                   AND (d.created_by = :userId OR ds.user_id IS NOT NULL)
-
-            ORDER BY sortType ASC, name ASC
-            """, countQuery = """
+            """ + BROWSE_DOCUMENT_FILTER + ") t " + BROWSE_ORDER, countQuery = """
             SELECT COUNT(*) FROM (
                 SELECT f.id
                 FROM folders f
                 LEFT JOIN folder_shares fs ON f.id = fs.folder_id AND fs.user_id = :userId
                 WHERE f.is_deleted = :deleted AND f.parent_id = :folderId
                       AND (f.created_by = :userId OR fs.user_id IS NOT NULL)
+                """ + BROWSE_FOLDER_FILTER + """
+
 
                 UNION ALL
 
@@ -217,18 +251,25 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
                 LEFT JOIN document_shares ds ON d.id = ds.document_id AND ds.user_id = :userId
                 WHERE d.is_deleted = :deleted AND d.folder_id = :folderId
                       AND (d.created_by = :userId OR ds.user_id IS NOT NULL)
+                """ + BROWSE_DOCUMENT_FILTER + """
             ) AS total
             """, nativeQuery = true)
-    Page<FileItemProjection> findFolderFiles(@Param("userId") UUID userId,
+    Page<FileItemProjection> findFolderFiles(@Param("includeFolders") Boolean includeFolders,
+            @Param("includeDocuments") Boolean includeDocuments,
+            @Param("mimeType") String mimeType,
+            @Param("updatedFrom") Instant updatedFrom,
+            @Param("sortBy") String sortBy,
+            @Param("sortDir") String sortDir,
+            @Param("userId") UUID userId,
             @Param("folderId") UUID folderId,
             @Param("deleted") Boolean deleted,
             Pageable pageable);
 
-    @Query(value = """
+    @Query(value = "SELECT * FROM (" + """
             SELECT f.id AS id, f.name AS name, 'folder' AS type,
                    f.created_at AS createdAt, f.updated_at AS updatedAt, f.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   NULL as description, fs.share_type as permission, NULL as mime_type, NULL as processingStatus,
+                   NULL as description, fs.share_type as permission, NULL as mime_type, NULL as processingStatus, NULL as fileSize,
                    0 as sortType
             FROM folders f
             JOIN users u ON f.created_by = u.id
@@ -241,13 +282,15 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
                         WHERE fs2.user_id = :userId AND f2.id = f.parent_id AND f2.is_deleted = false
                     )
                 )
+            """ + BROWSE_FOLDER_FILTER + """
+
 
             UNION ALL
 
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description as description, ds.share_type as permission, d.mime_type as mime_type, d.processing_status as processingStatus,
+                   d.description as description, ds.share_type as permission, d.mime_type as mime_type, d.processing_status as processingStatus, d.file_size as fileSize,
                    1 as sortType
             FROM documents d
             JOIN users u ON d.created_by = u.id
@@ -260,10 +303,7 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
                         WHERE fs3.user_id = :userId AND f3.id = d.folder_id AND f3.is_deleted = false
                     )
                 )
-
-            ORDER BY sortType ASC, name ASC
-
-            """, countQuery = """
+            """ + BROWSE_DOCUMENT_FILTER + ") t " + BROWSE_ORDER, countQuery = """
                 SELECT COUNT(*) FROM (
                     SELECT f.id
                     FROM folders f
@@ -276,6 +316,8 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
                             WHERE fs2.user_id = :userId AND f2.id = f.parent_id AND f2.is_deleted = false
                            )
                       )
+                """ + BROWSE_FOLDER_FILTER + """
+
 
                     UNION ALL
 
@@ -290,15 +332,22 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
                                 WHERE fs3.user_id = :userId AND f3.id = d.folder_id AND f3.is_deleted = false
                             )
                         )
+                """ + BROWSE_DOCUMENT_FILTER + """
                 ) AS total
             """, nativeQuery = true)
-    Page<FileItemProjection> findSharedFiles(@Param("userId") UUID userId, Pageable pageable);
+    Page<FileItemProjection> findSharedFiles(@Param("includeFolders") Boolean includeFolders,
+            @Param("includeDocuments") Boolean includeDocuments,
+            @Param("mimeType") String mimeType,
+            @Param("updatedFrom") Instant updatedFrom,
+            @Param("sortBy") String sortBy,
+            @Param("sortDir") String sortDir,
+            @Param("userId") UUID userId, Pageable pageable);
 
     @Query(value = """
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description as description, 'OWNER' as permission, d.mime_type as mime_type, d.processing_status as processingStatus
+                   d.description as description, 'OWNER' as permission, d.mime_type as mime_type, d.processing_status as processingStatus, d.file_size as fileSize
             FROM documents d
             JOIN users u ON d.created_by = u.id
             WHERE d.created_by = :userId
@@ -329,7 +378,7 @@ public interface FileRepository extends JpaRepository<Folder, UUID> {
             SELECT d.id AS id, d.name AS name, 'document' AS type,
                    d.created_at AS createdAt, d.updated_at AS updatedAt, d.is_deleted AS isDeleted,
                    u.id AS createdById, u.email AS createdByEmail, u.first_name AS createdByFirstName, u.last_name AS createdByLastName,
-                   d.description AS description, 'OWNER' AS permission, d.mime_type AS mime_type, d.processing_status AS processingStatus
+                   d.description AS description, 'OWNER' AS permission, d.mime_type AS mime_type, d.processing_status AS processingStatus, d.file_size AS fileSize
             FROM documents d
             JOIN users u ON d.created_by = u.id
             WHERE d.created_by = :userId AND d.is_deleted = false
