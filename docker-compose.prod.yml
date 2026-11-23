@@ -186,7 +186,7 @@ services:
   register:
     image: dms-processor:latest
     container_name: dms-register
-    command: ["python", "-m", "scripts.register_model"]
+    entrypoint: ["python", "-m", "scripts.register_model"]
     volumes:
       - mlflow-data:/mlflow
     env_file:
