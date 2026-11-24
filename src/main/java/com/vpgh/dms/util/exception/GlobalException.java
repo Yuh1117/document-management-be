@@ -94,6 +94,14 @@ public class GlobalException {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<DataResponse<String>> handleException(TooManyRequestsException ex) {
+        DataResponse<String> errorResponse = new DataResponse<>();
+        errorResponse.setContent(resolveMessage(ex));
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errorResponse);
+    }
+
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<DataResponse<String>> handleException(ForbiddenException ex) {
         DataResponse<String> errorResponse = new DataResponse<>();

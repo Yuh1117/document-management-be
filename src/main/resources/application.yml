@@ -105,3 +105,7 @@ rabbitmq:
     routing-key: ${RABBITMQ_DOCUMENT_ROUTING_KEY}
     processing-result:
       queue: ${RABBITMQ_DOCUMENT_RESULT_QUEUE}
+
+rag:
+  # Questions per user per day; the ragDailyLimit system setting overrides it (0 = no limit).
+  daily-limit: ${RAG_DAILY_LIMIT:50}
