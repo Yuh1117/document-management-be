@@ -1,9 +1,12 @@
 package com.vpgh.dms.service.impl;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,9 +40,26 @@ public class ChatHistoryServiceImpl implements ChatHistoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ChatMessage> getMessages(UUID conversationId, UUID userId) {
+    public MessagePage getMessages(UUID conversationId, UUID userId, UUID beforeMessageId, int limit) {
         findOwned(conversationId, userId);
-        return messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId);
+        // Fetch one extra row to know whether an older page exists.
+        PageRequest page = PageRequest.of(0, limit + 1);
+
+        List<ChatMessage> newestFirst;
+        if (beforeMessageId == null) {
+            newestFirst = messageRepository.findByConversationIdOrderByCreatedAtDesc(conversationId, page);
+        } else {
+            ChatMessage cursor = messageRepository.findById(beforeMessageId)
+                    .filter(m -> m.getConversation().getId().equals(conversationId))
+                    .orElseThrow(() -> new NotFoundException("error.chat.conversationNotFound"));
+            newestFirst = messageRepository.findByConversationIdAndCreatedAtBeforeOrderByCreatedAtDesc(
+                    conversationId, cursor.getCreatedAt(), page);
+        }
+
+        boolean hasMore = newestFirst.size() > limit;
+        List<ChatMessage> messages = new ArrayList<>(hasMore ? newestFirst.subList(0, limit) : newestFirst);
+        Collections.reverse(messages);
+        return new MessagePage(messages, hasMore);
     }
 
     @Override

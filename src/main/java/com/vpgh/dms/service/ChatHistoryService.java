@@ -9,9 +9,16 @@ import com.vpgh.dms.model.entity.User;
 
 public interface ChatHistoryService {
 
+    record MessagePage(List<ChatMessage> messages, boolean hasMore) {
+    }
+
     List<ChatConversation> getConversations(UUID userId);
 
-    List<ChatMessage> getMessages(UUID conversationId, UUID userId);
+    /**
+     * Returns up to {@code limit} messages older than {@code beforeMessageId} (or the latest ones when null),
+     * oldest first, and whether even older messages exist.
+     */
+    MessagePage getMessages(UUID conversationId, UUID userId, UUID beforeMessageId, int limit);
 
     ChatConversation rename(UUID conversationId, UUID userId, String title);
 

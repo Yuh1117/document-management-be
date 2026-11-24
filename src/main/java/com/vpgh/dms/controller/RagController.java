@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,11 +26,13 @@ import com.vpgh.dms.model.dto.processor.ProcessorRagRequest;
 import com.vpgh.dms.model.dto.request.ChatConversationRenameReq;
 import com.vpgh.dms.model.dto.request.RagAskReq;
 import com.vpgh.dms.model.dto.response.ChatConversationRes;
+import com.vpgh.dms.model.dto.response.ChatMessagePageRes;
 import com.vpgh.dms.model.dto.response.ChatMessageRes;
 import com.vpgh.dms.model.entity.ChatConversation;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.service.ChatHistoryService;
+import com.vpgh.dms.service.ChatHistoryService.MessagePage;
 import com.vpgh.dms.service.ProcessorRagService;
 import com.vpgh.dms.util.SecurityUtil;
 
@@ -42,6 +45,7 @@ import reactor.core.scheduler.Schedulers;
 @RequestMapping("/api")
 public class RagController {
     private static final Logger log = LoggerFactory.getLogger(RagController.class);
+    private static final int MAX_MESSAGE_PAGE_SIZE = 100;
 
     private final ProcessorRagService processorRagService;
     private final DocumentRepository documentRepository;
@@ -97,11 +101,15 @@ public class RagController {
     }
 
     @GetMapping("/secure/rag/conversations/{id}/messages")
-    public ResponseEntity<List<ChatMessageRes>> getMessages(@PathVariable UUID id) {
+    public ResponseEntity<ChatMessagePageRes> getMessages(@PathVariable UUID id,
+            @RequestParam(required = false) UUID before,
+            @RequestParam(defaultValue = "30") int limit) {
         User user = SecurityUtil.getCurrentUserFromThreadLocal();
-        return ResponseEntity.ok(chatHistoryService.getMessages(id, user.getId()).stream()
-                .map(ChatMessageRes::from)
-                .toList());
+        int pageSize = Math.clamp(limit, 1, MAX_MESSAGE_PAGE_SIZE);
+        MessagePage page = chatHistoryService.getMessages(id, user.getId(), before, pageSize);
+        return ResponseEntity.ok(new ChatMessagePageRes(
+                page.messages().stream().map(ChatMessageRes::from).toList(),
+                page.hasMore()));
     }
 
     @PatchMapping("/secure/rag/conversations/{id}")
