@@ -13,6 +13,7 @@ public record ChatMessageRes(
         @JsonRawValue String sources,
         String status,
         String model,
+        @JsonRawValue String usage,
         Instant createdAt
 ) {
 
@@ -24,6 +25,7 @@ public record ChatMessageRes(
                 m.getSources(),
                 m.getStatus(),
                 m.getModel(),
+                m.getUsage(),
                 m.getCreatedAt());
     }
 }

@@ -9,6 +9,11 @@ public record ProcessorRagRequest(
         String question,
         @JsonProperty("owner_id") UUID ownerId,
         String language,
-        @JsonProperty("exclude_document_ids") List<UUID> excludeDocumentIds
+        @JsonProperty("exclude_document_ids") List<UUID> excludeDocumentIds,
+        List<HistoryMessage> history
 ) {
+
+    /** One earlier message of the conversation; role is "user" or "assistant". */
+    public record HistoryMessage(String role, String content) {
+    }
 }

@@ -102,7 +102,7 @@ public class ChatHistoryServiceImpl implements ChatHistoryService {
     @Override
     @Transactional
     public void saveAssistantMessage(UUID conversationId, String content, String sources, String status,
-            String model) {
+            String model, String usage) {
         ChatConversation conversation = conversationRepository.findById(conversationId).orElse(null);
         if (conversation == null) {
             // Deleted while the answer was streaming.
@@ -117,7 +117,31 @@ public class ChatHistoryServiceImpl implements ChatHistoryService {
         message.setSources(sources);
         message.setStatus(status);
         message.setModel(model);
+        message.setUsage(usage);
         messageRepository.save(message);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChatMessage> recentHistory(UUID conversationId, UUID userId, int limit) {
+        if (conversationId == null) {
+            return List.of();
+        }
+        findOwned(conversationId, userId);
+        List<ChatMessage> history = new ArrayList<>(messageRepository
+                .findByConversationIdOrderByCreatedAtDesc(conversationId, PageRequest.of(0, limit))
+                .stream()
+                .filter(m -> m.getRole() == ChatRole.USER
+                        || ("done".equals(m.getStatus()) && !m.getContent().isBlank()))
+                .toList());
+        Collections.reverse(history);
+        return history;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countQuestionsSince(UUID userId, Instant since) {
+        return messageRepository.countByUserAndRoleSince(userId, ChatRole.USER, since);
     }
 
     private ChatConversation findOwned(UUID conversationId, UUID userId) {

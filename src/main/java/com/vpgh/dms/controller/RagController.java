@@ -1,5 +1,7 @@
 package com.vpgh.dms.controller;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -7,6 +9,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
@@ -29,12 +32,16 @@ import com.vpgh.dms.model.dto.response.ChatConversationRes;
 import com.vpgh.dms.model.dto.response.ChatMessagePageRes;
 import com.vpgh.dms.model.dto.response.ChatMessageRes;
 import com.vpgh.dms.model.entity.ChatConversation;
+import com.vpgh.dms.model.entity.ChatMessage;
+import com.vpgh.dms.model.entity.SystemSetting;
 import com.vpgh.dms.model.entity.User;
 import com.vpgh.dms.repository.DocumentRepository;
 import com.vpgh.dms.service.ChatHistoryService;
 import com.vpgh.dms.service.ChatHistoryService.MessagePage;
 import com.vpgh.dms.service.ProcessorRagService;
+import com.vpgh.dms.service.SystemSettingService;
 import com.vpgh.dms.util.SecurityUtil;
+import com.vpgh.dms.util.exception.TooManyRequestsException;
 
 import jakarta.validation.Valid;
 import reactor.core.publisher.Flux;
@@ -46,18 +53,28 @@ import reactor.core.scheduler.Schedulers;
 public class RagController {
     private static final Logger log = LoggerFactory.getLogger(RagController.class);
     private static final int MAX_MESSAGE_PAGE_SIZE = 100;
+    /** Earlier messages sent to the model as context. */
+    private static final int HISTORY_MESSAGES = 10;
+    /** System setting that overrides {@code rag.daily-limit}; 0 or less means no limit. */
+    private static final String DAILY_LIMIT_SETTING = "ragDailyLimit";
 
     private final ProcessorRagService processorRagService;
     private final DocumentRepository documentRepository;
     private final ChatHistoryService chatHistoryService;
     private final ObjectMapper objectMapper;
+    private final SystemSettingService systemSettingService;
+    private final int defaultDailyLimit;
 
     public RagController(ProcessorRagService processorRagService, DocumentRepository documentRepository,
-            ChatHistoryService chatHistoryService, ObjectMapper objectMapper) {
+            ChatHistoryService chatHistoryService, ObjectMapper objectMapper,
+            SystemSettingService systemSettingService,
+            @Value("${rag.daily-limit:50}") int defaultDailyLimit) {
         this.processorRagService = processorRagService;
         this.documentRepository = documentRepository;
         this.chatHistoryService = chatHistoryService;
         this.objectMapper = objectMapper;
+        this.systemSettingService = systemSettingService;
+        this.defaultDailyLimit = defaultDailyLimit;
     }
 
     @PostMapping(path = "/secure/rag/ask", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -65,7 +82,12 @@ public class RagController {
         User user = SecurityUtil.getCurrentUserFromThreadLocal();
         String question = req.question().trim();
 
-        // Runs before streaming starts, so an unknown conversation id still fails as a normal 404.
+        // These run before streaming starts, so errors come back as normal JSON responses.
+        enforceDailyLimit(user);
+        List<ProcessorRagRequest.HistoryMessage> history = chatHistoryService
+                .recentHistory(req.conversationId(), user.getId(), HISTORY_MESSAGES).stream()
+                .map(this::toHistoryMessage)
+                .toList();
         ChatConversation conversation = chatHistoryService.startTurn(user, req.conversationId(), question);
         UUID conversationId = conversation.getId();
 
@@ -78,14 +100,14 @@ public class RagController {
                 .build();
 
         Flux<ServerSentEvent<String>> answerStream = processorRagService
-                .ask(new ProcessorRagRequest(question, user.getId(), locale.getLanguage(), trashed))
+                .ask(new ProcessorRagRequest(question, user.getId(), locale.getLanguage(), trashed, history))
                 .doOnNext(answer::accept);
 
         return Flux.concat(Flux.just(conversationEvent), answerStream)
                 .doFinally(signal -> Schedulers.boundedElastic().schedule(() -> {
                     try {
                         chatHistoryService.saveAssistantMessage(conversationId, answer.content.toString(),
-                                answer.sources, answer.finalStatus(signal), answer.model);
+                                answer.sources, answer.finalStatus(signal), answer.model, answer.usage);
                     } catch (Exception e) {
                         log.error("Failed to save assistant message for conversation {}", conversationId, e);
                     }
@@ -126,6 +148,64 @@ public class RagController {
         return ResponseEntity.noContent().build();
     }
 
+    private void enforceDailyLimit(User user) {
+        int limit = dailyLimit();
+        if (limit <= 0) {
+            return;
+        }
+        ZoneId zone = ZoneId.systemDefault();
+        long asked = chatHistoryService.countQuestionsSince(user.getId(),
+                LocalDate.now(zone).atStartOfDay(zone).toInstant());
+        if (asked >= limit) {
+            throw new TooManyRequestsException("error.chat.dailyLimit", limit);
+        }
+    }
+
+    private int dailyLimit() {
+        SystemSetting setting = systemSettingService.getSettingByKey(DAILY_LIMIT_SETTING);
+        if (setting != null) {
+            try {
+                return Integer.parseInt(setting.getValue().trim());
+            } catch (NumberFormatException e) {
+                log.warn("Ignoring invalid {} setting '{}'", DAILY_LIMIT_SETTING, setting.getValue());
+            }
+        }
+        return defaultDailyLimit;
+    }
+
+    private ProcessorRagRequest.HistoryMessage toHistoryMessage(ChatMessage m) {
+        // The processor trims history to fit the model's input budget.
+        String content = m.getContent();
+        String used = documentsUsed(m.getSources());
+        if (!used.isEmpty()) {
+            // Lets follow-ups like "what else does that file say" find the same documents.
+            content += "\n\n[Documents used: " + used + "]";
+        }
+        return new ProcessorRagRequest.HistoryMessage(m.getRole().name().toLowerCase(), content);
+    }
+
+    /** "name (id: …), …" for the distinct documents in a stored sources JSON array. */
+    private String documentsUsed(String sourcesJson) {
+        if (sourcesJson == null || sourcesJson.isBlank()) {
+            return "";
+        }
+        try {
+            Map<String, String> documents = new java.util.LinkedHashMap<>();
+            for (JsonNode source : objectMapper.readTree(sourcesJson)) {
+                String id = source.path("document_id").asText("");
+                if (!id.isEmpty()) {
+                    documents.putIfAbsent(id, source.path("name").asText(id));
+                }
+            }
+            return documents.entrySet().stream()
+                    .map(e -> e.getValue() + " (id: " + e.getKey() + ")")
+                    .collect(java.util.stream.Collectors.joining(", "));
+        } catch (Exception e) {
+            log.warn("Ignoring unreadable sources of a stored message", e);
+            return "";
+        }
+    }
+
     private String toJson(Object value) {
         try {
             return objectMapper.writeValueAsString(value);
@@ -140,6 +220,7 @@ public class RagController {
         volatile String sources;
         volatile String model;
         volatile String status;
+        volatile String usage;
 
         void accept(ServerSentEvent<String> event) {
             String type = event.event();
@@ -155,6 +236,7 @@ public class RagController {
                     case "done" -> {
                         status = "done";
                         model = node.path("model").isNull() ? null : node.path("model").asText(null);
+                        usage = node.path("usage").isObject() ? node.path("usage").toString() : null;
                     }
                     case "error" -> status = "error";
                     default -> {

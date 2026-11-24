@@ -36,6 +36,10 @@ public class ChatMessage {
 
     private String model;
 
+    /** Raw JSON token/tool-call counts reported by the processor. */
+    @Column(columnDefinition = "TEXT")
+    private String usage;
+
     @Column(name = "created_at")
     private Instant createdAt;
 
@@ -100,6 +104,14 @@ public class ChatMessage {
 
     public void setModel(String model) {
         this.model = model;
+    }
+
+    public String getUsage() {
+        return usage;
+    }
+
+    public void setUsage(String usage) {
+        this.usage = usage;
     }
 
     public Instant getCreatedAt() {

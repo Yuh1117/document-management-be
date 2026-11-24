@@ -1,5 +1,6 @@
 package com.vpgh.dms.service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,5 +30,15 @@ public interface ChatHistoryService {
      */
     ChatConversation startTurn(User user, UUID conversationId, String question);
 
-    void saveAssistantMessage(UUID conversationId, String content, String sources, String status, String model);
+    void saveAssistantMessage(UUID conversationId, String content, String sources, String status, String model,
+            String usage);
+
+    /**
+     * The latest messages of a conversation to give the model as context, oldest first.
+     * Unfinished or failed answers are left out. Empty for a new conversation.
+     */
+    List<ChatMessage> recentHistory(UUID conversationId, UUID userId, int limit);
+
+    /** Questions the user has asked since the given instant, across all conversations. */
+    long countQuestionsSince(UUID userId, Instant since);
 }

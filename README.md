@@ -17,7 +17,7 @@ Data flow:
 2. The backend stores files in Cloudflare R2/Cloudinary, persists metadata in PostgreSQL, and publishes document events to RabbitMQ.
 3. The processor consumes RabbitMQ events, runs OCR/parsing, chunking, generates embeddings, and indexes content into Elasticsearch.
 4. Search and summarization requests from the frontend are proxied through the backend to the processor service, authenticated with a shared API key (`dms.processor.api-key`).
-5. Question answering (RAG): the backend adds the caller's id and their trashed document ids to the question, forwards it to the processor and relays the answer back as a Server-Sent Events stream.
+5. Question answering (RAG): the backend adds the caller's id, their trashed document ids and the latest turns of the conversation to the question, forwards it to the processor and relays the answer back as a Server-Sent Events stream. It saves the question and the finished answer (with sources and token usage) as chat history.
 
 > This repository also owns `docker-compose.yml`, which orchestrates **all three
 > services** plus their infrastructure. See [Docker Compose](#docker-compose).
@@ -43,6 +43,7 @@ Data flow:
 - RabbitMQ publisher — triggers processor pipeline on document upload
 - Proxies search, summarization, and model management requests to the processor service
 - Streaming question answering over a user's own documents (RAG), proxied from the processor as Server-Sent Events
+- Chat history for question answering: conversations per user (list, rename, delete, paginated messages), follow-up questions sent with context, a daily question limit per user, and an admin page of token usage and estimated cost
 - Summary feedback collection
 - Email notifications (Spring Mail + Thymeleaf templates)
 - Internationalization (EN/VI)
@@ -124,6 +125,10 @@ Two things are easy to get wrong: the RabbitMQ, storage, and processor keys are
 `spring.rabbitmq.host`, and `r2.access-key` rather than `aws.s3.*`. And
 `dms.processor.api-key` must match the processor's `PROCESSOR_API_KEY`, or every
 search and summarize call will be rejected.
+
+Questions per user per day are capped by `rag.daily-limit` (env `RAG_DAILY_LIMIT`,
+default 50). Admins can override it at runtime with the `ragDailyLimit` system
+setting; `0` turns the limit off.
 
 Do not commit secrets to source control. Use environment variables or a secrets manager in production.
 
