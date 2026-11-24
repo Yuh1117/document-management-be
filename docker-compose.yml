@@ -176,6 +176,11 @@ services:
     container_name: dms-worker
     restart: unless-stopped
     command: ["watchfiles", "python -m app.worker", "/app"]
+    # Cap the worker so bulk uploads can't starve the rest of the machine.
+    cpus: ${WORKER_CPUS:-4}
+    environment:
+      - OMP_NUM_THREADS=${TORCH_NUM_THREADS:-2}
+      - MKL_NUM_THREADS=${TORCH_NUM_THREADS:-2}
     ports:
       - "8001:8001"
     volumes:
