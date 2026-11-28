@@ -134,15 +134,26 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ../document-management-fe:/app
-      - fe-node-modules:/app/node_modules
       - fe-next-cache:/app/.next
     env_file:
       - ../document-management-fe/.env
     environment:
       - INTERNAL_API_URL=http://backend:8080
-      - WATCHPACK_POLLING=true
-      - CHOKIDAR_USEPOLLING=true
+    # Run with `docker compose up --watch`: edits are copied into the container (no polling),
+    # and dependency changes rebuild the image.
+    develop:
+      watch:
+        - action: sync
+          path: ../document-management-fe
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+            - .git/
+        - action: rebuild
+          path: ../document-management-fe/package.json
+        - action: rebuild
+          path: ../document-management-fe/package-lock.json
     depends_on:
       - backend
     networks:
@@ -314,7 +325,6 @@ volumes:
   grafana-data:
   mlflow-data:
   ollama-data:
-  fe-node-modules:
   fe-next-cache:
 
 networks:
