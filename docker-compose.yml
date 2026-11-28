@@ -125,6 +125,29 @@ services:
     networks:
       - dms-network
 
+  frontend:
+    build:
+      context: ../document-management-fe
+      dockerfile: Dockerfile
+    image: document-management-fe
+    container_name: dms-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../document-management-fe:/app
+      - fe-node-modules:/app/node_modules
+      - fe-next-cache:/app/.next
+    env_file:
+      - ../document-management-fe/.env
+    environment:
+      - INTERNAL_API_URL=http://backend:8080
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
+    networks:
+      - dms-network
+
   # ollama:
   #   image: ollama/ollama:latest
   #   container_name: dms-ollama
@@ -240,7 +263,7 @@ services:
     image: grafana/grafana:11.6.0
     container_name: dms-grafana
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
@@ -291,6 +314,8 @@ volumes:
   grafana-data:
   mlflow-data:
   ollama-data:
+  fe-node-modules:
+  fe-next-cache:
 
 networks:
   dms-network:
